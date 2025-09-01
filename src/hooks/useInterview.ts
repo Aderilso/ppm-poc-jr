@@ -24,7 +24,7 @@ export const analysisKeys = {
 };
 
 // Hook para gerenciar entrevista atual
-export function useCurrentInterview() {
+export function useInterview() {
   const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const queryClient = useQueryClient();

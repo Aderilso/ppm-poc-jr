@@ -30,32 +30,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Componente de teste simples
-const TestComponent = () => {
-  console.log("🧪 TestComponent renderizado!");
-  return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ color: 'blue' }}>🧪 Teste do Sistema PPM</h1>
-      <p>Se você está vendo esta mensagem, o React está funcionando!</p>
-      <p>Backend: ✅ Rodando na porta 3001</p>
-      <p>Frontend: ✅ Rodando na porta 8080</p>
-      <button 
-        onClick={() => alert('Sistema funcionando!')}
-        style={{ 
-          padding: '10px 20px', 
-          backgroundColor: 'green', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '5px',
-          cursor: 'pointer'
-        }}
-      >
-        Testar Sistema
-      </button>
-    </div>
-  );
-};
-
 const App = () => {
   console.log("🚀 App.tsx está sendo renderizado!");
   
@@ -67,8 +41,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<TestComponent />} />
-              <Route path="/home" element={<Home />} />
+              <Route path="/" element={<Home />} />
               <Route path="/config" element={<Config />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/f1" element={<F1 />} />
