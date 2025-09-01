@@ -9,6 +9,7 @@ import { AnalysisReport } from "@/components/AnalysisReport";
 import { loadConfig, loadConfigWithFallback, loadAnswers, loadMeta } from "@/lib/storage";
 import { generateCsvData, downloadCsv, generateFileName } from "@/lib/csv";
 import { analyzeAnswers } from "@/lib/analysis";
+import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
 import { toast } from "@/hooks/use-toast";
 import type { PpmConfig, PpmMeta, FormAnswers, AnalysisResult } from "@/lib/types";
 
@@ -39,14 +40,40 @@ export default function Resumo() {
   const handleDownload = (formId: "f1" | "f2" | "f3" | "consolidado") => {
     if (!config) return;
 
-    const csvData = generateCsvData(config, formId, answers, meta);
-    const filename = generateFileName(formId);
-    downloadCsv(csvData, filename);
-    
-    toast({
-      title: "Download realizado",
-      description: `Arquivo ${filename} baixado com sucesso!`,
-    });
+    if (formId === "consolidado") {
+      // Novo relatório consolidado com análise
+      const consolidatedReport = generateConsolidatedReport(config, answers, meta);
+      const csvContent = exportConsolidatedReportToCsv(consolidatedReport);
+      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const filename = `PPM_Relatorio_Consolidado_${new Date().toISOString().slice(0, 16).replace(/[:-]/g, "").replace("T", "-")}.csv`;
+      
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      toast({
+        title: "Relatório Consolidado gerado",
+        description: `${filename} baixado com análise completa, scores e recomendações!`,
+      });
+    } else {
+      // Download individual dos formulários (formato original)
+      const csvData = generateCsvData(config, formId, answers, meta);
+      const filename = generateFileName(formId);
+      downloadCsv(csvData, filename);
+      
+      toast({
+        title: "Download realizado",
+        description: `Arquivo ${filename} baixado com sucesso!`,
+      });
+    }
   };
 
   const getFormStats = (formId: "f1" | "f2" | "f3") => {
@@ -236,12 +263,12 @@ export default function Resumo() {
                       onClick={() => handleDownload("consolidado")}
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      CSV Consolidado
+                      Relatório Consolidado
                     </Button>
                     <p className="text-xs text-muted-foreground text-center">
-                      Todos os formulários
+                      Análise completa com scores,
                       <br />
-                      em um arquivo
+                      insights e recomendações
                     </p>
                   </div>
                 </div>
