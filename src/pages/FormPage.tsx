@@ -81,12 +81,24 @@ export function FormPage({ formId }: FormPageProps) {
 
   // Carregar respostas do banco de dados quando a entrevista atual mudar
   useEffect(() => {
-    if (currentInterview) {
+    if (currentInterview && currentInterview.id) {
       console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
       
-      // Carregar respostas do formulário atual
+      // Verificar se a entrevista tem dados reais ou é uma nova entrevista
       const formAnswers = currentInterview[`${formId}Answers`] || {};
-      setAnswers(formAnswers);
+      const hasRealData = Object.keys(formAnswers).length > 0;
+      
+      if (hasRealData) {
+        // Carregar dados existentes
+        setAnswers(formAnswers);
+        setHasDraftData(true);
+        console.log("✅ FormPage - Dados existentes carregados para entrevista:", currentInterview.id);
+      } else {
+        // Nova entrevista - limpar campos
+        console.log("🧹 FormPage - Nova entrevista, limpando campos");
+        setAnswers({});
+        setHasDraftData(false);
+      }
       
       // Carregar metadados - usar nomes corretos da interface PpmMeta
       setMeta({
@@ -96,13 +108,9 @@ export function FormPage({ formId }: FormPageProps) {
         respondent_department: currentInterview.respondentDepartment || ""
       });
       
-      // Verificar se há dados salvos
-      setHasDraftData(Object.keys(formAnswers).length > 0);
-      
       // Limpar validação visual quando nova entrevista é carregada
       setShowValidation(false);
       
-      console.log("✅ FormPage - Campos carregados/limpos para entrevista:", currentInterview.id);
     } else {
       // Se não há entrevista ativa, limpar todos os campos
       console.log("🧹 FormPage - Limpando campos (sem entrevista ativa)");
