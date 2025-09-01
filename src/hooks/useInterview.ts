@@ -53,12 +53,15 @@ export function useInterview() {
     checkOnline();
   }, []);
 
-  // Buscar entrevista atual
+  // Buscar entrevista atual - simplificado
   const { data: currentInterview, isLoading, error: queryError } = useQuery({
     queryKey: interviewKeys.detail(currentInterviewId || ''),
     queryFn: () => {
       console.log("🔍 useInterview: Buscando entrevista:", currentInterviewId);
-      return interviewsApi.getById(currentInterviewId!);
+      if (!currentInterviewId) {
+        throw new Error("ID da entrevista não fornecido");
+      }
+      return interviewsApi.getById(currentInterviewId);
     },
     enabled: !!currentInterviewId && isOnline,
     retry: 1,
@@ -172,14 +175,14 @@ export function useInterview() {
     isOnline,
     isLoading: isLoading || createInterviewMutation.isPending,
     isSaving: saveAnswersMutation.isPending,
-    isCompleting: completeInterviewMutation.isPending,
+    isCompleting: false, // Temporariamente desabilitado
     startInterview,
     saveFormAnswers,
     updateAnswers,
     updateMeta,
     clearDraft,
     completeInterview,
-    error: createInterviewMutation.error || saveAnswersMutation.error || completeInterviewMutation.error,
+    error: createInterviewMutation.error || saveAnswersMutation.error || queryError,
   };
 }
 
