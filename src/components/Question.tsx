@@ -5,6 +5,9 @@ import { Likert010 } from "./questions/Likert010";
 import { MultiSelectChips } from "./questions/MultiSelectChips";
 import { SelectOne } from "./questions/SelectOne";
 import { TextAreaAuto } from "./questions/TextAreaAuto";
+import { ListaSuspensa } from "./questions/ListaSuspensa";
+import { SimNao } from "./questions/SimNao";
+import { ListaPriorizacao } from "./questions/ListaPriorizacao";
 import type { Question as QuestionType, Lookups } from "@/lib/types";
 
 interface QuestionProps {
@@ -15,7 +18,23 @@ interface QuestionProps {
 }
 
 export function Question({ question, value, onChange, lookups }: QuestionProps) {
+  
+  const parseDropdownOptions = (tipo: string): string[] => {
+    // Extrair opções de tipos lista_suspensa_()
+    const match = tipo.match(/lista_suspensa_\(([^)]+)\)/);
+    if (match) {
+      return match[1].split(',').map(opt => opt.trim().replace(/_/g, ' '));
+    }
+    return [];
+  };
+
   const getOptions = (tipo: string): string[] => {
+    // Primeiro verificar se é uma lista suspensa com opções definidas
+    const dropdownOptions = parseDropdownOptions(tipo);
+    if (dropdownOptions.length > 0) {
+      return dropdownOptions;
+    }
+
     switch (tipo) {
       case "multipla":
         // Determinar qual lookup usar baseado no ID da pergunta ou categoria
@@ -35,7 +54,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
         // Funcionalidades genéricas
         return [
           "Gestão de Cronogramas",
-          "Controle de Custos",
+          "Controle de Custos", 
           "Gestão de Recursos",
           "Dashboards e Relatórios",
           "Gestão de Riscos",
@@ -43,7 +62,19 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           "Outro (especificar)"
         ];
       case "selecionar_1":
+      case "lista_suspensa_baseada_na_resposta_anterior":
+      case "lista_suspensa_baseada_nas_respostas_anteriores":
         return lookups.FERRAMENTAS_PPM;
+      case "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)":
+        return [
+          "PPM com ERP Financeiro",
+          "PPM com CRM",
+          "PPM com Business Intelligence", 
+          "PPM com HRIS/RH",
+          "PPM com Service Desk",
+          "PPM com Ferramentas de Desenvolvimento",
+          "PPM com Sistemas de Comunicação"
+        ];
       default:
         return [];
     }
@@ -77,6 +108,8 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           />
         );
       case "selecionar_1":
+      case "lista_suspensa_baseada_na_resposta_anterior":
+      case "lista_suspensa_baseada_nas_respostas_anteriores":
         return (
           <SelectOne
             value={stringValue}
@@ -91,7 +124,44 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
             onChange={(val) => onChange(val)}
           />
         );
+      // Novos tipos de pergunta
+      case "sim/não":
+      case "sim/não_(pergunta_filtro)":
+        return (
+          <SimNao
+            value={stringValue}
+            onChange={(val) => onChange(val)}
+          />
+        );
+      case "sim/não/parcialmente_+_campo_para_especificar_quais":
+        return (
+          <SimNao
+            value={stringValue}
+            onChange={(val) => onChange(val)}
+            showPartial={true}
+            showTextField={true}
+          />
+        );
+      case "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)":
+        return (
+          <ListaPriorizacao
+            value={arrayValue}
+            onChange={(val) => onChange(val)}
+            options={getOptions(question.tipo)}
+            maxSelections={3}
+          />
+        );
       default:
+        // Para todos os tipos lista_suspensa_() 
+        if (question.tipo.startsWith("lista_suspensa_")) {
+          return (
+            <ListaSuspensa
+              value={stringValue}
+              onChange={(val) => onChange(val)}
+              options={getOptions(question.tipo)}
+            />
+          );
+        }
         return null;
     }
   };
