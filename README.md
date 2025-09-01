@@ -23,11 +23,12 @@ Este sistema permite que organizações avaliem suas necessidades de ferramentas
 ## ✨ Funcionalidades Principais
 
 ### 🔧 Sistema de Configuração Dinâmica
-- Formulários totalmente configuráveis via JSON
-- Validação robusta com Zod schema
-- Upload/download de configurações
-- Dados de exemplo incluídos
-- Interface de configuração intuitiva
+- **Formulários configuráveis**: Totalmente personalizáveis via JSON
+- **Validação robusta**: Schema Zod com tratamento de erros
+- **Upload/download**: Importação e exportação de configurações
+- **Dados de exemplo**: Templates pré-configurados incluídos
+- **Interface intuitiva**: Editor JSON + formulário visual para novas perguntas
+- **Gerenciamento de perguntas**: Ativar/inativar perguntas sem perder dados
 
 ### 📝 Tipos de Perguntas Suportados
 - **Escalas Likert**: 1-5 e 0-10
@@ -78,6 +79,27 @@ Este sistema permite que organizações avaliem suas necessidades de ferramentas
 - **Schema sincronizado**: Tipos de pergunta alinhados entre JSON e validação
 - **Tratamento de erros**: Mensagens claras de validação
 - **Fallbacks inteligentes**: Sistema funciona mesmo sem configuração
+
+### ✅ Sistema de Criação de Perguntas
+- **Interface visual**: Formulário completo para criar novas perguntas
+- **Tipos dinâmicos**: Suporte a todos os 9 tipos de pergunta disponíveis
+- **Opções inteligentes**: Adição individual ou múltipla (separadas por ";")
+- **Categorização**: Sistema de categorias personalizáveis
+- **Sistema de pesos**: Pesos de 1-5 com descrições de importância
+- **Integração automática**: Perguntas aparecem imediatamente nos formulários
+
+### ✅ Gerenciamento de Perguntas Ativas/Inativas
+- **Controle de visibilidade**: Ativar/inativar perguntas sem removê-las
+- **Interface de gerenciamento**: Aba dedicada para controlar status das perguntas
+- **Filtros automáticos**: Perguntas inativas não aparecem nos questionários
+- **Preservação de dados**: Perguntas inativas mantêm configurações e pesos
+- **Indicadores visuais**: Status claro (Ativa/Inativa) com cores diferenciadas
+
+### ✅ Sistema de Pesos Dinâmico
+- **WeightManager**: Gerenciamento inteligente de pesos para análise
+- **Categorias dinâmicas**: Criação automática de novas categorias
+- **Integração com análise**: Pesos aplicados automaticamente nos relatórios
+- **Persistência**: Manutenção de pesos personalizados entre sessões
 
 ## 🏗 Arquitetura
 
@@ -140,12 +162,25 @@ npm run preview
 - Use "Carregar Exemplo" para dados pré-configurados
 - Ou faça upload de um arquivo JSON personalizado
 
-### 2. Preenchimento dos Formulários
+### 2. Criação de Novas Perguntas
+- Na aba "Nova Pergunta", crie perguntas personalizadas
+- Selecione o formulário de destino (F1, F2 ou F3)
+- Escolha o tipo de pergunta e configure opções
+- Defina categoria e peso para análise
+- A pergunta aparece imediatamente no formulário
+
+### 3. Gerenciamento de Perguntas
+- Use a aba "Gerenciar Perguntas" para ativar/inativar perguntas
+- Perguntas inativas não aparecem nos questionários
+- Mantenha perguntas para uso futuro sem removê-las
+
+### 4. Preenchimento dos Formulários
 - Navegue pelos formulários F1, F2 e F3
 - O progresso é salvo automaticamente
 - Use os tooltips (?) para entender cada pergunta
+- Apenas perguntas ativas são exibidas
 
-### 3. Visualização e Export
+### 5. Visualização e Export
 - Acesse `/resumo` para revisar todas as respostas
 - Baixe relatórios individuais ou consolidados
 - Dados exportados em formato CSV
@@ -165,7 +200,8 @@ npm run preview
           "pergunta": "Texto da pergunta?",
           "tipo": "escala_1_5",
           "legenda": "Texto explicativo",
-          "categoria": "Categoria (opcional)"
+          "categoria": "Categoria (opcional)",
+          "active": true
         }
       ]
     }
@@ -177,6 +213,14 @@ npm run preview
   }
 }
 ```
+
+### Campos da Pergunta
+- **id**: Identificador único da pergunta
+- **pergunta**: Texto da pergunta exibido ao usuário
+- **tipo**: Tipo de pergunta (ver lista abaixo)
+- **legenda**: Texto explicativo/instrução
+- **categoria**: Categoria para agrupamento (opcional)
+- **active**: Se a pergunta está ativa (opcional, padrão: true)
 
 ### Tipos de Pergunta Disponíveis
 - `escala_1_5` / `escala_0_10`
