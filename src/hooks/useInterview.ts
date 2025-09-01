@@ -92,25 +92,45 @@ export function useInterview() {
     },
   });
 
-  // Função para iniciar nova entrevista
-  const startInterview = async () => {
+  // Função para buscar entrevista ativa ou criar nova se necessário
+  const findOrCreateInterview = async () => {
     try {
-      if (isOnline) {
-        // Criar no banco de dados
-        const result = await createInterviewMutation.mutateAsync({
-          isInterviewer: false,
-          interviewerName: "",
-          respondentName: "",
-          respondentDepartment: ""
-        });
-        return result;
-      } else {
+      if (!isOnline) {
         throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
+
+      // Primeiro, verificar se já existe uma entrevista em andamento
+      const allInterviews = await interviewsApi.getAll();
+      const activeInterview = allInterviews.find(interview => 
+        !interview.isCompleted && 
+        (!interview.f1Answers || !interview.f2Answers || !interview.f3Answers)
+      );
+
+      if (activeInterview) {
+        console.log("✅ useInterview - Entrevista ativa encontrada:", activeInterview.id);
+        setCurrentInterviewId(activeInterview.id);
+        return activeInterview;
+      }
+
+      // Se não há entrevista ativa, criar uma nova
+      console.log("🔍 useInterview - Criando nova entrevista...");
+      const result = await createInterviewMutation.mutateAsync({
+        isInterviewer: false,
+        interviewerName: "",
+        respondentName: "",
+        respondentDepartment: ""
+      });
+      console.log("✅ useInterview - Nova entrevista criada:", result.id);
+      return result;
     } catch (error) {
-      console.error('Erro ao iniciar entrevista:', error);
+      console.error('❌ useInterview - Erro ao buscar/criar entrevista:', error);
       throw error;
     }
+  };
+
+  // Função para iniciar nova entrevista (agora usa findOrCreateInterview)
+  const startInterview = async () => {
+    return findOrCreateInterview();
   };
 
   // Função para salvar respostas
