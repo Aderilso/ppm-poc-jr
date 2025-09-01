@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Play, FileText, Settings, Download } from "lucide-react";
+import { Play, FileText, Settings, Download, BarChart3 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { DraftBanner } from "@/components/DraftBanner";
 import { hasData, clearAnswersData } from "@/lib/storage";
@@ -128,7 +128,28 @@ export default function Home() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="ppm-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Dashboard
+              </CardTitle>
+              <CardDescription>
+                Visualize indicadores e métricas em tempo real
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/dashboard")}
+              >
+                Ver Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card className="ppm-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

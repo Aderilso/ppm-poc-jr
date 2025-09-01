@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Settings, Home } from "lucide-react";
+import { Settings, Home, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
@@ -20,14 +20,24 @@ export function Layout({ children }: LayoutProps) {
               <h1 className="text-xl font-bold">Pesquisa PPM</h1>
             </Link>
             
-            {location.pathname !== "/config" && (
-              <Link to="/config">
-                <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Configurações
-                </Button>
-              </Link>
-            )}
+            <div className="flex items-center gap-2">
+              {location.pathname !== "/dashboard" && (
+                <Link to="/dashboard">
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
+              {location.pathname !== "/config" && (
+                <Link to="/config">
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
+                    Configurações
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </header>
