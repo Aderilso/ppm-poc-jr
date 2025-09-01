@@ -24,7 +24,9 @@ export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsP
 
   const handleCustomAdd = () => {
     if (customValue.trim() && !value.includes(customValue.trim())) {
-      onChange([...value, customValue.trim()]);
+      // Remover "Outro (especificar)" e adicionar o valor customizado
+      const newValue = value.filter(v => !v.toLowerCase().includes("outro"));
+      onChange([...newValue, customValue.trim()]);
       setCustomValue("");
     }
   };
