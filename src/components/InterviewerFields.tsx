@@ -1,0 +1,75 @@
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { PpmMeta } from "@/lib/types";
+
+interface InterviewerFieldsProps {
+  meta: PpmMeta;
+  onMetaChange: (meta: PpmMeta) => void;
+}
+
+export function InterviewerFields({ meta, onMetaChange }: InterviewerFieldsProps) {
+  return (
+    <div className="ppm-card p-4 mb-6 bg-[hsl(var(--ppm-gray))]">
+      <div className="flex items-center space-x-2 mb-4">
+        <Checkbox
+          id="is_interviewer"
+          checked={meta.is_interviewer}
+          onCheckedChange={(checked) =>
+            onMetaChange({ ...meta, is_interviewer: !!checked })
+          }
+        />
+        <Label htmlFor="is_interviewer" className="text-sm font-medium">
+          Preencher como ENTREVISTADOR
+        </Label>
+      </div>
+
+      {meta.is_interviewer && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="interviewer_name" className="text-sm">
+              Nome do Entrevistador *
+            </Label>
+            <Input
+              id="interviewer_name"
+              value={meta.interviewer_name || ""}
+              onChange={(e) =>
+                onMetaChange({ ...meta, interviewer_name: e.target.value })
+              }
+              placeholder="Seu nome"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="respondent_name" className="text-sm">
+              Nome do Respondente *
+            </Label>
+            <Input
+              id="respondent_name"
+              value={meta.respondent_name || ""}
+              onChange={(e) =>
+                onMetaChange({ ...meta, respondent_name: e.target.value })
+              }
+              placeholder="Nome do entrevistado"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="respondent_department" className="text-sm">
+              Departamento do Respondente *
+            </Label>
+            <Input
+              id="respondent_department"
+              value={meta.respondent_department || ""}
+              onChange={(e) =>
+                onMetaChange({ ...meta, respondent_department: e.target.value })
+              }
+              placeholder="Departamento"
+              required
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
