@@ -16,6 +16,7 @@ import { criticalApi } from "@/lib/api";
 import { isAuthenticatedForCriticalOperations } from "@/lib/auth";
 import { AuthModal } from "@/components/AuthModal";
 import type { PpmConfig, Question } from "@/lib/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Config() {
   const [jsonText, setJsonText] = useState("");
@@ -30,6 +31,9 @@ export default function Config() {
 
   // Hidden file input for custom JSON upload
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Query client para limpar cache
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const config = loadConfig();
@@ -298,6 +302,11 @@ export default function Config() {
       localStorage.removeItem('ppm-answers-f3');
       localStorage.removeItem('ppm-meta');
       
+      // Limpar cache da query
+      queryClient.invalidateQueries({ queryKey: ['interviews'] });
+      queryClient.invalidateQueries({ queryKey: ['analyses'] });
+      queryClient.invalidateQueries({ queryKey: ['configs'] });
+
     } catch (error) {
       console.error('Erro ao limpar banco de dados:', error);
       toast({
