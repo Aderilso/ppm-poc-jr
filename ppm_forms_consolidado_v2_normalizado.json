@@ -19,7 +19,7 @@
                 {
                     "id": "f1_q03",
                     "pergunta": "Há quanto tempo você utiliza ferramentas de gestão de projetos?",
-                    "tipo": "lista_suspensa_(<_1_Ano,_1_3_Anos,_3_5_Anos,_5_10_Anos,_>_10_Anos)",
+                    "tipo": "lista_suspensa_(<_1_Ano,_1-3_Anos,_3-5_Anos,_5-10_Anos,_>_10_Anos)",
                     "legenda": "Preencha conforme indicado."
                 },
                 {

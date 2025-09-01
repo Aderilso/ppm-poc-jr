@@ -2,7 +2,7 @@ export type QuestionType =
   "escala_0_10" |
   "escala_1_5" |
   "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)" |
-  "lista_suspensa_(<_1_Ano,_1_3_Anos,_3_5_Anos,_5_10_Anos,_>_10_Anos)" |
+  "lista_suspensa_(<_1_Ano,_1-3_Anos,_3-5_Anos,_5-10_Anos,_>_10_Anos)" |
   "lista_suspensa_(Diariamente,_Semanalmente,_Quinzenalmente,_Mensalmente,_Esporadicamente)" |
   "lista_suspensa_(Gerente_de_Projeto,_Analista,_Coordenador,_Diretor,_Consultor,_Scrum_Master,_Outro)" |
   "lista_suspensa_(Integração_Automática,_Export/Import,_Digitação_Manual,_Não_Há_Troca,_Não_Sei)" |
