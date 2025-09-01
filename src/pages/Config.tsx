@@ -4,13 +4,13 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { AlertTriangle, Upload, Download, Database, Loader2 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { useConfig } from "@/hooks/useInterview";
 import { useToast } from "@/hooks/use-toast";
 import { criticalApi } from "@/lib/api";
-import { useAuth } from "@/lib/auth";
+import { isAuthenticatedForCriticalOperations, createAuthSession, verifyPassword } from "@/lib/auth";
 import type { PpmConfig } from "@/lib/types";
 
 export default function Config() {
@@ -21,12 +21,17 @@ export default function Config() {
   const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [password, setPassword] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const { toast } = useToast();
-  const { isAuthenticated, login, logout } = useAuth();
   
   // Usar hook para carregar configuração do banco
   const { config, isLoading: configLoading, createConfig, isCreating } = useConfig();
+
+  useEffect(() => {
+    // Verificar autenticação ao carregar
+    setIsAuthenticated(isAuthenticatedForCriticalOperations());
+  }, []);
 
   useEffect(() => {
     if (config) {
@@ -202,7 +207,7 @@ export default function Config() {
       });
       
       setShowClearConfirm(false);
-      logout();
+      setIsAuthenticated(false);
     } catch (error) {
       toast({
         title: "❌ Erro ao limpar banco",
@@ -211,6 +216,23 @@ export default function Config() {
       });
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const handleLogin = (inputPassword: string) => {
+    if (verifyPassword(inputPassword)) {
+      createAuthSession();
+      setIsAuthenticated(true);
+      toast({
+        title: "✅ Autenticado",
+        description: "Senha correta! Você pode realizar operações críticas.",
+      });
+    } else {
+      toast({
+        title: "❌ Senha incorreta",
+        description: "A senha fornecida está incorreta.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -464,7 +486,7 @@ export default function Config() {
                     </Button>
                     <Button
                       onClick={() => {
-                        login(password);
+                        handleLogin(password);
                         setShowPasswordInput(false);
                         setPassword("");
                       }}
