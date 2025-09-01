@@ -41,13 +41,25 @@ export function useInterview() {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
           
-          // Se a API está online, verificar se há entrevista ativa
+          // Se a API está online E não há entrevista ativa, APENAS buscar existentes (NÃO criar)
           if (!currentInterviewId) {
-            console.log("🔍 useInterview: Verificando entrevista ativa...");
+            console.log("🔍 useInterview: Verificando se há entrevista existente...");
             try {
-              await findOrCreateInterview();
+              // Apenas buscar entrevistas existentes, sem criar novas
+              const allInterviews = await interviewsApi.getAll();
+              const existingInterview = allInterviews.find(interview => 
+                !interview.isCompleted && 
+                (interview.f1Answers || interview.f2Answers || interview.f3Answers)
+              );
+              
+              if (existingInterview) {
+                console.log("✅ useInterview: Entrevista existente encontrada:", existingInterview.id);
+                setCurrentInterviewId(existingInterview.id);
+              } else {
+                console.log("🔍 useInterview: Nenhuma entrevista existente encontrada - aguardando usuário iniciar");
+              }
             } catch (error) {
-              console.log("🔍 useInterview: Erro ao verificar entrevista ativa:", error);
+              console.log("🔍 useInterview: Erro ao verificar entrevistas existentes:", error);
             }
           }
         } else {
