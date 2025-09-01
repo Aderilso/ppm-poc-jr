@@ -1,15 +1,20 @@
-export type QuestionType = "escala_1_5" | "escala_0_10" | "multipla" | "selecionar_1" | "texto" | 
-  "lista_suspensa_(ti,_finanças,_rh,_operações,_marketing,_pmo,_estratégia,_outro)" |
-  "lista_suspensa_(gp,_analista,_coordenador,_diretor,_consultor,_scrum_master,_outro)" |
-  "lista_suspensa_(<_1_ano,_1_3_anos,_3_5_anos,_5_10_anos,_>_10_anos)" |
-  "lista_suspensa_(diariamente,_semanalmente,_quinzenalmente,_mensalmente,_esporadicamente)" |
-  "sim/não_(pergunta_filtro)" |
+export type QuestionType = 
+  "escala_0_10" |
+  "escala_1_5" |
+  "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)" |
+  "lista_suspensa_(<_1_Ano,_1_3_Anos,_3_5_Anos,_5_10_Anos,_>_10_Anos)" |
+  "lista_suspensa_(Diariamente,_Semanalmente,_Quinzenalmente,_Mensalmente,_Esporadicamente)" |
+  "lista_suspensa_(Gerente_de_Projeto,_Analista,_Coordenador,_Diretor,_Consultor,_Scrum_Master,_Outro)" |
+  "lista_suspensa_(Integração_Automática,_Export/Import,_Digitação_Manual,_Não_Há_Troca,_Não_Sei)" |
+  "lista_suspensa_(TI,_Finanças,_RH,_Operações,_Marketing,_PMO,_Estratégia,_Outro)" |
   "lista_suspensa_baseada_na_resposta_anterior" |
+  "lista_suspensa_baseada_nas_respostas_anteriores" |
+  "multipla" |
+  "selecionar_1" |
   "sim/não" |
   "sim/não/parcialmente_+_campo_para_especificar_quais" |
-  "lista_suspensa_(integração_automática,_export/import,_digitação_manual,_não_há_troca,_não_sei)" |
-  "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)" |
-  "lista_suspensa_baseada_nas_respostas_anteriores";
+  "sim/não_(pergunta_filtro)" |
+  "texto";
 
 export interface Question {
   id: string;

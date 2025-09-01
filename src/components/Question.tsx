@@ -23,7 +23,10 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
     // Extrair opções de tipos lista_suspensa_()
     const match = tipo.match(/lista_suspensa_\(([^)]+)\)/);
     if (match) {
-      return match[1].split(',').map(opt => opt.trim().replace(/_/g, ' '));
+      return match[1].split(',').map(opt => {
+        // Remover underscores do início e substituir underscores internos por espaços
+        return opt.replace(/^_/, '').replace(/_/g, ' ').trim();
+      });
     }
     return [];
   };

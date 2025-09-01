@@ -10,19 +10,19 @@ export const SAMPLE_JSON: PpmConfig = {
         {
           "id": "f1_q01",
           "pergunta": "Qual seu departamento/área de atuação?",
-          "tipo": "lista_suspensa_(ti,_finanças,_rh,_operações,_marketing,_pmo,_estratégia,_outro)",
+          "tipo": "lista_suspensa_(TI,_Finanças,_RH,_Operações,_Marketing,_PMO,_Estratégia,_Outro)",
           "legenda": "Preencha conforme indicado."
         },
         {
           "id": "f1_q02",
           "pergunta": "Qual sua função/cargo principal?",
-          "tipo": "lista_suspensa_(gp,_analista,_coordenador,_diretor,_consultor,_scrum_master,_outro)",
+          "tipo": "lista_suspensa_(Gerente_de_Projeto,_Analista,_Coordenador,_Diretor,_Consultor,_Scrum_Master,_Outro)",
           "legenda": "Preencha conforme indicado."
         },
         {
           "id": "f1_q03",
           "pergunta": "Há quanto tempo você utiliza ferramentas de gestão de projetos?",
-          "tipo": "lista_suspensa_(<_1_ano,_1_3_anos,_3_5_anos,_5_10_anos,_>_10_anos)",
+          "tipo": "lista_suspensa_(<_1_Ano,_1_3_Anos,_3_5_Anos,_5_10_Anos,_>_10_Anos)",
           "legenda": "Preencha conforme indicado."
         },
         {
@@ -34,7 +34,7 @@ export const SAMPLE_JSON: PpmConfig = {
         {
           "id": "f1_q05",
           "pergunta": "Com que frequência você utiliza sua ferramenta principal de gestão de projetos?",
-          "tipo": "lista_suspensa_(diariamente,_semanalmente,_quinzenalmente,_mensalmente,_esporadicamente)",
+          "tipo": "lista_suspensa_(Diariamente,_Semanalmente,_Quinzenalmente,_Mensalmente,_Esporadicamente)",
           "legenda": "Preencha conforme indicado."
         },
         {
@@ -234,7 +234,7 @@ export const SAMPLE_JSON: PpmConfig = {
         {
           "id": "f3_q05",
           "pergunta": "Como os dados transitam entre seus sistemas principais hoje?",
-          "tipo": "lista_suspensa_(integração_automática,_export/import,_digitação_manual,_não_há_troca,_não_sei)",
+          "tipo": "lista_suspensa_(Integração_Automática,_Export/Import,_Digitação_Manual,_Não_Há_Troca,_Não_Sei)",
           "legenda": "Preencha conforme indicado."
         },
         {

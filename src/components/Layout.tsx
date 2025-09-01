@@ -40,12 +40,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Footer */}
       <footer className="bg-muted mt-16">
         <div className="container mx-auto px-4 py-6">
-          <div className="text-center text-sm text-muted-foreground">
-            <p>
-              Esta pesquisa está em conformidade com a LGPD. 
-              Os dados são armazenados localmente no seu navegador e não são enviados para servidores externos.
-            </p>
-          </div>
+
         </div>
       </footer>
     </div>
