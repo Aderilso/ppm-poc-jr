@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Play, FileText, Settings, Download } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { DraftBanner } from "@/components/DraftBanner";
-import { hasData, clearAllData } from "@/lib/storage";
+import { hasData, clearAnswersData } from "@/lib/storage";
 import { useState, useEffect } from "react";
 
 export default function Home() {
@@ -16,7 +16,7 @@ export default function Home() {
   }, []);
 
   const handleClearDraft = () => {
-    clearAllData();
+    clearAnswersData();
     setHasDraftData(false);
   };
 

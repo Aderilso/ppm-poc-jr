@@ -69,8 +69,21 @@ export function clearAllData(): void {
   });
 }
 
+export function clearAnswersData(): void {
+  localStorage.removeItem(STORAGE_KEYS.ANSWERS_F1);
+  localStorage.removeItem(STORAGE_KEYS.ANSWERS_F2);
+  localStorage.removeItem(STORAGE_KEYS.ANSWERS_F3);
+  localStorage.removeItem(STORAGE_KEYS.META);
+}
+
 export function hasData(): boolean {
-  return Object.values(STORAGE_KEYS).some(key => 
+  const answerKeys = [
+    STORAGE_KEYS.ANSWERS_F1,
+    STORAGE_KEYS.ANSWERS_F2, 
+    STORAGE_KEYS.ANSWERS_F3,
+    STORAGE_KEYS.META
+  ];
+  return answerKeys.some(key => 
     localStorage.getItem(key) !== null
   );
 }

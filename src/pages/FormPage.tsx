@@ -9,7 +9,7 @@ import { DraftBanner } from "@/components/DraftBanner";
 import { InterviewerFields } from "@/components/InterviewerFields";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Question } from "@/components/Question";
-import { loadConfig, loadConfigWithFallback, saveAnswers, loadAnswers, saveMeta, loadMeta, hasData, clearAllData } from "@/lib/storage";
+import { loadConfig, loadConfigWithFallback, saveAnswers, loadAnswers, saveMeta, loadMeta, hasData, clearAnswersData } from "@/lib/storage";
 import type { FormSpec, PpmMeta, Answers } from "@/lib/types";
 
 interface FormPageProps {
@@ -54,7 +54,7 @@ export function FormPage({ formId }: FormPageProps) {
   };
 
   const handleClearDraft = () => {
-    clearAllData();
+    clearAnswersData();
     setAnswers({});
     setMeta({ is_interviewer: false });
     setHasDraftData(false);
