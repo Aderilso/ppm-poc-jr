@@ -81,6 +81,13 @@ export function FormPage({ formId }: FormPageProps) {
 
   // Carregar respostas do banco de dados quando a entrevista atual mudar
   useEffect(() => {
+    console.log("🔍 FormPage - useEffect executado:", { 
+      currentInterview: currentInterview?.id, 
+      formId,
+      hasRealData: currentInterview ? Object.keys(currentInterview[`${formId}Answers`] || {}).length > 0 : false,
+      isCompleted: currentInterview?.isCompleted
+    });
+    
     if (currentInterview && currentInterview.id) {
       console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
       

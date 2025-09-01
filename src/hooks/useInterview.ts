@@ -29,7 +29,7 @@ export function useInterview() {
   const [isOnline, setIsOnline] = useState(true);
   const queryClient = useQueryClient();
 
-  // Verificar se a API está online - APENAS verificar conexão, SEM buscar entrevistas
+  // Verificar se a API está online - APENAS verificar conexão, SEM buscar entrevistas automaticamente
   useEffect(() => {
     console.log("🔍 useInterview: useEffect executado - Verificando APENAS conexão...");
     const checkOnline = async () => {
@@ -42,29 +42,9 @@ export function useInterview() {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
           
-          // Se a API está online E não há currentInterviewId, buscar entrevista existente
-          if (!currentInterviewId) {
-            console.log("🔍 useInterview: Verificando se há entrevista existente para definir currentInterviewId...");
-            try {
-              const allInterviews = await interviewsApi.getAll();
-              console.log("🔍 useInterview: Total de entrevistas encontradas:", allInterviews.length);
-              
-              // Priorizar entrevistas com dados (respostas salvas)
-              const interviewWithData = allInterviews.find(interview => 
-                !interview.isCompleted && 
-                (interview.f1Answers || interview.f2Answers || interview.f3Answers)
-              );
-              
-              if (interviewWithData) {
-                console.log("✅ useInterview: Entrevista com dados encontrada, definindo currentInterviewId:", interviewWithData.id);
-                setCurrentInterviewId(interviewWithData.id);
-              } else {
-                console.log("🔍 useInterview: Nenhuma entrevista com dados encontrada");
-              }
-            } catch (error) {
-              console.log("🔍 useInterview: Erro ao verificar entrevistas existentes:", error);
-            }
-          }
+          // NÃO buscar entrevistas existentes automaticamente
+          // O sistema deve começar limpo e só carregar dados quando explicitamente solicitado
+          console.log("🔍 useInterview: Sistema iniciado limpo, aguardando ação do usuário");
         } else {
           console.log("❌ useInterview: API offline");
           setIsOnline(false);
@@ -334,6 +314,8 @@ export function useInterview() {
     // Aguardar um pouco e forçar nova invalidação para garantir limpeza
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: interviewKeys.all });
+      // Forçar limpeza adicional
+      queryClient.clear();
     }, 100);
     
     console.log("✅ useInterview - Estado limpo completamente");
