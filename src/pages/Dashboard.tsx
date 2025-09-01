@@ -309,6 +309,19 @@ export default function Dashboard() {
     navigate('/');
   };
 
+  const handleResetStats = () => {
+    console.log("🧹 Dashboard - Zerando estatísticas...");
+    
+    // Limpar métricas
+    setOperationalMetrics(null);
+    setAnalyticalMetrics(null);
+    
+    // Forçar limpeza do cache
+    refetch();
+    
+    console.log("✅ Dashboard - Estatísticas zeradas");
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -337,6 +350,14 @@ export default function Dashboard() {
             <Button variant="outline" onClick={handleRefresh} className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />
               Atualizar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleResetStats} 
+              className="flex items-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Zerar Estatísticas
             </Button>
             <Button 
               onClick={handleNewSurvey}
