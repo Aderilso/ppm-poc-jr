@@ -21,6 +21,14 @@ export function Layout({ children }: LayoutProps) {
             </Link>
             
             <div className="flex items-center gap-2">
+              {location.pathname !== "/" && (
+                <Link to="/">
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <Home className="w-4 h-4" />
+                    Home
+                  </Button>
+                </Link>
+              )}
               {location.pathname !== "/dashboard" && (
                 <Link to="/dashboard">
                   <Button variant="secondary" size="sm" className="flex items-center gap-2">
