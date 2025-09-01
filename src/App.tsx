@@ -13,6 +13,7 @@ import F3 from "./pages/F3";
 import Resumo from "./pages/Resumo";
 import Entrevistas from "./pages/Entrevistas";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,26 @@ const queryClient = new QueryClient({
 
 const App = () => {
   console.log("🚀 App.tsx está sendo renderizado!");
+  
+  // Capturar erros globais
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error("❌ Erro global capturado:", event.error);
+      console.error("❌ Stack trace:", event.error?.stack);
+    };
+    
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error("❌ Promise rejeitada não tratada:", event.reason);
+    };
+    
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
   
   return (
     <ErrorBoundary>
