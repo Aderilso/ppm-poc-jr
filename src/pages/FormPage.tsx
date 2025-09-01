@@ -10,7 +10,7 @@ import { InterviewerFields } from "@/components/InterviewerFields";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Question } from "@/components/Question";
 import { useInterview } from "@/hooks/useInterview";
-import { loadConfig } from "@/lib/storage";
+import { useConfig } from "@/hooks/useInterview";
 import type { FormSpec, PpmMeta, Answers, Lookups } from "@/lib/types";
 
 interface FormPageProps {
@@ -24,7 +24,7 @@ export function FormPage({ formId }: FormPageProps) {
   const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [hasDraftData, setHasDraftData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showValidation, setShowValidation] = useState(false); // Nova state para controlar validação
+  const [showValidation, setShowValidation] = useState(false);
   const [lookups, setLookups] = useState<Lookups>({
     SISTEMAS_ESSENCIAIS: [],
     FERRAMENTAS_PPM: [],
@@ -41,36 +41,34 @@ export function FormPage({ formId }: FormPageProps) {
     error 
   } = useInterview();
 
+  // Usar o hook de configuração para carregar formulários
+  const { config, isLoading: configLoading } = useConfig();
+
   useEffect(() => {
-    try {
-      const config = loadConfig();
-      if (!config) {
-        setIsLoading(false);
-        navigate("/config");
-        return;
-      }
-
-      const currentForm = config.forms.find(f => f.id === formId);
-      if (!currentForm) {
-        console.warn(`Formulário ${formId} não encontrado na configuração`);
-        setIsLoading(false);
-        navigate("/");
-        return;
-      }
-
-      setForm(currentForm);
-      setLookups(config.lookups || {
-        SISTEMAS_ESSENCIAIS: [],
-        FERRAMENTAS_PPM: [],
-        TIPOS_DADOS_SINCRONIZAR: []
-      });
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Erro ao carregar dados do formulário:', error);
+    if (configLoading) return;
+    
+    if (!config) {
       setIsLoading(false);
       navigate("/config");
+      return;
     }
-  }, [formId, navigate]);
+
+    const currentForm = config.forms.find(f => f.id === formId);
+    if (!currentForm) {
+      console.warn(`Formulário ${formId} não encontrado na configuração`);
+      setIsLoading(false);
+      navigate("/");
+      return;
+    }
+
+    setForm(currentForm);
+    setLookups(config.lookups || {
+      SISTEMAS_ESSENCIAIS: [],
+      FERRAMENTAS_PPM: [],
+      TIPOS_DADOS_SINCRONIZAR: []
+    });
+    setIsLoading(false);
+  }, [config, configLoading, formId, navigate]);
 
   // Carregar respostas do banco de dados quando a entrevista atual mudar
   useEffect(() => {

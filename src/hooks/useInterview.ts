@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interviewsApi, configsApi, analysesApi, type ApiInterview } from '@/lib/api';
-import { loadConfig, saveAnswers, loadAnswers, saveMeta, loadMeta, clearAnswersData } from '@/lib/storage';
 import type { PpmMeta, Answers } from '@/lib/types';
 
 // Chaves para React Query
@@ -76,12 +75,6 @@ export function useInterview() {
     mutationFn: interviewsApi.create,
     onSuccess: (data) => {
       setCurrentInterviewId(data.id);
-      // Sincronizar com localStorage
-      const meta = loadMeta();
-      saveMeta({
-        ...meta,
-        interviewId: data.id,
-      });
     },
   });
 
@@ -91,48 +84,22 @@ export function useInterview() {
       if (!currentInterviewId) throw new Error('Nenhuma entrevista ativa');
       return interviewsApi.saveAnswers(currentInterviewId, formId, answers);
     },
-    onSuccess: (data) => {
-      // Sincronizar com localStorage
-      if (data.f1Answers) saveAnswers('f1', data.f1Answers);
-      if (data.f2Answers) saveAnswers('f2', data.f2Answers);
-      if (data.f3Answers) saveAnswers('f3', data.f3Answers);
-    },
-  });
-
-  // Mutação para completar entrevista
-  const completeInterviewMutation = useMutation({
-    mutationFn: (configSnapshot?: any) => {
-      if (!currentInterviewId) throw new Error('Nenhuma entrevista ativa');
-      return interviewsApi.complete(currentInterviewId, configSnapshot);
-    },
-    onSuccess: () => {
-      // Limpar localStorage após completar
-      clearAnswersData();
-      setCurrentInterviewId(null);
-    },
   });
 
   // Função para iniciar nova entrevista
-  const startInterview = async (meta: PpmMeta) => {
+  const startInterview = async () => {
     try {
       if (isOnline) {
         // Criar no banco de dados
-        const interview = await createInterviewMutation.mutateAsync({
-          isInterviewer: meta.is_interviewer,
-          interviewerName: meta.interviewer_name,
-          respondentName: meta.respondent_name,
-          respondentDepartment: meta.respondent_department,
+        const result = await createInterviewMutation.mutateAsync({
+          isInterviewer: false,
+          interviewerName: "",
+          respondentName: "",
+          respondentDepartment: ""
         });
-        return interview;
+        return result;
       } else {
-        // Modo offline - usar localStorage
-        const interviewId = `offline_${Date.now()}`;
-        setCurrentInterviewId(interviewId);
-        saveMeta({
-          ...meta,
-          interviewId,
-        });
-        return { id: interviewId, isCompleted: false };
+        throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
     } catch (error) {
       console.error('Erro ao iniciar entrevista:', error);
@@ -143,16 +110,13 @@ export function useInterview() {
   // Função para salvar respostas
   const saveFormAnswers = async (formId: 'f1' | 'f2' | 'f3', answers: Answers) => {
     try {
-      // Sempre salvar no localStorage primeiro
-      saveAnswers(formId, answers);
-      
       if (isOnline && currentInterviewId) {
         // Sincronizar com banco de dados
         await saveAnswersMutation.mutateAsync({ formId, answers });
       }
     } catch (error) {
       console.error('Erro ao salvar respostas:', error);
-      // Em caso de erro, pelo menos temos no localStorage
+      throw error;
     }
   };
 
@@ -162,9 +126,6 @@ export function useInterview() {
   // Função para atualizar metadados
   const updateMeta = async (meta: PpmMeta) => {
     try {
-      // Salvar no localStorage
-      saveMeta(meta);
-      
       if (isOnline && currentInterviewId) {
         // Atualizar no banco de dados
         await interviewsApi.update(currentInterviewId, {
@@ -184,35 +145,23 @@ export function useInterview() {
 
   // Função para limpar rascunho
   const clearDraft = () => {
-    clearAnswersData();
     setCurrentInterviewId(null);
   };
 
   // Função para completar entrevista
   const completeInterview = async () => {
     try {
-      const config = loadConfig();
-      
       if (isOnline && currentInterviewId) {
-        await completeInterviewMutation.mutateAsync(config);
-      } else {
-        // Modo offline - apenas limpar localStorage
-        clearAnswersData();
+        await interviewsApi.complete(currentInterviewId);
         setCurrentInterviewId(null);
+      } else {
+        throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
     } catch (error) {
       console.error('Erro ao completar entrevista:', error);
       throw error;
     }
   };
-
-  // Carregar entrevista existente do localStorage
-  useEffect(() => {
-    const meta = loadMeta();
-    if (meta.interviewId && !meta.interviewId.startsWith('offline_')) {
-      setCurrentInterviewId(meta.interviewId);
-    }
-  }, []);
 
   return {
     currentInterview,
