@@ -57,3 +57,6 @@ export interface FormAnswers {
   f2: Answers;
   f3: Answers;
 }
+
+// Re-export from analysis for convenience
+export type { AnalysisResult } from "./analysis";
