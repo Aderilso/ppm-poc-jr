@@ -28,9 +28,9 @@ export function useInterview() {
   const [isOnline, setIsOnline] = useState(true);
   const queryClient = useQueryClient();
 
-  // Verificar se a API está online - simplificado temporariamente
+  // Verificar se a API está online - APENAS verificar conexão, SEM buscar entrevistas
   useEffect(() => {
-    console.log("🔍 useInterview: Verificando conexão...");
+    console.log("🔍 useInterview: useEffect executado - Verificando APENAS conexão...");
     const checkOnline = async () => {
       try {
         const response = await fetch('http://localhost:3001/api/health', {
@@ -40,28 +40,6 @@ export function useInterview() {
         if (response.ok) {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
-          
-          // Se a API está online E não há entrevista ativa, APENAS buscar existentes (NÃO criar)
-          if (!currentInterviewId) {
-            console.log("🔍 useInterview: Verificando se há entrevista existente...");
-            try {
-              // Apenas buscar entrevistas existentes, sem criar novas
-              const allInterviews = await interviewsApi.getAll();
-              const existingInterview = allInterviews.find(interview => 
-                !interview.isCompleted && 
-                (interview.f1Answers || interview.f2Answers || interview.f3Answers)
-              );
-              
-              if (existingInterview) {
-                console.log("✅ useInterview: Entrevista existente encontrada:", existingInterview.id);
-                setCurrentInterviewId(existingInterview.id);
-              } else {
-                console.log("🔍 useInterview: Nenhuma entrevista existente encontrada - aguardando usuário iniciar");
-              }
-            } catch (error) {
-              console.log("🔍 useInterview: Erro ao verificar entrevistas existentes:", error);
-            }
-          }
         } else {
           console.log("❌ useInterview: API offline");
           setIsOnline(false);
@@ -73,7 +51,7 @@ export function useInterview() {
     };
     
     checkOnline();
-  }, []);
+  }, []); // Array de dependências vazio - só executa uma vez
 
   // Buscar entrevista atual - otimizado para evitar re-renderizações
   const { data: currentInterview, isLoading, error: queryError } = useQuery({
