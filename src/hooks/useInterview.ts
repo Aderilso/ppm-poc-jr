@@ -170,9 +170,33 @@ export function useInterview() {
     }
   };
 
-  // Função para iniciar nova entrevista (agora usa findOrCreateInterview)
+  // Função para iniciar nova entrevista (sempre cria nova, não reutiliza)
   const startInterview = async () => {
-    return findOrCreateInterview();
+    try {
+      if (!isOnline) {
+        throw new Error('Sistema offline. Conecte-se à internet para continuar.');
+      }
+
+      console.log("🔍 useInterview - Criando nova entrevista para nova pessoa...");
+      
+      // Sempre criar nova entrevista, não reutilizar existente
+      const result = await createInterviewMutation.mutateAsync({
+        isInterviewer: false,
+        interviewerName: "",
+        respondentName: "",
+        respondentDepartment: ""
+      });
+      
+      console.log("✅ useInterview - Nova entrevista criada:", result.id);
+      
+      // Limpar currentInterviewId para forçar nova query
+      setCurrentInterviewId(result.id);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ useInterview - Erro ao criar nova entrevista:', error);
+      throw error;
+    }
   };
 
   // Função para salvar respostas
@@ -181,6 +205,19 @@ export function useInterview() {
     
     try {
       if (isOnline && currentInterviewId) {
+        // Verificar se a entrevista atual não está finalizada
+        const currentInterviewData = await interviewsApi.getById(currentInterviewId);
+        
+        if (currentInterviewData.isCompleted) {
+          console.log("❌ useInterview - Entrevista já finalizada, não é possível salvar mais dados");
+          toast({
+            title: "Entrevista Finalizada",
+            description: "Esta entrevista já foi finalizada. Inicie uma nova entrevista para continuar.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         console.log("✅ useInterview - Salvando respostas no banco...");
         // Sincronizar com banco de dados
         const result = await saveAnswersMutation.mutateAsync({ formId, answers });
