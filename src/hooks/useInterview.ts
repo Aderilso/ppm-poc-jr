@@ -112,12 +112,27 @@ export function useInterview() {
       }
 
       // Primeiro, verificar se já existe uma entrevista em andamento
+      console.log("🔍 useInterview - Buscando entrevistas existentes...");
       const allInterviews = await interviewsApi.getAll();
-      const activeInterview = allInterviews.find(interview => 
+      console.log("🔍 useInterview - Total de entrevistas encontradas:", allInterviews.length);
+      
+      // Priorizar entrevistas com dados (respostas salvas)
+      const interviewWithData = allInterviews.find(interview => 
         !interview.isCompleted && 
-        (!interview.f1Answers || !interview.f2Answers || !interview.f3Answers)
+        (interview.f1Answers || interview.f2Answers || interview.f3Answers)
       );
-
+      
+      if (interviewWithData) {
+        console.log("✅ useInterview - Entrevista com dados encontrada:", interviewWithData.id);
+        setCurrentInterviewId(interviewWithData.id);
+        return interviewWithData;
+      }
+      
+      // Se não há entrevista com dados, buscar qualquer entrevista ativa
+      const activeInterview = allInterviews.find(interview => 
+        !interview.isCompleted
+      );
+      
       if (activeInterview) {
         console.log("✅ useInterview - Entrevista ativa encontrada:", activeInterview.id);
         setCurrentInterviewId(activeInterview.id);
