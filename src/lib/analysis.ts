@@ -1,5 +1,6 @@
 import type { PpmConfig, FormAnswers, Question } from "./types";
-import { QUESTION_WEIGHTS, CATEGORY_WEIGHTS, getQuestionWeight, getCategoryWeight } from "./weights";
+import { QUESTION_WEIGHTS, CATEGORY_WEIGHTS, getQuestionWeight as getStaticQuestionWeight, getCategoryWeight as getStaticCategoryWeight } from "./weights";
+import { WeightManager } from "./weightManager";
 
 export interface ScoreResult {
   score: number;
@@ -89,13 +90,27 @@ function getNumericValue(answer: string | string[], question: Question): number 
   return 0;
 }
 
+// Função para obter peso de uma pergunta (com suporte a pesos dinâmicos)
+function getQuestionWeight(questionId: string) {
+  const manager = WeightManager.getInstance();
+  return manager.getQuestionWeight(questionId) || getStaticQuestionWeight(questionId);
+}
+
+// Função para obter peso de uma categoria (com suporte a pesos dinâmicos)
+function getCategoryWeight(category: string) {
+  const manager = WeightManager.getInstance();
+  return manager.getCategoryWeight(category) || getStaticCategoryWeight(category);
+}
+
 // Calcular score por categoria
 function calculateCategoryScore(
   config: PpmConfig,
   answers: FormAnswers,
   category: string
 ): CategoryScore {
-  const categoryQuestions = QUESTION_WEIGHTS.filter(w => w.category === category);
+  const manager = WeightManager.getInstance();
+  const allWeights = manager.getAllQuestionWeights();
+  const categoryQuestions = allWeights.filter(w => w.category === category);
   let totalScore = 0;
   let maxScore = 0;
   let questionCount = 0;
@@ -151,7 +166,9 @@ function calculateAnalysisTypeScore(
   answers: FormAnswers,
   analysisType: string
 ): ScoreResult {
-  const typeQuestions = QUESTION_WEIGHTS.filter(w => w.analysisType === analysisType);
+  const manager = WeightManager.getInstance();
+  const allWeights = manager.getAllQuestionWeights();
+  const typeQuestions = allWeights.filter(w => w.analysisType === analysisType);
   let totalScore = 0;
   let maxScore = 0;
   
@@ -283,7 +300,9 @@ function generateRecommendations(
 // Função principal de análise
 export function analyzeAnswers(config: PpmConfig, answers: FormAnswers): AnalysisResult {
   // Calcular scores por categoria
-  const categories = [...new Set(QUESTION_WEIGHTS.map(w => w.category))];
+  const manager = WeightManager.getInstance();
+  const allWeights = manager.getAllQuestionWeights();
+  const categories = [...new Set(allWeights.map(w => w.category))];
   const categoryScores = categories.map(category => 
     calculateCategoryScore(config, answers, category)
   );

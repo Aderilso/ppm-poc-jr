@@ -22,6 +22,7 @@ export interface Question {
   tipo: QuestionType;
   legenda: string;
   categoria?: string;
+  active?: boolean; // Campo para controlar se a pergunta está ativa
 }
 
 export interface FormSpec {

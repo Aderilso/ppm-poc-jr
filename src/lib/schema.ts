@@ -23,6 +23,7 @@ export const questionSchema = z.object({
   ]),
   legenda: z.string(),
   categoria: z.string().optional(),
+  active: z.boolean().optional(), // Campo para controlar se a pergunta está ativa
 });
 
 export const formSpecSchema = z.object({

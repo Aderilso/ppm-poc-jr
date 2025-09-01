@@ -80,8 +80,9 @@ export function FormPage({ formId }: FormPageProps) {
 
   const getProgress = () => {
     if (!form) return { current: 0, total: 0 };
-    const answered = form.questions.filter(q => answers[q.id]).length;
-    return { current: answered, total: form.questions.length };
+    const activeQuestions = form.questions.filter(q => q.active !== false);
+    const answered = activeQuestions.filter(q => answers[q.id]).length;
+    return { current: answered, total: activeQuestions.length };
   };
 
   const canProceed = () => {
@@ -135,7 +136,9 @@ export function FormPage({ formId }: FormPageProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {form.questions.map((question) => (
+              {form.questions
+                .filter(question => question.active !== false) // Filtrar apenas perguntas ativas
+                .map((question) => (
                 <Question
                   key={question.id}
                   question={question}
