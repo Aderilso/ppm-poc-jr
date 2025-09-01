@@ -2,6 +2,35 @@ import { Link, useLocation } from "react-router-dom";
 import { Settings, Home, BarChart3, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// Deloitte Logo Component
+const DeloitteLogo = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 200 100"
+    className={className}
+    fill="currentColor"
+    preserveAspectRatio="none"
+    style={{ width: '36px', height: '24px' }}
+  >
+    <path
+      d="M20 10 C20 10, 20 10, 20 10
+         L20 90
+         C20 90, 20 90, 20 90
+         L80 90
+         C120 90, 140 70, 140 50
+         C140 30, 120 10, 80 10
+         L20 10 Z
+         M40 25
+         L75 25
+         C105 25, 120 35, 120 50
+         C120 65, 105 75, 75 75
+         L40 75
+         L40 25 Z"
+      fill="#000000"
+    />
+    <circle cx="160" cy="50" r="12" fill="#86BC25" />
+  </svg>
+);
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -16,10 +45,10 @@ export function Layout({ children }: LayoutProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <Home className="w-6 h-6" />
+              <DeloitteLogo className="" />
               <h1 className="text-xl font-bold">Pesquisa PPM</h1>
             </Link>
-            
+
             <div className="flex items-center gap-2">
               {location.pathname !== "/" && (
                 <Link to="/">
