@@ -8,6 +8,8 @@ import { useInterview } from "@/hooks/useInterview";
 import { useState, useEffect } from "react";
 
 export default function Home() {
+  console.log("🏠 Home.tsx está sendo renderizada!");
+  
   const navigate = useNavigate();
   const [hasDraftData, setHasDraftData] = useState(false);
   const [isStartingInterview, setIsStartingInterview] = useState(false);

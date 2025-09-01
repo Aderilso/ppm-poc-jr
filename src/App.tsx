@@ -30,29 +30,60 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/config" element={<Config />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/f1" element={<F1 />} />
-            <Route path="/f2" element={<F2 />} />
-            <Route path="/f3" element={<F3 />} />
-            <Route path="/resumo" element={<Resumo />} />
-            <Route path="/entrevistas" element={<Entrevistas />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+// Componente de teste simples
+const TestComponent = () => {
+  console.log("🧪 TestComponent renderizado!");
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <h1 style={{ color: 'blue' }}>🧪 Teste do Sistema PPM</h1>
+      <p>Se você está vendo esta mensagem, o React está funcionando!</p>
+      <p>Backend: ✅ Rodando na porta 3001</p>
+      <p>Frontend: ✅ Rodando na porta 8080</p>
+      <button 
+        onClick={() => alert('Sistema funcionando!')}
+        style={{ 
+          padding: '10px 20px', 
+          backgroundColor: 'green', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}
+      >
+        Testar Sistema
+      </button>
+    </div>
+  );
+};
+
+const App = () => {
+  console.log("🚀 App.tsx está sendo renderizado!");
+  
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<TestComponent />} />
+              <Route path="/home" element={<Home />} />
+              <Route path="/config" element={<Config />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/f1" element={<F1 />} />
+              <Route path="/f2" element={<F2 />} />
+              <Route path="/f3" element={<F3 />} />
+              <Route path="/resumo" element={<Resumo />} />
+              <Route path="/entrevistas" element={<Entrevistas />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;
