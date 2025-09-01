@@ -54,6 +54,18 @@ const App = () => {
     };
   }, []);
   
+  // Log das rotas para debug
+  console.log("🔍 App - Rotas configuradas:", [
+    { path: "/", component: "Home" },
+    { path: "/f1", component: "F1" },
+    { path: "/f2", component: "F2" },
+    { path: "/f3", component: "F3" },
+    { path: "/config", component: "Config" },
+    { path: "/dashboard", component: "Dashboard" },
+    { path: "/resumo", component: "Resumo" },
+    { path: "/entrevistas", component: "Entrevistas" }
+  ]);
+  
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>

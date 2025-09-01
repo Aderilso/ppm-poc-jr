@@ -61,7 +61,10 @@ export default function Home() {
 
   const handleAccessForm = (formId: string) => {
     console.log(`🔍 Home - Acessando formulário ${formId}`);
+    console.log(`🔍 Home - Estado atual:`, { hasDraftData, currentInterview, formId });
+    
     if (hasDraftData) {
+      console.log(`✅ Home - Com dados de rascunho, navegando para /${formId}`);
       navigate(`/${formId}`);
     } else {
       console.log("⚠️ Home - Sem dados de rascunho, iniciando nova entrevista...");

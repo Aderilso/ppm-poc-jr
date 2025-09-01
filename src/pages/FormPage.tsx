@@ -45,22 +45,31 @@ export function FormPage({ formId }: FormPageProps) {
   const { config, isLoading: configLoading } = useConfig();
 
   useEffect(() => {
+    console.log("🔍 FormPage - useEffect config:", { config, configLoading, formId });
+    
     if (configLoading) return;
     
     if (!config) {
+      console.log("❌ FormPage - Sem configuração, redirecionando para /config");
       setIsLoading(false);
       navigate("/config");
       return;
     }
 
+    console.log("🔍 FormPage - Configuração carregada:", config);
+    console.log("🔍 FormPage - Formulários disponíveis:", config.forms.map(f => ({ id: f.id, title: f.title })));
+    
     const currentForm = config.forms.find(f => f.id === formId);
+    console.log("🔍 FormPage - Formulário encontrado:", currentForm);
+    
     if (!currentForm) {
-      console.warn(`Formulário ${formId} não encontrado na configuração`);
+      console.warn(`❌ FormPage - Formulário ${formId} não encontrado na configuração`);
       setIsLoading(false);
       navigate("/");
       return;
     }
 
+    console.log("✅ FormPage - Definindo formulário:", { formId, title: currentForm.title });
     setForm(currentForm);
     setLookups(config.lookups || {
       SISTEMAS_ESSENCIAIS: [],
