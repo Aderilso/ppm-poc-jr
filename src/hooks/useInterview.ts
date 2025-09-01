@@ -331,16 +331,23 @@ export function useInterview() {
   // Função para limpar a entrevista atual e campos
   const clearCurrentInterview = () => {
     console.log("🧹 useInterview - Limpando entrevista atual e campos...");
+    
+    // Limpar ID da entrevista atual
     setCurrentInterviewId(null);
     
     // Forçar limpeza completa do cache
     queryClient.removeQueries({ queryKey: interviewKeys.lists() });
-    queryClient.removeQueries({ queryKey: interviewKeys.detail(currentInterviewId || '') });
     
-    // Limpar cache específico da entrevista atual
+    // Limpar cache específico da entrevista atual se existir
     if (currentInterviewId) {
       queryClient.removeQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
     }
+    
+    // Limpar todos os caches relacionados a entrevistas
+    queryClient.removeQueries({ queryKey: interviewKeys.all });
+    
+    // Forçar invalidação para garantir atualização
+    queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
     
     console.log("✅ useInterview - Estado limpo completamente");
   };

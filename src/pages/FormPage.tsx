@@ -137,10 +137,21 @@ export function FormPage({ formId }: FormPageProps) {
   };
 
   const handleClearDraft = () => {
-    clearDraft();
+    console.log("🧹 FormPage - Limpando rascunho manualmente...");
+    
+    // Limpar estado local
     setAnswers({});
     setMeta({ is_interviewer: false });
     setHasDraftData(false);
+    setShowValidation(false);
+    
+    // Limpar entrevista atual via hook
+    clearDraft();
+    
+    // Forçar re-render para garantir limpeza
+    setTimeout(() => {
+      console.log("✅ FormPage - Rascunho limpo completamente");
+    }, 100);
   };
 
   const getNextRoute = () => {
