@@ -7,46 +7,68 @@ import { Download, FileText, CheckCircle, BarChart3, Upload } from "lucide-react
 import { Layout } from "@/components/Layout";
 import { AnalysisReport } from "@/components/AnalysisReport";
 import { CsvImport } from "@/components/CsvImport";
-import { loadConfig, loadConfigWithFallback, loadAnswers, loadMeta } from "@/lib/storage";
 import { generateCsvData, downloadCsv, generateFileName } from "@/lib/csv";
 import { analyzeAnswers } from "@/lib/analysis";
 import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
 import { consolidateFormInterviews, generateConsolidatedFormCsv, downloadConsolidatedFormCsv } from "@/lib/consolidatedFormExport";
 import { toast } from "@/hooks/use-toast";
+import { useInterview } from "@/hooks/useInterview";
+import { loadConfig } from "@/lib/storage";
 import type { PpmConfig, PpmMeta, FormAnswers, AnalysisResult } from "@/lib/types";
 
 export default function Resumo() {
-  const [config, setConfig] = useState<PpmConfig | null>(null);
-  const [answers, setAnswers] = useState<FormAnswers>({ f1: {}, f2: {}, f3: {} });
-  const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [config, setConfig] = useState<PpmConfig | null>(null);
+  
+  // Usar hook do banco de dados para entrevista
+  const { currentInterview, currentInterviewId } = useInterview();
 
-  const loadData = () => {
+  // Carregar dados da entrevista atual
+  const [currentAnswers, setCurrentAnswers] = useState<FormAnswers>({ f1: {}, f2: {}, f3: {} });
+  const [currentMeta, setCurrentMeta] = useState<PpmMeta>({ is_interviewer: false });
+
+  // Carregar configuração
+  useEffect(() => {
     const configData = loadConfig();
     setConfig(configData);
-    const answersData = {
-      f1: loadAnswers("f1"),
-      f2: loadAnswers("f2"), 
-      f3: loadAnswers("f3"),
-    };
-    setAnswers(answersData);
-    setMeta(loadMeta());
-    
-    // Gerar análise se há dados suficientes
-    if (configData && (Object.keys(answersData.f1).length > 0 || Object.keys(answersData.f2).length > 0 || Object.keys(answersData.f3).length > 0)) {
-      const analysisResult = analyzeAnswers(configData, answersData);
-      setAnalysis(analysisResult);
-    } else {
-      setAnalysis(null);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
+  // Carregar dados da entrevista atual quando ela mudar
+  useEffect(() => {
+    if (currentInterview && config) {
+      console.log("🔍 Resumo - Entrevista atual carregada:", currentInterview);
+      
+      // Carregar respostas dos formulários
+      const formAnswers = {
+        f1: currentInterview.f1Answers || {},
+        f2: currentInterview.f2Answers || {},
+        f3: currentInterview.f3Answers || {},
+      };
+      setCurrentAnswers(formAnswers);
+      
+      // Carregar metadados
+      setCurrentMeta({
+        is_interviewer: currentInterview.isInterviewer || false,
+        interviewer_name: currentInterview.interviewerName || "",
+        respondent_name: currentInterview.respondentName || "",
+        respondent_department: currentInterview.respondentDepartment || ""
+      });
+      
+      // Gerar análise se há dados suficientes
+      if (Object.keys(formAnswers.f1).length > 0 || Object.keys(formAnswers.f2).length > 0 || Object.keys(formAnswers.f3).length > 0) {
+        console.log("🔍 Resumo - Gerando análise com dados:", formAnswers);
+        const analysisResult = analyzeAnswers(config, formAnswers);
+        setAnalysis(analysisResult);
+      } else {
+        console.log("🔍 Resumo - Sem dados suficientes para análise");
+        setAnalysis(null);
+      }
+    }
+  }, [currentInterview, config]);
+
   const handleImportSuccess = () => {
-    loadData(); // Recarregar dados após importação
+    // Recarregar dados após importação
+    // A lógica de recarregar dados da entrevista atual já está no useEffect
     toast({
       title: "Dados atualizados",
       description: "As respostas importadas estão agora disponíveis para visualização e análise.",
@@ -58,7 +80,7 @@ export default function Resumo() {
 
     if (formId === "consolidado") {
       // Novo relatório consolidado com análise
-      const consolidatedReport = generateConsolidatedReport(config, answers, meta);
+      const consolidatedReport = generateConsolidatedReport(config, currentAnswers, currentMeta);
       const csvContent = exportConsolidatedReportToCsv(consolidatedReport);
       
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -81,7 +103,7 @@ export default function Resumo() {
       });
     } else {
       // Download individual dos formulários (formato original)
-      const csvData = generateCsvData(config, formId, answers, meta);
+      const csvData = generateCsvData(config, formId, currentAnswers, currentMeta);
       const filename = generateFileName(formId);
       downloadCsv(csvData, filename);
       
@@ -135,7 +157,7 @@ export default function Resumo() {
     const form = config.forms.find(f => f.id === formId);
     if (!form) return { total: 0, answered: 0 };
     
-    const formAnswers = answers[formId];
+    const formAnswers = currentAnswers[formId];
     const answered = form.questions.filter(q => formAnswers[q.id]).length;
     
     return { total: form.questions.length, answered };
@@ -173,7 +195,7 @@ export default function Resumo() {
         </div>
 
         {/* Meta Information */}
-        {meta.is_interviewer && (
+        {currentMeta.is_interviewer && (
           <Card className="ppm-card mb-6 bg-[hsl(var(--ppm-gray))]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -184,13 +206,13 @@ export default function Resumo() {
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <strong>Entrevistador:</strong> {meta.interviewer_name}
+                  <strong>Entrevistador:</strong> {currentMeta.interviewer_name}
                 </div>
                 <div>
-                  <strong>Respondente:</strong> {meta.respondent_name}
+                  <strong>Respondente:</strong> {currentMeta.respondent_name}
                 </div>
                 <div>
-                  <strong>Departamento:</strong> {meta.respondent_department}
+                  <strong>Departamento:</strong> {currentMeta.respondent_department}
                 </div>
               </div>
             </CardContent>
@@ -236,7 +258,7 @@ export default function Resumo() {
           <TabsContent value="summary" className="mt-6">
             <div className="space-y-6">
               {config.forms.map((form) => {
-                const formAnswers = answers[form.id];
+                const formAnswers = currentAnswers[form.id];
                 const stats = getFormStats(form.id);
                 
                 return (
