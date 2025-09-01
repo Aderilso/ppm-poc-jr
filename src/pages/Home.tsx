@@ -292,9 +292,9 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/resumo")}
               >
-                Ver Dashboard
+                Exportar Dados
               </Button>
             </CardContent>
           </Card>

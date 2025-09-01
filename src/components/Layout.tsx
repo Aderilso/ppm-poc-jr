@@ -74,6 +74,14 @@ export function Layout({ children }: LayoutProps) {
                   </Button>
                 </Link>
               )}
+              {location.pathname !== "/resumo" && (
+                <Link to="/resumo">
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Resumo
+                  </Button>
+                </Link>
+              )}
               {location.pathname !== "/config" && (
                 <Link to="/config">
                   <Button variant="secondary" size="sm" className="flex items-center gap-2">
