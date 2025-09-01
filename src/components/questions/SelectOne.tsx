@@ -13,9 +13,10 @@ interface SelectOneProps {
   onChange: (value: string) => void;
   options: string[];
   placeholder?: string;
+  hasError?: boolean;
 }
 
-export function SelectOne({ value, onChange, options, placeholder = "Selecione uma opção..." }: SelectOneProps) {
+export function SelectOne({ value, onChange, options, placeholder = "Selecione uma opção...", hasError = false }: SelectOneProps) {
   const [customValue, setCustomValue] = useState("");
   
   // Verificar se o valor atual é uma opção "Outro" customizada
@@ -50,9 +51,9 @@ export function SelectOne({ value, onChange, options, placeholder = "Selecione u
   const showCustomInput = hasOutroOption && value && (value.toLowerCase().includes("outro") || isCustomValue);
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className={`mt-2 ${hasError ? 'border border-red-300 rounded-lg p-3 bg-red-50/30' : ''}`}>
       <Select value={displayValue} onValueChange={handleSelectChange}>
-        <SelectTrigger className="w-full">
+        <SelectTrigger className={`w-full ${hasError ? 'border-red-500 text-red-700' : ''}`}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

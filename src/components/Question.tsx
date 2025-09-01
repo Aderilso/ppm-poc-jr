@@ -15,9 +15,10 @@ interface QuestionProps {
   value: string | string[];
   onChange: (value: string | string[]) => void;
   lookups: Lookups;
+  hasError?: boolean; // Nova prop para indicar erro de validação
 }
 
-export function Question({ question, value, onChange, lookups }: QuestionProps) {
+export function Question({ question, value, onChange, lookups, hasError = false }: QuestionProps) {
   
   const parseDropdownOptions = (tipo: string): string[] => {
     // Extrair opções de tipos lista_suspensa_()
@@ -93,6 +94,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           <Likert15
             value={stringValue}
             onChange={(val) => onChange(val)}
+            hasError={hasError}
           />
         );
       case "escala_0_10":
@@ -100,6 +102,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           <Likert010
             value={stringValue}
             onChange={(val) => onChange(val)}
+            hasError={hasError}
           />
         );
       case "multipla":
@@ -108,6 +111,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
             value={arrayValue}
             onChange={(val) => onChange(val)}
             options={getOptions(question.tipo)}
+            hasError={hasError}
           />
         );
       case "selecionar_1":
@@ -118,6 +122,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
             value={stringValue}
             onChange={(val) => onChange(val)}
             options={getOptions(question.tipo)}
+            hasError={hasError}
           />
         );
       case "texto":
@@ -125,6 +130,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           <TextAreaAuto
             value={stringValue}
             onChange={(val) => onChange(val)}
+            hasError={hasError}
           />
         );
       // Novos tipos de pergunta
@@ -134,6 +140,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
           <SimNao
             value={stringValue}
             onChange={(val) => onChange(val)}
+            hasError={hasError}
           />
         );
       case "sim/não/parcialmente_+_campo_para_especificar_quais":
@@ -143,6 +150,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
             onChange={(val) => onChange(val)}
             showPartial={true}
             showTextField={true}
+            hasError={hasError}
           />
         );
       case "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)":
@@ -152,6 +160,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
             onChange={(val) => onChange(val)}
             options={getOptions(question.tipo)}
             maxSelections={3}
+            hasError={hasError}
           />
         );
       default:
@@ -162,6 +171,7 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
               value={stringValue}
               onChange={(val) => onChange(val)}
               options={getOptions(question.tipo)}
+              hasError={hasError}
             />
           );
         }
@@ -170,21 +180,37 @@ export function Question({ question, value, onChange, lookups }: QuestionProps) 
   };
 
   return (
-    <div className="space-y-2 p-4 border border-border rounded-lg bg-card">
+    <div className={`space-y-2 p-4 border rounded-lg bg-card transition-colors duration-200 ${
+      hasError 
+        ? 'border-red-500 bg-red-50/50' 
+        : 'border-border'
+    }`}>
       <div className="flex items-start">
-        <Label className="text-base font-medium leading-relaxed flex-1">
+        <Label className={`text-base font-medium leading-relaxed flex-1 ${
+          hasError ? 'text-red-700' : ''
+        }`}>
           {question.pergunta}
+          {hasError && <span className="text-red-500 ml-1">*</span>}
         </Label>
         <HelpTooltip content={question.legenda} />
       </div>
       
       {question.categoria && (
-        <div className="text-xs text-muted-foreground uppercase font-medium tracking-wide">
+        <div className={`text-xs uppercase font-medium tracking-wide ${
+          hasError ? 'text-red-600' : 'text-muted-foreground'
+        }`}>
           {question.categoria}
         </div>
       )}
       
       {renderInput()}
+      
+      {hasError && (
+        <div className="text-sm text-red-600 mt-2 flex items-center gap-1">
+          <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+          Esta pergunta é obrigatória
+        </div>
+      )}
     </div>
   );
 }

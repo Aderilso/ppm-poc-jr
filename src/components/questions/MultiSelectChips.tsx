@@ -9,9 +9,10 @@ interface MultiSelectChipsProps {
   value: string[];
   onChange: (value: string[]) => void;
   options: string[];
+  hasError?: boolean;
 }
 
-export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsProps) {
+export function MultiSelectChips({ value, onChange, options, hasError = false }: MultiSelectChipsProps) {
   const [customValue, setCustomValue] = useState("");
 
   const handleToggle = (option: string, checked: boolean) => {
@@ -36,7 +37,7 @@ export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsP
   };
 
   return (
-    <div className="space-y-4 mt-2">
+    <div className={`space-y-4 mt-2 ${hasError ? 'border border-red-300 rounded-lg p-3 bg-red-50/30' : ''}`}>
       {/* Selected chips */}
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -51,6 +52,7 @@ export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsP
                 type="button"
                 onClick={() => handleRemove(item)}
                 className="ml-1 hover:text-destructive"
+                title="Remover item"
               >
                 <X className="w-3 h-3" />
               </button>
@@ -71,10 +73,11 @@ export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsP
                 id={`multi-${option}`}
                 checked={isSelected}
                 onCheckedChange={(checked) => handleToggle(option, !!checked)}
+                className={hasError ? 'border-red-500' : ''}
               />
               <Label
                 htmlFor={`multi-${option}`}
-                className="text-sm cursor-pointer flex-1"
+                className={`text-sm cursor-pointer flex-1 ${hasError ? 'text-red-700' : ''}`}
               >
                 {option}
               </Label>
@@ -85,7 +88,7 @@ export function MultiSelectChips({ value, onChange, options }: MultiSelectChipsP
                     value={customValue}
                     onChange={(e) => setCustomValue(e.target.value)}
                     placeholder="Especifique..."
-                    className="w-32 h-8 text-xs"
+                    className={`w-32 h-8 text-xs ${hasError ? 'border-red-500' : ''}`}
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();

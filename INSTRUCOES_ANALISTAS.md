@@ -1,54 +1,39 @@
 # 📋 Instruções para Analistas - Sistema PPM
 
-## 🎯 Visão Geral
-
-Este documento contém instruções específicas para analistas que vão usar o sistema de pesquisa PPM. O sistema permite trabalho colaborativo entre múltiplos analistas com sincronização de dados.
-
 ## 🚀 Primeira Configuração
 
 ### 📁 Arquivos Incluídos no Projeto
 - ✅ **`ppm_forms_consolidado_v2_normalizado.json`** - Configuração padrão com todas as perguntas
-- ✅ **`setup-database.sh`** - Script de configuração automática do banco (macOS/Linux)
-- ✅ **`setup-database.bat`** - Script de configuração automática do banco (Windows)
+- ✅ **`setup-completo.sh`** - Script de configuração automática completa (macOS/Linux)
+- ✅ **`setup-completo.bat`** - Script de configuração automática completa (Windows)
+- ✅ **`setup-database.sh`** - Script de configuração do banco (macOS/Linux)
+- ✅ **`setup-database.bat`** - Script de configuração do banco (Windows)
+- ✅ **`diagnostico.sh`** - Diagnóstico automático (macOS/Linux)
+- ✅ **`diagnostico.bat`** - Diagnóstico automático (Windows)
+- ✅ **`diagnostico-dashboard.sh`** - Diagnóstico específico do Dashboard (macOS/Linux)
+- ✅ **`diagnostico-dashboard.bat`** - Diagnóstico específico do Dashboard (Windows)
+- ✅ **`reiniciar-sistema.sh`** - Reinicialização automática (macOS/Linux)
+- ✅ **`reiniciar-sistema.bat`** - Reinicialização automática (Windows)
 - ✅ **`README.md`** - Documentação completa do sistema
 - ✅ **`CHANGELOG.md`** - Histórico de mudanças
+- ✅ **`TROUBLESHOOTING.md`** - Guia de solução de problemas
 
-### 1. Instalação do Sistema
+## 🎯 Visão Geral
 
-```bash
-# Clone o repositório
-git clone <URL_DO_REPOSITORIO>
-cd ppm-poc-jr
-
-# Instale as dependências
-npm install
-
-# Configure o banco de dados (IMPORTANTE!)
-# macOS/Linux:
-./setup-database.sh
-# Windows:
-setup-database.bat
-
-# Inicie o servidor backend
-cd server && npm run dev
-
-# Em outro terminal, inicie o frontend
-npm run dev
-```
-
-### 2. URLs Importantes
-- **Sistema**: http://localhost:8080 (ou 8081)
-- **API Backend**: http://localhost:3001/api
-- **Prisma Studio**: http://localhost:5555 (gerenciamento do banco)
-
-## 📋 Fluxo de Trabalho
+Este sistema permite que múltiplos analistas trabalhem de forma independente e depois consolidem seus dados.
 
 ### Para Analistas Secundários:
 
 #### 1. Configuração Inicial
-- **O arquivo JSON já está incluído** no projeto: `ppm_forms_consolidado_v2_normalizado.json`
-- **Após o clone**, você terá acesso imediato ao arquivo de configuração
-- **Se houver atualizações**, o analista principal compartilhará um novo arquivo
+- **Clone o repositório** - o arquivo JSON já estará disponível
+- **Execute o script de configuração completa**:
+  - **Windows**: `setup-completo.bat`
+  - **macOS/Linux**: `./setup-completo.sh`
+- **O script fará TUDO automaticamente**:
+  - Instalar dependências
+  - Configurar banco de dados
+  - Iniciar backend e frontend
+  - Verificar funcionamento
 
 #### 2. Carregar Configuração
 1. Acesse: http://localhost:8080/config
@@ -58,27 +43,25 @@ npm run dev
 5. **OU** se receber atualizações: Escolha "Anexar JSON" e selecione o arquivo atualizado
 
 #### 3. Realizar Entrevistas
-1. Vá para a página inicial: http://localhost:8080
-2. Clique em "Iniciar Pesquisa"
-3. Preencha os formulários F1, F2 e F3
-4. Os dados são salvos automaticamente
+1. Acesse: http://localhost:8080/
+2. Clique em "Iniciar Preenchimento"
+3. Preencha os dados do entrevistado
+4. Responda as perguntas do formulário
+5. Salve a entrevista
 
-#### 4. Exportar Dados Consolidados
+#### 4. Exportar Dados
 1. Acesse: http://localhost:8080/resumo
-2. Na seção "Consolidados por Formulário"
-3. Clique em "Consolidado F1", "Consolidado F2", "Consolidado F3"
-4. Salve os arquivos CSV gerados
-
-#### 5. Enviar para Coordenação
-- **Envie os 3 arquivos CSV** para o coordenador:
-  - `consolidado-f1-YYYY-MM-DD-HHMM.csv`
-  - `consolidado-f2-YYYY-MM-DD-HHMM.csv`
-  - `consolidado-f3-YYYY-MM-DD-HHMM.csv`
+2. Na seção "Downloads Individuais"
+3. Clique em "Relatório Consolidado" para cada formulário
+4. Salve os arquivos CSV
 
 ### Para Coordenação Final:
 
 #### 1. Configuração Inicial
 - **Clone o repositório** - o arquivo JSON já estará disponível
+- **Execute o script de configuração completa**:
+  - **Windows**: `setup-completo.bat`
+  - **macOS/Linux**: `./setup-completo.sh`
 - **Carregue a configuração** usando "Usar JSON Padrão"
 - **Se houver atualizações**, receba o arquivo atualizado do analista principal
 
@@ -90,7 +73,7 @@ npm run dev
 1. Acesse: http://localhost:8080/resumo
 2. Na seção "Importar CSV"
 3. Selecione "Importação Consolidada"
-4. Escolha o formulário correspondente (F1, F2 ou F3)
+4. Escolha o formulário (F1, F2 ou F3)
 5. Faça upload do arquivo consolidado
 6. Repita para cada formulário e analista
 
@@ -99,88 +82,86 @@ npm run dev
 2. Clique em "Relatório Consolidado"
 3. Baixe o relatório final com todos os dados
 
-## 🔧 Funcionalidades Importantes
+## 🛠️ Comandos Úteis
 
-### 📊 Gerenciamento de Entrevistas
-- **Acesse**: http://localhost:8080/entrevistas
-- **Visualize**: Todas as entrevistas realizadas
-- **Filtre**: Por status (completa/incompleta)
-- **Detalhes**: Clique em uma entrevista para ver respostas
+### 🔧 Diagnóstico e Configuração
+- **Windows**: `diagnostico.bat` - Verificar status do sistema
+- **macOS/Linux**: `./diagnostico.sh` - Verificar status do sistema
+- **Windows**: `diagnostico-dashboard.bat` - Diagnóstico específico do Dashboard
+- **macOS/Linux**: `./diagnostico-dashboard.sh` - Diagnóstico específico do Dashboard
+- **Windows**: `setup-completo.bat` - Configuração completa automática
+- **macOS/Linux**: `./setup-completo.sh` - Configuração completa automática
 
-### ⚙️ Configurações
-- **Acesse**: http://localhost:8080/config
-- **Visualize**: Configuração atual
-- **Limpe**: Use "Limpar Configuração" se necessário
-- **Baixe**: Use "Baixar JSON Atualizado" para compartilhar
-- **🗑️ Apagar Banco**: Use "Apagar Banco de Dados" (requer senha: !@#ad!@#)
+### 🔄 Reinicialização
+- **Windows**: `reiniciar-sistema.bat` - Reiniciar tudo automaticamente
+- **macOS/Linux**: `./reiniciar-sistema.sh` - Reiniciar tudo automaticamente
 
-### 📈 Dashboard
-- **Acesse**: http://localhost:8080/dashboard
-- **Visualize**: Métricas em tempo real
-- **Monitore**: Progresso das entrevistas
-
-### 🗑️ Operações Críticas
-- **Apagar Banco de Dados**: Remove TODAS as entrevistas e análises
-- **Senha**: !@#ad!@# (apenas para testes)
-- **Confirmação**: Modal de autenticação obrigatório
-- **Log**: Todas as operações são registradas no console
-- **⚠️ ATENÇÃO**: Operação irreversível!
+### 📊 Monitoramento
+- **Configuração**: http://localhost:8080/config
+- **Dashboard**: http://localhost:8080/dashboard
+- **Entrevistas**: http://localhost:8080/entrevistas
+- **Resumo**: http://localhost:8080/resumo
 
 ## 🚨 Problemas Comuns
 
-### Erro: "Formulário não encontrado"
-**Solução**: Carregue a configuração primeiro em `/config`
+### Erro "Failed to fetch"
+**Solução**: 
+- **Windows**: Execute `diagnostico.bat` para diagnóstico rápido
+- **macOS/Linux**: Execute `./diagnostico.sh` para diagnóstico rápido
+- **Ambos**: Consulte `TROUBLESHOOTING.md` para soluções detalhadas
 
-### Erro: "Nenhuma configuração carregada"
-**Solução**: Use "Carregar Configuração" e selecione o JSON recebido
+### Dashboard não mostra dados
+**Solução**:
+- **Windows**: Execute `diagnostico-dashboard.bat` para diagnóstico específico
+- **macOS/Linux**: Execute `./diagnostico-dashboard.sh` para diagnóstico específico
+- **Verifique**: Se há entrevistas criadas no sistema
+- **Teste**: Acesse http://localhost:8080/entrevistas para ver se há dados
 
-### Sistema não carrega
-**Solução**: Verifique se o backend está rodando em `http://localhost:3001`
-
-### Banco de dados não funciona
-**Solução**: Execute `./setup-database.sh` (macOS/Linux) ou `setup-database.bat` (Windows) novamente
+### Sistema não inicia
+**Solução**:
+- **Windows**: Execute `setup-completo.bat` para configuração completa
+- **macOS/Linux**: Execute `./setup-completo.sh` para configuração completa
 
 ### Flash de erro ao carregar
 **Solução**: Normal, aguarde o carregamento completo
-
-### Erro "Failed to fetch"
-**Solução**: 
-- **macOS/Linux**: Execute `./diagnostico.sh` para diagnóstico rápido
-- **Windows**: Execute `diagnostico.bat` para diagnóstico rápido
 
 ## 📞 Suporte
 
 ### Logs de Erro
 - **Frontend**: Console do navegador (F12)
 - **Backend**: Terminal onde está rodando o servidor
+- **Logs**: `backend.log` e `frontend.log` (macOS/Linux)
 
 ### Diagnóstico Rápido
-- **macOS/Linux**: Execute `./diagnostico.sh` para verificar status completo
 - **Windows**: Execute `diagnostico.bat` para verificar status completo
+- **macOS/Linux**: Execute `./diagnostico.sh` para verificar status completo
+- **Dashboard específico**: Execute `diagnostico-dashboard.bat` (Windows) ou `./diagnostico-dashboard.sh` (macOS/Linux)
 - **Consulte**: `TROUBLESHOOTING.md` para soluções detalhadas
 
 ### Contatos
 - **Desenvolvedor**: Aderilso Junior
-- **Repositório**: [URL_DO_REPOSITORIO]
+- **Documentação**: README.md e INSTRUCOES_ANALISTAS.md
 
-## 📝 Checklist do Analista
+## ✅ Checklist
 
 ### ✅ Configuração Inicial
 - [ ] Sistema instalado e funcionando
 - [ ] Banco de dados configurado
 - [ ] Configuração JSON carregada (usando "Usar JSON Padrão")
 - [ ] Teste de navegação realizado
+- [ ] Dashboard funcionando com dados
 
 ### ✅ Durante o Trabalho
-- [ ] Entrevistas sendo salvas automaticamente
-- [ ] Progresso visível no dashboard
-- [ ] Dados aparecendo em `/entrevistas`
+- [ ] Entrevistas sendo salvas corretamente
+- [ ] Dados sendo exportados em CSV
+- [ ] Backup dos dados realizado
+- [ ] Comunicação com coordenação mantida
 
 ### ✅ Finalização
-- [ ] Todos os formulários preenchidos
-- [ ] Consolidados exportados (F1, F2, F3)
-- [ ] Arquivos enviados para coordenação
-- [ ] Backup local realizado (opcional)
+- [ ] Todas as entrevistas exportadas
+- [ ] Arquivos CSV enviados para coordenação
+- [ ] Sistema desligado adequadamente
+- [ ] Logs de erro verificados
 
 ## 🔄 Sincronização
 
@@ -191,13 +172,53 @@ npm run dev
 - **Use apenas** as perguntas fornecidas
 - **Mantenha** a estrutura original
 
-### Se precisar de mudanças:
-1. **Contate** o analista principal
-2. **Aguarde** nova configuração
-3. **Recarregue** o sistema com nova configuração
+### 🗑️ Operações Críticas
+- **Apagar Banco de Dados**: Remove TODAS as entrevistas e análises
+- **Senha**: !@#ad!@# (apenas para testes)
+- **Confirmação**: Modal de autenticação obrigatório
+- **Log**: Todas as operações são registradas no console
+- **⚠️ ATENÇÃO**: Operação irreversível!
 
----
+## 🚀 Configuração Rápida
 
-**Última atualização**: Janeiro 2025
-**Versão do Sistema**: 2.0
-**Desenvolvido por**: Aderilso Junior
+### Para Windows:
+```cmd
+git clone [URL_DO_REPOSITORIO]
+cd ppm-poc-jr
+setup-completo.bat
+```
+
+### Para macOS/Linux:
+```bash
+git clone [URL_DO_REPOSITORIO]
+cd ppm-poc-jr
+chmod +x setup-completo.sh
+./setup-completo.sh
+```
+
+**Resultado**: Sistema completamente configurado e funcionando em http://localhost:8080
+
+## 🔍 Diagnóstico do Dashboard
+
+### Se o Dashboard não mostrar dados:
+
+1. **Execute o diagnóstico específico**:
+   - **Windows**: `diagnostico-dashboard.bat`
+   - **macOS/Linux**: `./diagnostico-dashboard.sh`
+
+2. **Verifique se há entrevistas**:
+   - Acesse: http://localhost:8080/entrevistas
+   - Se não houver entrevistas, crie algumas primeiro
+
+3. **Teste a API diretamente**:
+   - Abra: http://localhost:3001/api/interviews
+   - Deve retornar um JSON com as entrevistas
+
+4. **Limpe o cache do navegador**:
+   - Pressione Ctrl+F5 no Dashboard
+   - Ou abra em uma aba anônima
+
+5. **Verifique o console do navegador**:
+   - Pressione F12
+   - Vá na aba "Console"
+   - Procure por erros em vermelho

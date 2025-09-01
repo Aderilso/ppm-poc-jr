@@ -6,13 +6,15 @@ interface TextAreaAutoProps {
   onChange: (value: string) => void;
   placeholder?: string;
   maxLength?: number;
+  hasError?: boolean;
 }
 
 export function TextAreaAuto({ 
   value, 
   onChange, 
   placeholder = "Digite sua resposta...", 
-  maxLength = 500 
+  maxLength = 500,
+  hasError = false
 }: TextAreaAutoProps) {
   const [charCount, setCharCount] = useState(value.length);
 
@@ -32,12 +34,12 @@ export function TextAreaAuto({
   const isAtLimit = charCount >= maxLength;
 
   return (
-    <div className="mt-2 space-y-2">
+    <div className={`mt-2 ${hasError ? 'border border-red-300 rounded-lg p-3 bg-red-50/30' : ''}`}>
       <Textarea
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
-        className="min-h-[100px] resize-none"
+        className={`resize-none ${hasError ? 'border-red-500' : ''}`}
         rows={4}
       />
       <div className="flex justify-between items-center text-xs">

@@ -113,6 +113,25 @@ export function FormPage({ formId }: FormPageProps) {
     return progress.current === progress.total;
   };
 
+  // Função para verificar se uma pergunta específica tem erro
+  const hasQuestionError = (questionId: string) => {
+    if (!form) return false;
+    const question = form.questions.find(q => q.id === questionId);
+    if (!question || question.active === false) return false;
+    
+    const answer = answers[questionId];
+    return !answer || (Array.isArray(answer) && answer.length === 0) || answer === "";
+  };
+
+  // Função para obter todas as perguntas com erro
+  const getQuestionsWithErrors = () => {
+    if (!form) return [];
+    return form.questions
+      .filter(q => q.active !== false)
+      .filter(q => hasQuestionError(q.id))
+      .map(q => q.id);
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -193,6 +212,7 @@ export function FormPage({ formId }: FormPageProps) {
                   value={answers[question.id] || ""}
                   onChange={(value) => handleAnswerChange(question.id, value)}
                   lookups={lookups}
+                  hasError={hasQuestionError(question.id)}
                 />
               ))}
             </div>

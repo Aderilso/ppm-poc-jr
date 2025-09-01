@@ -300,7 +300,7 @@ export default function Dashboard() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <RefreshCw className="h-12 w-12 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">Carregando dashboard...</p>
+          <p className="text-muted-foreground">Carregando dashboard...</p>
           </div>
         </div>
       </Layout>
@@ -351,19 +351,19 @@ export default function Dashboard() {
             {operationalMetrics && (
               <>
                 {/* KPIs Principais */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <Card className="ppm-card bg-blue-50 border-l-4 border-l-blue-500">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
                           <div className="text-blue-600 mb-2">
                             <Users className="w-6 h-6" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
                               Total de Respondentes
-                            </p>
-                            <p className="text-xs text-muted-foreground">
+                      </p>
+                        <p className="text-xs text-muted-foreground">
                               Convidados / Iniciados / Concluídos
                             </p>
                           </div>
@@ -394,17 +394,17 @@ export default function Dashboard() {
                             <p className="text-sm font-medium text-muted-foreground">
                               Taxa de Conclusão
                             </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
+                    </div>
+                  </div>
+                  <div className="text-right">
                           <div className="text-2xl font-bold text-green-600">
                             {operationalMetrics.completionRate.toFixed(1)}%
-                          </div>
-                          <div className="mt-2">
-                            <Progress 
+                    </div>
+                      <div className="mt-2">
+                        <Progress 
                               value={operationalMetrics.completionRate} 
-                              className="h-2 w-16" 
-                            />
+                          className="h-2 w-16" 
+                        />
                           </div>
                         </div>
                       </div>
@@ -459,28 +459,28 @@ export default function Dashboard() {
                               className="h-2 w-16" 
                             />
                           </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
+        </div>
 
                 {/* Progresso por Formulário */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <Card className="ppm-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+          <Card className="ppm-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                         <Target className="w-5 h-5 text-blue-600" />
                         Formulário 1 - Avaliação Geral
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
                           <span className="text-sm">Iniciados</span>
                           <Badge variant="outline">{operationalMetrics.formProgress.f1.started}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
+                </div>
+                <div className="flex items-center justify-between">
                           <span className="text-sm">Concluídos</span>
                           <Badge variant="default">{operationalMetrics.formProgress.f1.completed}</Badge>
                         </div>
@@ -507,8 +507,8 @@ export default function Dashboard() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Iniciados</span>
                           <Badge variant="outline">{operationalMetrics.formProgress.f2.started}</Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
+                </div>
+                <div className="flex items-center justify-between">
                           <span className="text-sm">Concluídos</span>
                           <Badge variant="default">{operationalMetrics.formProgress.f2.completed}</Badge>
                         </div>
@@ -518,19 +518,19 @@ export default function Dashboard() {
                             <span>{operationalMetrics.formProgress.f2.rate.toFixed(1)}%</span>
                           </div>
                           <Progress value={operationalMetrics.formProgress.f2.rate} className="h-2" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                  <Card className="ppm-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+          <Card className="ppm-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                         <Zap className="w-5 h-5 text-purple-600" />
                         Formulário 3 - Integração
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Iniciados</span>
@@ -540,7 +540,7 @@ export default function Dashboard() {
                           <span className="text-sm">Concluídos</span>
                           <Badge variant="default">{operationalMetrics.formProgress.f3.completed}</Badge>
                         </div>
-                        <div className="space-y-2">
+              <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span>Taxa de Conclusão</span>
                             <span>{operationalMetrics.formProgress.f3.rate.toFixed(1)}%</span>
@@ -595,7 +595,7 @@ export default function Dashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                  </div>
               </>
             )}
           </TabsContent>
@@ -737,7 +737,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))}
-                    </div>
+                  </div>
                   </CardContent>
                 </Card>
 
@@ -759,22 +759,22 @@ export default function Dashboard() {
                                 {index + 1}
                               </Badge>
                               <span className="text-sm">{system.name}</span>
-                            </div>
+                  </div>
                             <Badge variant="secondary">{system.count}</Badge>
-                          </div>
+                  </div>
                         ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-                  <Card className="ppm-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
+          <Card className="ppm-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                         <Lightbulb className="w-5 h-5 text-yellow-600" />
                         Top 5 Melhorias Sugeridas
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
                       <div className="space-y-3">
                         {analyticalMetrics.topImprovements.map((improvement, index) => (
                           <div key={improvement.text} className="flex items-center justify-between">
@@ -787,10 +787,10 @@ export default function Dashboard() {
                             <Badge variant="secondary">{improvement.count}</Badge>
                           </div>
                         ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
               </>
             )}
           </TabsContent>
