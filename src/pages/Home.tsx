@@ -15,7 +15,7 @@ export default function Home() {
   const [isStartingInterview, setIsStartingInterview] = useState(false);
 
   // Usar o hook de entrevista
-  const { currentInterview, startInterview, isLoading, error, isOnline } = useInterview();
+  const { currentInterview, startInterview, clearDraft, isLoading, error, isOnline } = useInterview();
 
   console.log("🔍 Home - Estado atual:", {
     currentInterview,
@@ -27,20 +27,39 @@ export default function Home() {
   });
 
   useEffect(() => {
-    // Verificar se há uma entrevista em andamento
-    const hasData = !!currentInterview;
-    console.log("🔍 Home - useEffect: hasData =", hasData);
-    setHasDraftData(hasData);
+    // Verificar se há uma entrevista em andamento COM DADOS REAIS
+    if (currentInterview && currentInterview.id) {
+      // Verificar se a entrevista tem dados salvos e não está concluída
+      const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
+      const hasF2Data = currentInterview.f2Answers && Object.keys(currentInterview.f2Answers).length > 0;
+      const hasF3Data = currentInterview.f3Answers && Object.keys(currentInterview.f3Answers).length > 0;
+      const isCompleted = currentInterview.isCompleted;
+      
+      const hasRealData = (hasF1Data || hasF2Data || hasF3Data) && !isCompleted;
+      console.log("🔍 Home - useEffect: hasRealData =", hasRealData, {
+        hasF1Data,
+        hasF2Data,
+        hasF3Data,
+        isCompleted
+      });
+      setHasDraftData(hasRealData);
+    } else {
+      console.log("🔍 Home - useEffect: Sem entrevista ativa");
+      setHasDraftData(false);
+    }
   }, [currentInterview]);
 
   const handleClearDraft = () => {
     console.log("🧹 Home - Limpando rascunho");
-    // Limpar entrevista atual
-    if (currentInterview) {
-      // Aqui você pode implementar a lógica para limpar a entrevista
-      window.location.reload();
-    }
+    
+    // Limpar estado local
     setHasDraftData(false);
+    
+    // Usar o hook para limpar a entrevista atual
+    if (currentInterview) {
+      console.log("🧹 Home - Chamando clearDraft() do hook");
+      clearDraft();
+    }
   };
 
   const handleStartInterview = async () => {

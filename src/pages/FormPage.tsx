@@ -84,18 +84,24 @@ export function FormPage({ formId }: FormPageProps) {
     if (currentInterview && currentInterview.id) {
       console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
       
-      // Verificar se a entrevista tem dados reais ou é uma nova entrevista
+      // Verificar se a entrevista tem dados reais E não está concluída
       const formAnswers = currentInterview[`${formId}Answers`] || {};
       const hasRealData = Object.keys(formAnswers).length > 0;
+      const isCompleted = currentInterview.isCompleted;
       
-      if (hasRealData) {
-        // Carregar dados existentes
+      if (hasRealData && !isCompleted) {
+        // Carregar dados existentes de entrevista em andamento
         setAnswers(formAnswers);
         setHasDraftData(true);
-        console.log("✅ FormPage - Dados existentes carregados para entrevista:", currentInterview.id);
+        console.log("✅ FormPage - Dados de entrevista em andamento carregados:", currentInterview.id);
+      } else if (hasRealData && isCompleted) {
+        // Entrevista concluída - limpar campos para nova pesquisa
+        console.log("🧹 FormPage - Entrevista concluída, limpando campos para nova pesquisa");
+        setAnswers({});
+        setHasDraftData(false);
       } else {
-        // Nova entrevista - limpar campos
-        console.log("🧹 FormPage - Nova entrevista, limpando campos");
+        // Nova entrevista ou sem dados - limpar campos
+        console.log("🧹 FormPage - Nova entrevista ou sem dados, limpando campos");
         setAnswers({});
         setHasDraftData(false);
       }

@@ -274,34 +274,16 @@ export function useInterview() {
       console.log("🔍 useInterview - Status dos formulários:", { hasF1, hasF2, hasF3 });
       console.log("🔍 useInterview - Entrevista já concluída:", currentInterviewData.isCompleted);
       
-      // Se todos os formulários estão preenchidos E não está concluída, marcar como concluída
-      if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
-        console.log("✅ useInterview - Todos os formulários preenchidos, marcando como concluída...");
-        
-        try {
-          await interviewsApi.complete(currentInterviewId);
-          console.log("✅ useInterview - Entrevista marcada como concluída com sucesso!");
-          
-          // Invalidar cache para refletir mudanças
-          queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-          queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
-          
-          // Mostrar toast de sucesso
-          toast({
-            title: "Entrevista Concluída!",
-            description: "Todos os formulários foram preenchidos. Análise sendo gerada...",
-          });
-          
-        } catch (completeError) {
-          console.error('❌ useInterview - Erro ao marcar como concluída:', completeError);
+              // NÃO marcar como concluída automaticamente - só quando botão Finalizar for clicado
+        if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
+          console.log("✅ useInterview - Todos os formulários preenchidos, mas aguardando botão Finalizar");
+        } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
+          console.log("✅ useInterview - Entrevista já está concluída");
+        } else {
+          console.log("🔍 useInterview - Formulários ainda não estão todos preenchidos");
         }
-      } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
-        console.log("✅ useInterview - Entrevista já está concluída");
-      } else {
-        console.log("⏳ useInterview - Entrevista ainda em andamento");
-      }
     } catch (error) {
-      console.error('❌ useInterview - Erro ao verificar conclusão:', error);
+              console.error('❌ useInterview - Erro ao verificar status da entrevista:', error);
     }
   };
 
@@ -348,6 +330,11 @@ export function useInterview() {
     
     // Forçar invalidação para garantir atualização
     queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+    
+    // Aguardar um pouco e forçar nova invalidação para garantir limpeza
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: interviewKeys.all });
+    }, 100);
     
     console.log("✅ useInterview - Estado limpo completamente");
   };
