@@ -10,7 +10,6 @@ import Dashboard from "./pages/Dashboard";
 import F1 from "./pages/F1";
 import F2 from "./pages/F2";
 import F3 from "./pages/F3";
-import Resumo from "./pages/Resumo";
 import Entrevistas from "./pages/Entrevistas";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -62,7 +61,6 @@ const App = () => {
     { path: "/f3", component: "F3" },
     { path: "/config", component: "Config" },
     { path: "/dashboard", component: "Dashboard" },
-    { path: "/resumo", component: "Resumo" },
     { path: "/entrevistas", component: "Entrevistas" }
   ]);
   
@@ -80,7 +78,6 @@ const App = () => {
               <Route path="/f1" element={<F1 />} />
               <Route path="/f2" element={<F2 />} />
               <Route path="/f3" element={<F3 />} />
-              <Route path="/resumo" element={<Resumo />} />
               <Route path="/entrevistas" element={<Entrevistas />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

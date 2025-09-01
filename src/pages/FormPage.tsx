@@ -171,7 +171,7 @@ export function FormPage({ formId }: FormPageProps) {
     switch (formId) {
       case "f1": return "/f2";
       case "f2": return "/f3";
-      case "f3": return "/resumo";
+      case "f3": return "/dashboard"; // Redirecionar para Dashboard em vez de Resumo
       default: return "/";
     }
   };
