@@ -185,6 +185,9 @@ export function useInterview() {
         const result = await saveAnswersMutation.mutateAsync({ formId, answers });
         console.log("✅ useInterview - Respostas salvas com sucesso:", result);
         
+        // Verificar se todos os formulários estão preenchidos para marcar como concluída
+        await checkAndCompleteInterview();
+        
         // Invalidar cache para refletir mudanças
         queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
         queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
@@ -197,6 +200,36 @@ export function useInterview() {
     } catch (error) {
       console.error('❌ useInterview - Erro ao salvar respostas:', error);
       throw error;
+    }
+  };
+
+  // Função para verificar e completar entrevista automaticamente
+  const checkAndCompleteInterview = async () => {
+    if (!currentInterviewId || !isOnline) return;
+    
+    try {
+      console.log("🔍 useInterview - Verificando se entrevista pode ser marcada como concluída...");
+      const currentInterviewData = await interviewsApi.getById(currentInterviewId);
+      
+      // Verificar se todos os formulários têm respostas
+      const hasF1 = currentInterviewData.f1Answers && Object.keys(currentInterviewData.f1Answers).length > 0;
+      const hasF2 = currentInterviewData.f2Answers && Object.keys(currentInterviewData.f2Answers).length > 0;
+      const hasF3 = currentInterviewData.f3Answers && Object.keys(currentInterviewData.f3Answers).length > 0;
+      
+      console.log("🔍 useInterview - Status dos formulários:", { hasF1, hasF2, hasF3 });
+      
+      // Se todos os formulários estão preenchidos, marcar como concluída
+      if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
+        console.log("✅ useInterview - Todos os formulários preenchidos, marcando como concluída...");
+        await interviewsApi.complete(currentInterviewId);
+        console.log("✅ useInterview - Entrevista marcada como concluída!");
+        
+        // Invalidar cache para refletir mudanças
+        queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+      }
+    } catch (error) {
+      console.error('❌ useInterview - Erro ao verificar/completar entrevista:', error);
     }
   };
 
