@@ -13,6 +13,7 @@ import F3 from "./pages/F3";
 import Resumo from "./pages/Resumo";
 import Entrevistas from "./pages/Entrevistas";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,22 @@ const queryClient = new QueryClient({
 
 const App = () => {
   console.log("🚀 App.tsx está sendo renderizado!");
+  
+  // Teste de conexão com a API
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        console.log("🔍 Testando conexão com API...");
+        const response = await fetch('http://localhost:3001/api/health');
+        const data = await response.json();
+        console.log("✅ API conectada:", data);
+      } catch (error) {
+        console.error("❌ Erro na conexão com API:", error);
+      }
+    };
+    
+    testConnection();
+  }, []);
   
   return (
     <ErrorBoundary>

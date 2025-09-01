@@ -28,8 +28,9 @@ export function useInterview() {
   const [isOnline, setIsOnline] = useState(true);
   const queryClient = useQueryClient();
 
-  // Verificar se a API está online
+  // Verificar se a API está online - simplificado temporariamente
   useEffect(() => {
+    console.log("🔍 useInterview: Verificando conexão...");
     const checkOnline = async () => {
       try {
         const response = await fetch('http://localhost:3001/api/health', {
@@ -37,38 +38,40 @@ export function useInterview() {
           signal: AbortSignal.timeout(5000) // Timeout de 5 segundos
         });
         if (response.ok) {
+          console.log("✅ useInterview: API online");
           setIsOnline(true);
         } else {
+          console.log("❌ useInterview: API offline");
           setIsOnline(false);
         }
       } catch (error) {
-        // Silenciosamente definir como offline em caso de erro
+        console.error("❌ useInterview: Erro ao verificar API:", error);
         setIsOnline(false);
       }
     };
     
-    // Verificar apenas uma vez na inicialização
     checkOnline();
-    
-    // Verificar periodicamente apenas se estiver online
-    const interval = setInterval(() => {
-      if (isOnline) {
-        checkOnline();
-      }
-    }, 60000); // Verificar a cada 1 minuto
-    
-    return () => clearInterval(interval);
-  }, [isOnline]);
+  }, []);
 
   // Buscar entrevista atual
-  const { data: currentInterview, isLoading } = useQuery({
+  const { data: currentInterview, isLoading, error: queryError } = useQuery({
     queryKey: interviewKeys.detail(currentInterviewId || ''),
-    queryFn: () => interviewsApi.getById(currentInterviewId!),
+    queryFn: () => {
+      console.log("🔍 useInterview: Buscando entrevista:", currentInterviewId);
+      return interviewsApi.getById(currentInterviewId!);
+    },
     enabled: !!currentInterviewId && isOnline,
-    retry: 1, // Tentar apenas uma vez
-    retryDelay: 1000, // Esperar 1 segundo antes de tentar novamente
-    staleTime: 30000, // Considerar dados frescos por 30 segundos
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 30000,
   });
+
+  // Log de erros para debug
+  useEffect(() => {
+    if (queryError) {
+      console.error("❌ useInterview: Erro na query:", queryError);
+    }
+  }, [queryError]);
 
   // Mutação para criar entrevista
   const createInterviewMutation = useMutation({
