@@ -30,6 +30,13 @@ Este sistema permite que organizações avaliem suas necessidades de ferramentas
 - **Interface intuitiva**: Editor JSON + formulário visual para novas perguntas
 - **Gerenciamento de perguntas**: Ativar/inativar perguntas sem perder dados
 
+### 📥 Sistema de Importação/Exportação
+- **Templates CSV inteligentes**: Geração automática por formulário
+- **Estrutura detalhada**: Perguntas e opções visíveis no template
+- **Importação robusta**: Validação completa e processamento automático
+- **Integração externa**: Compatível com Forms, Google Forms, etc.
+- **Relatórios consolidados**: Análise completa com scores e recomendações
+
 ### 📝 Tipos de Perguntas Suportados
 - **Escalas Likert**: 1-5 e 0-10
 - **Múltipla escolha**: Com chips visuais
@@ -100,6 +107,14 @@ Este sistema permite que organizações avaliem suas necessidades de ferramentas
 - **Categorias dinâmicas**: Criação automática de novas categorias
 - **Integração com análise**: Pesos aplicados automaticamente nos relatórios
 - **Persistência**: Manutenção de pesos personalizados entre sessões
+
+### ✅ Sistema de Importação CSV
+- **Templates por formulário**: Templates separados para F1, F2 e F3
+- **Estrutura detalhada**: Perguntas e opções visíveis no template
+- **Extração inteligente**: Opções extraídas automaticamente por tipo
+- **Validação robusta**: Verificação completa dos dados importados
+- **Processamento automático**: Filtros para linhas de exemplo e comentários
+- **Integração externa**: Compatível com Microsoft Forms, Google Forms, etc.
 
 ## 🏗 Arquitetura
 
@@ -180,7 +195,13 @@ npm run preview
 - Use os tooltips (?) para entender cada pergunta
 - Apenas perguntas ativas são exibidas
 
-### 5. Visualização e Export
+### 5. Importação de Dados Externos
+- Use a aba "Importar CSV" para importar respostas coletadas externamente
+- Baixe templates específicos por formulário (F1, F2, F3)
+- Templates incluem perguntas e opções de resposta para facilitar preenchimento
+- Compatível com Microsoft Forms, Google Forms e outras ferramentas
+
+### 6. Visualização e Export
 - Acesse `/resumo` para revisar todas as respostas
 - Baixe relatórios individuais ou consolidados
 - Dados exportados em formato CSV
@@ -212,6 +233,18 @@ npm run preview
     "TIPOS_DADOS_SINCRONIZAR": ["Tipo 1", "Tipo 2"]
   }
 }
+```
+
+### Estrutura dos Templates CSV
+```csv
+respondent_name,respondent_department,interviewer_name,timestamp,f1_q1,f1_q2...
+"PERGUNTA →","Departamento/Área","Entrevistador","Data/Hora","Como você avalia...","Qual sua experiência..."
+"OPÇÕES →","Ex: TI, Finanças, RH","Nome do entrevistador","AAAA-MM-DD HH:MM","1, 2, 3, 4, 5","< 1 Ano, 1-3 Anos..."
+
+// EXEMPLO DE PREENCHIMENTO:
+"João Silva","TI","Maria Santos","2025-01-09 15:30","4","1-3 Anos"
+
+// SEUS DADOS AQUI (apague as linhas de exemplo acima):
 ```
 
 ### Campos da Pergunta
@@ -254,3 +287,5 @@ Para dúvidas ou problemas:
 ---
 
 **Desenvolvido com ❤️ para facilitar a avaliação de necessidades PPM em organizações**
+
+**Desenvolvido por Aderilso Junior**

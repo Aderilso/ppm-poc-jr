@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Settings, Home, BarChart3 } from "lucide-react";
+import { Settings, Home, BarChart3, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
@@ -58,7 +58,20 @@ export function Layout({ children }: LayoutProps) {
       {/* Footer */}
       <footer className="bg-muted mt-16">
         <div className="container mx-auto px-4 py-6">
-
+          <div className="text-center text-sm text-muted-foreground">
+            <p className="flex items-center justify-center gap-2">
+              Desenvolvido por{" "}
+              <a
+                href="https://www.linkedin.com/in/aderilsojunior/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium"
+              >
+                <Linkedin className="w-4 h-4" />
+                Aderilso Junior
+              </a>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
