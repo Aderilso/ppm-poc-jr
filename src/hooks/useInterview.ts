@@ -170,33 +170,47 @@ export function useInterview() {
     }
   };
 
-  // Função para iniciar nova entrevista (sempre cria nova, não reutiliza)
+  // Função para iniciar nova pesquisa (NÃO cria entrevista, só limpa campos)
   const startInterview = async () => {
     try {
       if (!isOnline) {
         throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
 
-      console.log("🔍 useInterview - Criando nova entrevista para nova pessoa...");
+      console.log("🔍 useInterview - Iniciando nova pesquisa (sem criar entrevista vazia)...");
       
-      // Sempre criar nova entrevista, não reutilizar existente
-      const result = await createInterviewMutation.mutateAsync({
-        isInterviewer: false,
-        interviewerName: "",
-        respondentName: "",
-        respondentDepartment: ""
-      });
+      // Limpar estado atual para preparar nova pesquisa
+      clearCurrentInterview();
       
-      console.log("✅ useInterview - Nova entrevista criada:", result.id);
+      // NÃO criar entrevista aqui - será criada apenas quando necessário
+      console.log("✅ useInterview - Campos limpos para nova pesquisa");
       
-      // Limpar currentInterviewId para forçar nova query
-      setCurrentInterviewId(result.id);
-      
-      return result;
+      return null; // Retorna null pois não há entrevista criada ainda
     } catch (error) {
-      console.error('❌ useInterview - Erro ao criar nova entrevista:', error);
+      console.error('❌ useInterview - Erro ao iniciar nova pesquisa:', error);
       throw error;
     }
+  };
+
+  // Função para criar entrevista quando necessário (chamada internamente)
+  const createInterviewIfNeeded = async () => {
+    if (currentInterviewId) {
+      return currentInterviewId; // Já existe uma entrevista
+    }
+
+    console.log("🔍 useInterview - Criando entrevista (primeira vez que salva dados)...");
+    
+    const result = await createInterviewMutation.mutateAsync({
+      isInterviewer: false,
+      interviewerName: "",
+      respondentName: "",
+      respondentDepartment: ""
+    });
+    
+    console.log("✅ useInterview - Entrevista criada:", result.id);
+    setCurrentInterviewId(result.id);
+    
+    return result.id;
   };
 
   // Função para salvar respostas
@@ -204,9 +218,12 @@ export function useInterview() {
     console.log("🔍 useInterview - saveFormAnswers chamada:", { formId, answers, currentInterviewId, isOnline });
     
     try {
-      if (isOnline && currentInterviewId) {
+      if (isOnline) {
+        // Criar entrevista se não existir (primeira vez que salva dados)
+        const interviewId = await createInterviewIfNeeded();
+        
         // Verificar se a entrevista atual não está finalizada
-        const currentInterviewData = await interviewsApi.getById(currentInterviewId);
+        const currentInterviewData = await interviewsApi.getById(interviewId);
         
         if (currentInterviewData.isCompleted) {
           console.log("❌ useInterview - Entrevista já finalizada, não é possível salvar mais dados");
@@ -228,12 +245,12 @@ export function useInterview() {
         
         // Invalidar cache para refletir mudanças
         queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
         
         return result;
       } else {
-        console.log("❌ useInterview - Não foi possível salvar:", { isOnline, currentInterviewId });
-        throw new Error('Sistema offline ou sem entrevista ativa');
+        console.log("❌ useInterview - Sistema offline, não foi possível salvar");
+        throw new Error('Sistema offline');
       }
     } catch (error) {
       console.error('❌ useInterview - Erro ao salvar respostas:', error);
@@ -281,10 +298,10 @@ export function useInterview() {
       } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
         console.log("✅ useInterview - Entrevista já está concluída");
       } else {
-        console.log("🔍 useInterview - Formulários ainda não estão todos preenchidos");
+        console.log("⏳ useInterview - Entrevista ainda em andamento");
       }
     } catch (error) {
-      console.error('❌ useInterview - Erro ao verificar/completar entrevista:', error);
+      console.error('❌ useInterview - Erro ao verificar conclusão:', error);
     }
   };
 
@@ -312,7 +329,7 @@ export function useInterview() {
   };
 
   // Função para limpar rascunho
-  const clearDraft = () => {
+  const clearCurrentInterview = () => {
     setCurrentInterviewId(null);
   };
 
@@ -342,7 +359,7 @@ export function useInterview() {
     saveFormAnswers,
     updateAnswers,
     updateMeta,
-    clearDraft,
+    clearDraft: clearCurrentInterview,
     completeInterview,
     error: createInterviewMutation.error || saveAnswersMutation.error || queryError,
   };

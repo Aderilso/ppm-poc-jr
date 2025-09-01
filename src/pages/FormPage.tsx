@@ -82,6 +82,8 @@ export function FormPage({ formId }: FormPageProps) {
   // Carregar respostas do banco de dados quando a entrevista atual mudar
   useEffect(() => {
     if (currentInterview) {
+      console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
+      
       // Carregar respostas do formulário atual
       const formAnswers = currentInterview[`${formId}Answers`] || {};
       setAnswers(formAnswers);
@@ -96,6 +98,18 @@ export function FormPage({ formId }: FormPageProps) {
       
       // Verificar se há dados salvos
       setHasDraftData(Object.keys(formAnswers).length > 0);
+      
+      // Limpar validação visual quando nova entrevista é carregada
+      setShowValidation(false);
+      
+      console.log("✅ FormPage - Campos carregados/limpos para entrevista:", currentInterview.id);
+    } else {
+      // Se não há entrevista ativa, limpar todos os campos
+      console.log("🧹 FormPage - Limpando campos (sem entrevista ativa)");
+      setAnswers({});
+      setMeta({ is_interviewer: false });
+      setHasDraftData(false);
+      setShowValidation(false);
     }
   }, [currentInterview, formId]);
 
