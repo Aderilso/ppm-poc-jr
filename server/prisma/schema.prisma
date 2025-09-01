@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Interview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Metadados da entrevista
+  isInterviewer    Boolean  @default(false)
+  interviewerName  String?
+  respondentName   String?
+  respondentDepartment String?
+
+  // Respostas dos formulários (armazenadas como texto JSON)
+  f1Answers String? // Respostas do Formulário 1 (JSON string)
+  f2Answers String? // Respostas do Formulário 2 (JSON string)
+  f3Answers String? // Respostas do Formulário 3 (JSON string)
+
+  // Status da entrevista
+  isCompleted Boolean @default(false)
+  completedAt DateTime?
+
+  // Configuração usada na entrevista
+  configSnapshot String? // Snapshot da configuração (JSON string)
+
+  // Relação com análises
+  analyses Analysis[]
+
+  @@map("interviews")
+}
+
+model Config {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Configuração dos formulários (armazenadas como texto JSON)
+  forms String // Array de formulários (F1, F2, F3) (JSON string)
+  lookups String // Lookups para opções (JSON string)
+  
+  // Metadados da configuração
+  name        String?
+  description String?
+  isActive    Boolean @default(true)
+  
+  @@map("configs")
+}
+
+model Analysis {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  // Referência à entrevista
+  interviewId String
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  
+  // Resultados da análise (armazenados como texto JSON)
+  overallScore     Float
+  categoryScores   String // JSON string
+  satisfactionScore Float
+  functionalityScore Float
+  integrationScore   Float
+  usageScore         Float
+  insights          String // JSON string
+  recommendations   String // JSON string
+  
+  @@map("analyses")
+}

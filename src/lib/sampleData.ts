@@ -1,6 +1,23 @@
 import type { PpmConfig } from "./types";
 
-// JSON de exemplo com perguntas reais fornecidas pelo usuário
+// Função para carregar o JSON padrão do arquivo
+export const loadDefaultConfig = async (): Promise<PpmConfig> => {
+  try {
+    // Tentar carregar o arquivo JSON padrão
+    const response = await fetch('/ppm_forms_consolidado_v2_normalizado.json');
+    if (response.ok) {
+      const config = await response.json();
+      return config;
+    }
+  } catch (error) {
+    console.warn('Erro ao carregar arquivo JSON padrão, usando fallback:', error);
+  }
+  
+  // Fallback: usar o JSON hardcoded se o arquivo não estiver disponível
+  return SAMPLE_JSON;
+};
+
+// JSON de exemplo com perguntas reais fornecidas pelo usuário (fallback)
 export const SAMPLE_JSON: PpmConfig = {
   "forms": [
     {

@@ -1,0 +1,27 @@
+{
+  "name": "ppm-server",
+  "version": "1.0.0",
+  "description": "Backend para sistema de pesquisa PPM",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:init": "node init-db.js",
+    "db:reset": "prisma migrate reset --force && node init-db.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.6",
+    "prisma": "^5.7.1",
+    "@prisma/client": "^5.7.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

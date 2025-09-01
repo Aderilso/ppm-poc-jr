@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Download, FileText, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { downloadFormCsvTemplate, importCsvData } from "@/lib/csvImport";
+import { importConsolidatedCsv, validateConsolidatedCsv } from "@/lib/consolidatedImport";
 import { toast } from "@/hooks/use-toast";
 import type { PpmConfig } from "@/lib/types";
 
@@ -15,6 +16,8 @@ interface CsvImportProps {
 export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; count: number } | null>(null);
+  const [importMode, setImportMode] = useState<'individual' | 'consolidated'>('individual');
+  const [selectedFormId, setSelectedFormId] = useState<'f1' | 'f2' | 'f3'>('f1');
 
   const handleDownloadTemplate = (formId: "f1" | "f2" | "f3") => {
     try {
@@ -49,7 +52,28 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
     setUploadResult(null);
 
     try {
-      const result = await importCsvData(file, config);
+      let result;
+      
+      if (importMode === 'consolidated') {
+        // Importar consolidado
+        const csvContent = await file.text();
+        const validation = validateConsolidatedCsv(csvContent);
+        
+        if (!validation.valid) {
+          throw new Error(`Erros de validação:\n${validation.errors.join('\n')}`);
+        }
+        
+        const importResult = await importConsolidatedCsv(csvContent, config, selectedFormId);
+        result = {
+          success: importResult.success,
+          message: importResult.message,
+          count: importResult.importedInterviews
+        };
+      } else {
+        // Importar individual
+        result = await importCsvData(file, config);
+      }
+
       setUploadResult(result);
 
       if (result.success) {
@@ -138,15 +162,68 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
           </p>
         </div>
 
+        {/* Seleção do modo de importação */}
+        <div className="space-y-3">
+          <h3 className="font-medium">2. Selecionar Tipo de Importação</h3>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="importMode"
+                  value="individual"
+                  checked={importMode === 'individual'}
+                  onChange={(e) => setImportMode(e.target.value as 'individual' | 'consolidated')}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Importação Individual (uma entrevista)</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="importMode"
+                  value="consolidated"
+                  checked={importMode === 'consolidated'}
+                  onChange={(e) => setImportMode(e.target.value as 'individual' | 'consolidated')}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Importação Consolidada (múltiplas entrevistas)</span>
+              </label>
+            </div>
+            
+            {importMode === 'consolidated' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Selecionar Formulário:</label>
+                <select
+                  value={selectedFormId}
+                  onChange={(e) => setSelectedFormId(e.target.value as 'f1' | 'f2' | 'f3')}
+                  className="w-full p-2 border rounded-md"
+                  title="Selecionar formulário para importação consolidada"
+                >
+                  {config.forms.map((form) => (
+                    <option key={form.id} value={form.id}>
+                      {form.title} ({form.id.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Selecione o formulário correspondente ao arquivo consolidado que será importado
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Upload de arquivo */}
         <div className="space-y-3">
-          <h3 className="font-medium">2. Upload do Arquivo Preenchido</h3>
+          <h3 className="font-medium">3. Upload do Arquivo</h3>
           <div className="space-y-4">
             <input
               type="file"
               accept=".csv"
               onChange={handleFileUpload}
               disabled={isUploading}
+              title="Selecionar arquivo CSV para importação"
               className="block w-full text-sm text-muted-foreground
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-lg file:border-0
@@ -195,27 +272,20 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
           <h3 className="font-medium">Instruções de Preenchimento</h3>
           <div className="text-sm text-muted-foreground space-y-2">
             <div>
-              <strong>Campos obrigatórios:</strong>
+              <strong>Importação Individual:</strong>
               <ul className="list-disc list-inside ml-4 mt-1">
-                <li><code>respondent_name</code>: Nome do respondente</li>
+                <li><strong>Campos obrigatórios:</strong> <code>respondent_name</code></li>
+                <li><strong>Campos opcionais:</strong> <code>respondent_department</code>, <code>interviewer_name</code>, <code>timestamp</code></li>
+                <li><strong>Estrutura:</strong> Uma linha por pergunta, uma coluna por respondente</li>
               </ul>
             </div>
             <div>
-              <strong>Campos opcionais:</strong>
+              <strong>Importação Consolidada:</strong>
               <ul className="list-disc list-inside ml-4 mt-1">
-                <li><code>respondent_department</code>: Departamento/área</li>
-                <li><code>interviewer_name</code>: Nome do entrevistador</li>
-                <li><code>timestamp</code>: Data/hora da resposta</li>
-              </ul>
-            </div>
-            <div>
-              <strong>Estrutura do Template:</strong>
-              <ul className="list-disc list-inside ml-4 mt-1">
-                <li><strong>Linha 1:</strong> Cabeçalhos (IDs das colunas)</li>
-                <li><strong>Linha 2:</strong> Texto das perguntas</li>
-                <li><strong>Linha 3:</strong> Opções de resposta disponíveis</li>
-                <li><strong>Linha 5:</strong> Exemplo de preenchimento</li>
-                <li><strong>Linha 8+:</strong> Seus dados aqui</li>
+                <li><strong>Formato:</strong> Arquivo gerado pelo "Consolidado por Formulário"</li>
+                <li><strong>Colunas obrigatórias:</strong> <code>respondent_name</code>, <code>question_id</code>, <code>resposta</code></li>
+                <li><strong>Funcionamento:</strong> Cada linha = uma resposta de uma entrevista</li>
+                <li><strong>Resultado:</strong> Cria entrevistas individuais no banco de dados</li>
               </ul>
             </div>
             <div>
@@ -225,7 +295,7 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
                 <li><strong>Sim/Não:</strong> "Sim", "Não" ou "Parcialmente"</li>
                 <li><strong>Múltipla escolha:</strong> Separar por ";" (ex: "Opção1;Opção2")</li>
                 <li><strong>Texto livre:</strong> Qualquer texto</li>
-                <li><strong>Listas:</strong> Escolher uma das opções mostradas na linha 3</li>
+                <li><strong>Listas:</strong> Escolher uma das opções disponíveis</li>
               </ul>
             </div>
           </div>

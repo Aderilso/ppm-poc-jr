@@ -1,24 +1,40 @@
 # Sistema de Pesquisa PPM (Project Portfolio Management)
 
-Uma aplicação web moderna para avaliação de necessidades organizacionais em ferramentas de gestão de portfólio de projetos.
+Uma aplicação web moderna para avaliação de necessidades organizacionais em ferramentas de gestão de portfólio de projetos, com suporte completo para múltiplos analistas e sincronização de dados.
 
 ## 📋 Sobre o Projeto
 
-Este sistema permite que organizações avaliem suas necessidades de ferramentas PPM através de três questionários estruturados:
+Este sistema permite que organizações avaliem suas necessidades de ferramentas PPM através de três questionários estruturados, com suporte completo para trabalho colaborativo entre múltiplos analistas:
 
 - **Formulário 1**: Avaliação Geral (maturidade PPM, satisfação com ferramentas atuais)
 - **Formulário 2**: Análise de Funcionalidades (benchmarking, necessidades específicas)
 - **Formulário 3**: Necessidades de Integração (sistemas, dados, conectividade)
 
+### 🎯 Funcionalidades para Múltiplos Analistas
+- **Sincronização via JSON**: Compartilhamento de configurações entre analistas
+- **Banco de dados centralizado**: Armazenamento de todas as entrevistas
+- **Exportação consolidada**: Relatórios por formulário com todas as entrevistas
+- **Importação consolidada**: Carregamento de múltiplas entrevistas de uma vez
+- **Modo offline/online**: Funciona com ou sem conexão com servidor
+
 ## 🚀 Tecnologias Utilizadas
 
-- **Frontend**: React 18 + TypeScript + Vite
+### Frontend
+- **React 18** + **TypeScript** + **Vite**
 - **UI Components**: shadcn/ui (baseado em Radix UI)
 - **Styling**: Tailwind CSS com tema customizado
 - **Formulários**: React Hook Form + Zod para validação
 - **Roteamento**: React Router DOM
-- **Estado**: localStorage para persistência local
+- **Estado**: localStorage + React Query para cache
 - **Ícones**: Lucide React
+- **Error Boundary**: Tratamento global de erros
+
+### Backend
+- **Node.js** + **Express**
+- **SQLite** (banco de dados)
+- **Prisma ORM** (mapeamento objeto-relacional)
+- **CORS** (Cross-Origin Resource Sharing)
+- **UUID** (identificadores únicos)
 
 ## ✨ Funcionalidades Principais
 
@@ -29,115 +45,156 @@ Este sistema permite que organizações avaliem suas necessidades de ferramentas
 - **Dados de exemplo**: Templates pré-configurados incluídos
 - **Interface intuitiva**: Editor JSON + formulário visual para novas perguntas
 - **Gerenciamento de perguntas**: Ativar/inativar perguntas sem perder dados
+- **Carregamento inteligente**: "Usar JSON Padrão" ou "Anexar JSON"
+- **Limpeza de configuração**: Reset completo do sistema
 
-### 📥 Sistema de Importação/Exportação
+### 📥 Sistema de Importação/Exportação Avançado
 - **Templates CSV inteligentes**: Geração automática por formulário
 - **Estrutura detalhada**: Perguntas e opções visíveis no template
 - **Importação robusta**: Validação completa e processamento automático
 - **Integração externa**: Compatível com Forms, Google Forms, etc.
 - **Relatórios consolidados**: Análise completa com scores e recomendações
+- **Importação consolidada**: Carregamento de múltiplas entrevistas
+- **Exportação consolidada**: Todas as entrevistas por formulário
 
-### 📝 Tipos de Perguntas Suportados
-- **Escalas Likert**: 1-5 e 0-10
-- **Múltipla escolha**: Com chips visuais
-- **Seleção única**: Dropdowns e listas
-- **Texto livre**: Áreas de texto expansíveis
-- **Sim/Não/Parcialmente**: Com campos condicionais
-- **Listas suspensas dinâmicas**: Baseadas em respostas anteriores
-- **Priorização por ranking**: Arrastar e soltar
-
-### 💾 Sistema de Persistência Inteligente
-- Salvamento automático no localStorage
-- Modo rascunho com banner de aviso
-- Recuperação de dados entre sessões
-- Limpeza seletiva de dados
+### 💾 Sistema de Persistência Híbrido
+- **localStorage**: Persistência local para modo offline
+- **Banco de dados SQLite**: Armazenamento centralizado
+- **Sincronização automática**: Entre localStorage e banco
+- **Modo offline/online**: Funciona com ou sem servidor
+- **Modo rascunho**: Com banner de aviso
+- **Recuperação de dados**: Entre sessões
+- **Backup automático**: Proteção contra perda de dados
 
 ### 👥 Funcionalidades de Entrevista
-- Modo entrevistador com campos específicos
-- Metadados do respondente
-- Campos condicionais baseados no contexto
+- **Modo entrevistador**: Com campos específicos
+- **Metadados do respondente**: Nome, departamento, etc.
+- **Campos condicionais**: Baseados no contexto
+- **Gerenciamento de entrevistas**: Visualizar todas as entrevistas
+- **Identificação única**: UUID para cada entrevista
+- **Timestamps**: Controle de criação e modificação
 
 ### 📊 Exportação e Relatórios
-- Download individual por formulário (CSV)
-- Relatório consolidado
-- Nomes de arquivo com timestamp
-- Visualização completa das respostas
+- **Download individual**: Por formulário (CSV)
+- **Relatório consolidado**: Análise completa
+- **Nomes de arquivo**: Com timestamp automático
+- **Visualização completa**: Das respostas
+- **Gerenciamento de entrevistas**: Visualizar todas as entrevistas
+- **Análises centralizadas**: Scores e insights armazenados
+- **Estatísticas em tempo real**: Dashboard com métricas
+- **Exportação consolidada**: Todas as entrevistas por formulário
 
 ### 🎨 Interface e UX
-- Design responsivo e moderno
-- Indicadores de progresso
-- Tooltips informativos para cada pergunta
-- Navegação intuitiva entre formulários
-- Tema visual consistente
+- **Design responsivo**: Moderno e adaptável
+- **Indicadores de progresso**: Visuais e intuitivos
+- **Tooltips informativos**: Para cada pergunta
+- **Navegação intuitiva**: Entre formulários
+- **Tema visual consistente**: Design system unificado
+- **Loading states**: Transições suaves
+- **Error handling**: Tratamento global de erros
+- **Feedback visual**: Toasts e notificações
+
+### 🔄 Sistema de Sincronização entre Analistas
+- **Download de configuração atualizada**: JSON com timestamp
+- **Compartilhamento via arquivo**: Entre analistas
+- **Importação consolidada**: Múltiplas entrevistas
+- **Controle de versão**: Timestamps de última atualização
+- **Limpeza de configuração**: Reset para nova configuração
+- **Backup automático**: Antes de limpar dados
+
+### 🗑️ Operações Críticas
+- **Apagar Banco de Dados**: Remove TODAS as entrevistas e análises
+- **Autenticação obrigatória**: Senha de administrador necessária (`!@#ad!@#`)
+- **Confirmação dupla**: Modal de confirmação + senha
+- **Log detalhado**: Registra todas as operações no console
+- **Sessão temporária**: Autenticação válida por 24 horas
+- **⚠️ ATENÇÃO**: Operação irreversível para testes
 
 ## 🛠 Melhorias Implementadas
 
-### ✅ Normalização de Dados
-- **Capitalização consistente**: Todas as opções com primeira letra maiúscula
-- **Padronização de siglas**: "TI" e "RH" em maiúsculas
-- **Nomenclatura clara**: "GP" substituído por "Gerente de Projeto"
+### ✅ Sistema de Banco de Dados
+- **SQLite**: Banco de dados local e portável
+- **Prisma ORM**: Mapeamento objeto-relacional
+- **Migrações automáticas**: Controle de versão do banco
+- **Inicialização automática**: Script de setup completo
+- **Backup e restore**: Proteção de dados
 
-### ✅ Correções de Interface
-- **Tooltips funcionais**: Ícones "?" exibem legendas das perguntas
-- **Parsing correto**: Opções de listas suspensas com capitalização adequada
-- **Dados de exemplo atualizados**: Consistência entre schema e dados de exemplo
+### ✅ Sistema de Entrevistas
+- **Identificação única**: UUID para cada entrevista
+- **Metadados completos**: Respondente, entrevistador, timestamp
+- **Status de conclusão**: Controle de entrevistas completas
+- **Busca e filtros**: Encontrar entrevistas específicas
+- **Visualização detalhada**: Todas as respostas por entrevista
 
-### ✅ Validação Robusta
-- **Schema sincronizado**: Tipos de pergunta alinhados entre JSON e validação
-- **Tratamento de erros**: Mensagens claras de validação
-- **Fallbacks inteligentes**: Sistema funciona mesmo sem configuração
+### ✅ Exportação/Importação Consolidada
+- **Exportação por formulário**: Todas as entrevistas de um formulário
+- **Importação consolidada**: Múltiplas entrevistas de uma vez
+- **Validação robusta**: Verificação de dados antes da importação
+- **Prevenção de duplicatas**: Controle de entrevistas existentes
+- **Estatísticas de importação**: Relatório de sucesso/erros
 
-### ✅ Sistema de Criação de Perguntas
-- **Interface visual**: Formulário completo para criar novas perguntas
-- **Tipos dinâmicos**: Suporte a todos os 9 tipos de pergunta disponíveis
-- **Opções inteligentes**: Adição individual ou múltipla (separadas por ";")
-- **Categorização**: Sistema de categorias personalizáveis
-- **Sistema de pesos**: Pesos de 1-5 com descrições de importância
-- **Integração automática**: Perguntas aparecem imediatamente nos formulários
+### ✅ Sistema de Configuração Melhorado
+- **Carregamento inteligente**: "Usar JSON Padrão" ou "Anexar JSON"
+- **Salvamento automático**: Configuração aplicada instantaneamente
+- **Limpeza de configuração**: Reset completo do sistema
+- **Controle de timestamp**: Última atualização registrada
+- **Backup antes de limpar**: Proteção contra perda acidental
 
-### ✅ Gerenciamento de Perguntas Ativas/Inativas
-- **Controle de visibilidade**: Ativar/inativar perguntas sem removê-las
-- **Interface de gerenciamento**: Aba dedicada para controlar status das perguntas
-- **Filtros automáticos**: Perguntas inativas não aparecem nos questionários
-- **Preservação de dados**: Perguntas inativas mantêm configurações e pesos
-- **Indicadores visuais**: Status claro (Ativa/Inativa) com cores diferenciadas
+### ✅ Tratamento de Erros Robusto
+- **Error Boundary**: Captura global de erros JavaScript
+- **Loading states**: Estados de carregamento para evitar flash de erro
+- **Fallbacks inteligentes**: Sistema funciona mesmo com erros
+- **Logs detalhados**: Para debugging e monitoramento
+- **Recovery automático**: Tentativas de recuperação
 
-### ✅ Sistema de Pesos Dinâmico
-- **WeightManager**: Gerenciamento inteligente de pesos para análise
-- **Categorias dinâmicas**: Criação automática de novas categorias
-- **Integração com análise**: Pesos aplicados automaticamente nos relatórios
-- **Persistência**: Manutenção de pesos personalizados entre sessões
-
-### ✅ Sistema de Importação CSV
-- **Templates por formulário**: Templates separados para F1, F2 e F3
-- **Estrutura detalhada**: Perguntas e opções visíveis no template
-- **Extração inteligente**: Opções extraídas automaticamente por tipo
-- **Validação robusta**: Verificação completa dos dados importados
-- **Processamento automático**: Filtros para linhas de exemplo e comentários
-- **Integração externa**: Compatível com Microsoft Forms, Google Forms, etc.
+### ✅ Performance e UX
+- **Loading suave**: Transições sem flash de erro
+- **React Query**: Cache inteligente e sincronização
+- **Lazy loading**: Carregamento sob demanda
+- **Otimizações**: Re-renders controlados
+- **Responsividade**: Funciona em todos os dispositivos
 
 ## 🏗 Arquitetura
 
 ```
-src/
-├── components/          # Componentes reutilizáveis
-│   ├── ui/             # Componentes base (shadcn/ui)
-│   ├── questions/      # Componentes específicos de perguntas
-│   ├── Layout.tsx      # Template principal
-│   ├── Question.tsx    # Renderizador universal de perguntas
-│   └── HelpTooltip.tsx # Tooltips de ajuda
-├── pages/              # Páginas da aplicação
-│   ├── Home.tsx        # Página inicial
-│   ├── Config.tsx      # Configuração de formulários
-│   ├── FormPage.tsx    # Template para F1/F2/F3
-│   └── Resumo.tsx      # Visualização e download
-├── lib/                # Utilitários e tipos
-│   ├── types.ts        # Definições TypeScript
-│   ├── schema.ts       # Validação Zod
-│   ├── storage.ts      # Persistência localStorage
-│   ├── sampleData.ts   # Dados de exemplo
-│   └── csv.ts          # Geração de relatórios
-└── hooks/              # Hooks customizados
+ppm-poc-jr/
+├── src/                    # Frontend React
+│   ├── components/         # Componentes reutilizáveis
+│   │   ├── ui/            # Componentes base (shadcn/ui)
+│   │   ├── questions/     # Componentes específicos de perguntas
+│   │   ├── Layout.tsx     # Template principal
+│   │   ├── Question.tsx   # Renderizador universal de perguntas
+│   │   ├── ErrorBoundary.tsx # Tratamento global de erros
+│   │   ├── AuthModal.tsx  # Modal de autenticação
+│   │   └── HelpTooltip.tsx # Tooltips de ajuda
+│   ├── pages/             # Páginas da aplicação
+│   │   ├── Home.tsx       # Página inicial
+│   │   ├── Config.tsx     # Configuração de formulários
+│   │   ├── FormPage.tsx   # Template para F1/F2/F3
+│   │   ├── Resumo.tsx     # Visualização e download
+│   │   └── Entrevistas.tsx # Gerenciamento de entrevistas
+│   ├── lib/               # Utilitários e tipos
+│   │   ├── types.ts       # Definições TypeScript
+│   │   ├── schema.ts      # Validação Zod
+│   │   ├── storage.ts     # Persistência localStorage
+│   │   ├── api.ts         # Cliente API para backend
+│   │   ├── auth.ts        # Sistema de autenticação
+│   │   ├── sampleData.ts  # Dados de exemplo
+│   │   ├── csv.ts         # Geração de relatórios
+│   │   ├── consolidatedFormExport.ts # Exportação consolidada
+│   │   ├── consolidatedImport.ts # Importação consolidada
+│   │   └── weightManager.ts # Gerenciamento de pesos
+│   └── hooks/             # Hooks customizados
+│       └── useInterview.ts # Hook para gerenciar entrevistas
+├── server/                # Backend Node.js
+│   ├── prisma/           # Schema e migrações do banco
+│   │   └── schema.prisma # Definição das tabelas
+│   ├── index.js          # Servidor Express
+│   ├── init-db.js        # Script de inicialização
+│   └── package.json      # Dependências do backend
+├── setup-database.sh     # Script de instalação
+├── ppm_forms_consolidado_v2_normalizado.json # Configuração padrão (raiz)
+└── public/ppm_forms_consolidado_v2_normalizado.json # Configuração padrão (web)
 ```
 
 ## 🚀 Como Executar
@@ -146,13 +203,40 @@ src/
 - Node.js 18+ 
 - npm ou yarn
 
-### Instalação
+### Instalação Completa (Recomendado)
+
 ```bash
 # Clone o repositório
 git clone <URL_DO_REPOSITORIO>
+cd ppm-poc-jr
 
-# Entre no diretório
-cd ppm-pesquisa
+# Instale as dependências do frontend
+npm install
+
+# Configure o banco de dados
+./setup-database.sh
+
+# OU configure manualmente:
+cd server
+npm install
+npm run db:generate
+npm run db:migrate
+npm run db:init
+cd ..
+
+# Inicie o servidor backend (em um terminal)
+cd server && npm run dev
+
+# Inicie o frontend (em outro terminal)
+npm run dev
+```
+
+### Instalação Simples (apenas localStorage)
+
+```bash
+# Clone o repositório
+git clone <URL_DO_REPOSITORIO>
+cd ppm-poc-jr
 
 # Instale as dependências
 npm install
@@ -174,37 +258,64 @@ npm run preview
 
 ### 1. Configuração Inicial
 - Acesse `/config` para configurar os formulários
-- Use "Carregar Exemplo" para dados pré-configurados
-- Ou faça upload de um arquivo JSON personalizado
+- Clique em "Carregar Configuração"
+- Escolha "Usar JSON Padrão" (carrega automaticamente)
+- Ou "Anexar JSON" para arquivo personalizado
 
-### 2. Criação de Novas Perguntas
+### 2. Trabalho com Múltiplos Analistas
+
+#### Para o Analista Principal:
+1. **Configure o sistema**: Carregue a configuração inicial
+2. **Adicione perguntas**: Use a aba "Nova Pergunta" se necessário
+3. **Baixe configuração atualizada**: Use "Baixar JSON Atualizado"
+4. **Compartilhe**: Envie o arquivo JSON para outros analistas
+
+#### Para Analistas Secundários:
+1. **Receba o JSON**: Do analista principal
+2. **Carregue configuração**: Use "Anexar JSON" na página de configurações
+3. **Realize entrevistas**: Preencha os formulários normalmente
+4. **Exporte consolidado**: Use "Consolidado por Formulário" no Resumo
+5. **Envie para coordenação**: Arquivo consolidado para análise final
+
+#### Para Coordenação Final:
+1. **Receba consolidados**: De todos os analistas
+2. **Importe consolidados**: Use "Importação Consolidada" no Resumo
+3. **Gere relatório final**: Use "Relatório Consolidado"
+
+### 3. Criação de Novas Perguntas
 - Na aba "Nova Pergunta", crie perguntas personalizadas
 - Selecione o formulário de destino (F1, F2 ou F3)
 - Escolha o tipo de pergunta e configure opções
 - Defina categoria e peso para análise
 - A pergunta aparece imediatamente no formulário
 
-### 3. Gerenciamento de Perguntas
+### 4. Gerenciamento de Perguntas
 - Use a aba "Gerenciar Perguntas" para ativar/inativar perguntas
 - Perguntas inativas não aparecem nos questionários
 - Mantenha perguntas para uso futuro sem removê-las
 
-### 4. Preenchimento dos Formulários
+### 5. Preenchimento dos Formulários
 - Navegue pelos formulários F1, F2 e F3
 - O progresso é salvo automaticamente
 - Use os tooltips (?) para entender cada pergunta
 - Apenas perguntas ativas são exibidas
 
-### 5. Importação de Dados Externos
+### 6. Importação de Dados Externos
 - Use a aba "Importar CSV" para importar respostas coletadas externamente
 - Baixe templates específicos por formulário (F1, F2, F3)
 - Templates incluem perguntas e opções de resposta para facilitar preenchimento
 - Compatível com Microsoft Forms, Google Forms e outras ferramentas
 
-### 6. Visualização e Export
+### 7. Visualização e Export
 - Acesse `/resumo` para revisar todas as respostas
 - Baixe relatórios individuais ou consolidados
 - Dados exportados em formato CSV
+
+### 8. Gerenciamento de Entrevistas
+- Acesse `/entrevistas` para ver todas as entrevistas
+- Visualize detalhes de cada entrevista
+- Filtre por status (completa/incompleta)
+- Exporte entrevistas específicas
 
 ## 🔧 Configuração de Formulários
 
@@ -265,6 +376,46 @@ respondent_name,respondent_department,interviewer_name,timestamp,f1_q1,f1_q2...
 - `lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)`
 - `lista_suspensa_baseada_na_resposta_anterior`
 
+## 🔄 Fluxo de Trabalho para Múltiplos Analistas
+
+### Cenário Típico:
+1. **Analista Principal**: Configura sistema e adiciona perguntas customizadas
+2. **Analista Principal**: Baixa JSON atualizado e compartilha com equipe
+3. **Analistas Secundários**: Carregam JSON e realizam entrevistas
+4. **Analistas Secundários**: Exportam consolidados por formulário
+5. **Coordenação**: Importa consolidados e gera relatório final
+
+### Vantagens:
+- **Sincronização**: Todos os analistas com mesma configuração
+- **Flexibilidade**: Trabalho independente de cada analista
+- **Consolidação**: Dados unificados para análise final
+- **Controle**: Rastreamento de origem dos dados
+- **Backup**: Proteção contra perda de dados
+
+## 🛠 Scripts Disponíveis
+
+### Frontend
+```bash
+npm run dev          # Desenvolvimento
+npm run build        # Build para produção
+npm run preview      # Preview do build
+```
+
+### Backend
+```bash
+cd server
+npm run dev          # Desenvolvimento com nodemon
+npm run db:studio    # Abrir Prisma Studio
+npm run db:generate  # Gerar cliente Prisma
+npm run db:migrate   # Executar migrações
+npm run db:init      # Inicializar banco
+```
+
+### Setup Automático
+```bash
+./setup-database.sh  # Configuração completa do banco
+```
+
 ## 🤝 Contribuição
 
 1. Fork o projeto
@@ -284,8 +435,16 @@ Para dúvidas ou problemas:
 2. Consulte os exemplos de configuração
 3. Abra uma issue no repositório
 
+## 🔗 URLs Importantes
+
+- **Frontend**: http://localhost:8080 (ou 8081)
+- **Backend API**: http://localhost:3001/api
+- **Prisma Studio**: http://localhost:5555 (gerenciamento do banco)
+
 ---
 
 **Desenvolvido com ❤️ para facilitar a avaliação de necessidades PPM em organizações**
 
 **Desenvolvido por Aderilso Junior**
+
+**Versão**: 2.1.0 - Sistema Completo com Operações Críticas e Autenticação

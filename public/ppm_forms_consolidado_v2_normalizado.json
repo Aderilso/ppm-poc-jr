@@ -1,0 +1,337 @@
+{
+    "forms": [
+        {
+            "id": "f1",
+            "title": "Avaliação Geral",
+            "questions": [
+                {
+                    "id": "f1_q01",
+                    "pergunta": "Qual seu departamento/área de atuação?",
+                    "tipo": "lista_suspensa_(TI,_Finanças,_RH,_Operações,_Marketing,_PMO,_Estratégia,_Outro)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q02",
+                    "pergunta": "Qual sua função/cargo principal?",
+                    "tipo": "lista_suspensa_(Gerente_de_Projeto,_Analista,_Coordenador,_Diretor,_Consultor,_Scrum_Master,_Outro)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q03",
+                    "pergunta": "Há quanto tempo você utiliza ferramentas de gestão de projetos?",
+                    "tipo": "lista_suspensa_(<_1_Ano,_1_3_Anos,_3_5_Anos,_5_10_Anos,_>_10_Anos)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q04",
+                    "pergunta": "Quais ferramentas de gestão de projetos/portfólio você utiliza atualmente? (Selecione todas que se aplicam)",
+                    "tipo": "multipla",
+                    "legenda": "Selecione todas as opções que se aplicam."
+                },
+                {
+                    "id": "f1_q05",
+                    "pergunta": "Com que frequência você utiliza sua ferramenta principal de gestão de projetos?",
+                    "tipo": "lista_suspensa_(Diariamente,_Semanalmente,_Quinzenalmente,_Mensalmente,_Esporadicamente)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q06",
+                    "pergunta": "Você utiliza a ferramenta diariamente em suas atividades de trabalho?",
+                    "tipo": "sim/não_(pergunta_filtro)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q07",
+                    "pergunta": "Qual ferramenta considera mais crítica para seu trabalho?",
+                    "tipo": "lista_suspensa_baseada_na_resposta_anterior",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f1_q08",
+                    "pergunta": "Em uma escala de 1 a 5, como avalia a facilidade de uso da sua ferramenta principal? (1=Muito difícil, 5=Muito fácil)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q09",
+                    "pergunta": "Quanto tempo você leva, em média, para encontrar as informações que precisa na ferramenta? (1=Imediato, 5=Mais de 10 minutos)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q10",
+                    "pergunta": "A interface da ferramenta é clara e intuitiva para suas tarefas diárias? (1=Muito confusa, 5=Muito clara)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q11",
+                    "pergunta": "A ferramenta aumenta ou diminui sua produtividade no trabalho? (1=Diminui muito, 5=Aumenta muito)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q12",
+                    "pergunta": "É fácil acompanhar o progresso dos seus projetos usando a ferramenta? (1=Muito difícil, 5=Muito fácil)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q13",
+                    "pergunta": "A ferramenta fornece informações que ajudam na tomada de decisões? (1=Nunca ajuda, 5=Sempre ajuda)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f1_q14",
+                    "pergunta": "Qual nota de 0 a 10 você daria para suas ferramentas atuais de gestão de projetos?",
+                    "tipo": "escala_0_10",
+                    "legenda": "0 = nada satisfeito; 10 = totalmente satisfeito."
+                },
+                {
+                    "id": "f1_q15",
+                    "pergunta": "Você recomendaria suas ferramentas atuais para um colega de trabalho?",
+                    "tipo": "sim/não",
+                    "legenda": "Preencha conforme indicado."
+                }
+            ]
+        },
+        {
+            "id": "f2",
+            "title": "Análise de Funcionalidades",
+            "questions": [
+                {
+                    "id": "f2_q01",
+                    "pergunta": "Como avalia as funcionalidades de planejamento (cronogramas, Gantt) da ferramenta? (1=Inadequadas, 5=Excelentes)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Planejamento e Cronogramas"
+                },
+                {
+                    "id": "f2_q02",
+                    "pergunta": "A gestão de recursos (pessoas, equipamentos) na ferramenta é adequada às suas necessidades? (1=Muito inadequada, 5=Muito adequada)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Gestão de Recursos"
+                },
+                {
+                    "id": "f2_q03",
+                    "pergunta": "O controle de orçamento e custos na ferramenta funciona bem para seus projetos? (1=Funciona muito mal, 5=Funciona muito bem)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Controle Orçamentário"
+                },
+                {
+                    "id": "f2_q04",
+                    "pergunta": "Como avalia a gestão de riscos e problemas na ferramenta? (1=Inadequada, 5=Excelente)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Gestão de Riscos"
+                },
+                {
+                    "id": "f2_q05",
+                    "pergunta": "Você consegue ter uma visão clara de múltiplos projetos simultaneamente? (1=Nunca consigo, 5=Sempre consigo)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Visão de Portfólio"
+                },
+                {
+                    "id": "f2_q06",
+                    "pergunta": "A priorização de projetos na ferramenta é clara e útil para suas decisões? (1=Muito confusa, 5=Muito clara)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Priorização Estratégica"
+                },
+                {
+                    "id": "f2_q07",
+                    "pergunta": "A análise de dependências entre projetos é adequada? (1=Inadequada, 5=Excelente)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Análise de Dependências"
+                },
+                {
+                    "id": "f2_q08",
+                    "pergunta": "Os fluxos de aprovação funcionam de forma eficiente? (1=Muito ineficientes, 5=Muito eficientes)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Workflows e Aprovações"
+                },
+                {
+                    "id": "f2_q09",
+                    "pergunta": "A comunicação entre equipes é facilitada pela ferramenta? (1=Muito prejudicada, 5=Muito facilitada)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Comunicação e Colaboração"
+                },
+                {
+                    "id": "f2_q10",
+                    "pergunta": "As notificações automáticas são úteis e chegam no momento certo? (1=Nada úteis, 5=Muito úteis)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Notificações e Alertas"
+                },
+                {
+                    "id": "f2_q11",
+                    "pergunta": "Os painéis/dashboards fornecem informações úteis e claras para seu trabalho? (1=Nada úteis, 5=Muito úteis)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Business Intelligence"
+                },
+                {
+                    "id": "f2_q12",
+                    "pergunta": "Os relatórios gerados atendem suas necessidades de acompanhamento? (1=Nunca atendem, 5=Sempre atendem)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "Relatórios Gerenciais"
+                },
+                {
+                    "id": "f2_q13",
+                    "pergunta": "As métricas e KPIs disponíveis são relevantes para suas decisões? (1=Nada relevantes, 5=Muito relevantes)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente).",
+                    "categoria": "KPIs e Métricas"
+                },
+                {
+                    "id": "f2_q14",
+                    "pergunta": "Quais funcionalidades essenciais estão ausentes na ferramenta? (Descreva as 3 principais)",
+                    "tipo": "texto",
+                    "legenda": "Descreva de forma objetiva (máx. 500 caracteres).",
+                    "categoria": "Gap Analysis"
+                }
+            ]
+        },
+        {
+            "id": "f3",
+            "title": "Necessidades de Integração",
+            "questions": [
+                {
+                    "id": "f3_q01",
+                    "pergunta": "Além das ferramentas PPM, quais outros sistemas você considera essenciais no seu trabalho? (Selecione todos que se aplicam)",
+                    "tipo": "multipla",
+                    "legenda": "Selecione todas as opções que se aplicam."
+                },
+                {
+                    "id": "f3_q02",
+                    "pergunta": "Com que frequência você precisa acessar dados de diferentes sistemas para completar uma tarefa? (1=Nunca, 5=Sempre)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f3_q03",
+                    "pergunta": "Quais sistemas contêm dados que você gostaria de ver automaticamente no PPM?",
+                    "tipo": "multipla",
+                    "legenda": "Selecione todas as opções que se aplicam."
+                },
+                {
+                    "id": "f3_q04",
+                    "pergunta": "Atualmente, alguns desses sistemas já estão integrados entre si?",
+                    "tipo": "sim/não/parcialmente_+_campo_para_especificar_quais",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f3_q05",
+                    "pergunta": "Como os dados transitam entre seus sistemas principais hoje?",
+                    "tipo": "lista_suspensa_(Integração_Automática,_Export/Import,_Digitação_Manual,_Não_Há_Troca,_Não_Sei)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f3_q06",
+                    "pergunta": "Quantas horas por semana você gasta transferindo dados manualmente entre sistemas?",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f3_q07",
+                    "pergunta": "Quais integrações considera mais críticas para seu trabalho? (Escolha até 3)",
+                    "tipo": "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)",
+                    "legenda": "Preencha conforme indicado."
+                },
+                {
+                    "id": "f3_q08",
+                    "pergunta": "Que tipos de dados gostaria que fossem sincronizados automaticamente? (Selecione todos que se aplicam)",
+                    "tipo": "multipla",
+                    "legenda": "Selecione todas as opções que se aplicam."
+                },
+                {
+                    "id": "f3_q09",
+                    "pergunta": "Descreva um processo que poderia ser automatizado com melhor integração entre sistemas",
+                    "tipo": "texto",
+                    "legenda": "Descreva de forma objetiva (máx. 500 caracteres)."
+                },
+                {
+                    "id": "f3_q10",
+                    "pergunta": "A falta de integração entre sistemas causa retrabalho no seu dia a dia? (1=Nunca causa, 5=Sempre causa)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f3_q11",
+                    "pergunta": "Com que frequência você encontra dados inconsistentes entre diferentes sistemas? (1=Nunca, 5=Sempre)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f3_q12",
+                    "pergunta": "Melhor integração entre sistemas melhoraria a qualidade das suas decisões? (1=Não melhoraria, 5=Melhoraria muito)",
+                    "tipo": "escala_1_5",
+                    "legenda": "Avalie de 1 (muito inadequada) a 5 (excelente)."
+                },
+                {
+                    "id": "f3_q13",
+                    "pergunta": "Qual integração traria o maior benefício para seu trabalho? (Escolha 1 opção)",
+                    "tipo": "lista_suspensa_baseada_nas_respostas_anteriores",
+                    "legenda": "Preencha conforme indicado."
+                }
+            ]
+        }
+    ],
+    "lookups": {
+        "SISTEMAS_ESSENCIAIS": [
+            "ERP Financeiro (SAP, Oracle, Totvs)",
+            "CRM (Salesforce, HubSpot, Pipedrive)",
+            "HRIS/RH (Success Factors, BambooHR)",
+            "Business Intelligence (Power BI, Tableau, Qlik)",
+            "Service Desk/ITSM (ServiceNow, Jira Service)",
+            "Sistemas Contábeis/Financeiros",
+            "Ferramentas de Desenvolvimento (Jira, Azure DevOps)",
+            "Plataformas de Comunicação (Teams, Slack, Email)",
+            "Sistemas de Produção/Operacionais",
+            "Ferramentas de Planejamento Estratégico",
+            "Sistemas de Gestão da Qualidade",
+            "Plataformas de E-commerce",
+            "Outro (especificar)"
+        ],
+        "FERRAMENTAS_PPM": [
+            "Microsoft Project",
+            "Project for Web",
+            "Smartsheet",
+            "Monday.com",
+            "Asana",
+            "ClickUp",
+            "Jira",
+            "ServiceNow PPM",
+            "Planview",
+            "Clarity",
+            "Trello",
+            "Notion",
+            "Excel/Google Sheets",
+            "Interna",
+            "Outro (especificar)"
+        ],
+        "TIPOS_DADOS_SINCRONIZAR": [
+            "Orçamento/Custos",
+            "Recursos/Pessoas",
+            "Status/Progresso",
+            "Clientes/Stakeholders",
+            "KPIs",
+            "Documentos/Anexos",
+            "Cronogramas/Marcos",
+            "Aprovações/Workflows",
+            "Riscos/Problemas",
+            "Relatórios Financeiros",
+            "Produtividade",
+            "Compliance",
+            "Outro (especificar)"
+        ]
+    }
+}

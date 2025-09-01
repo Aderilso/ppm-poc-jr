@@ -26,9 +26,22 @@ export function loadConfigWithFallback(): PpmConfig {
   const config = loadConfig();
   if (config) return config;
   
-  // Importar o fallback aqui para evitar dependência circular
-  const { SAMPLE_JSON } = require("./sampleData");
-  return SAMPLE_JSON;
+  try {
+    // Importar o fallback aqui para evitar dependência circular
+    const { SAMPLE_JSON } = require("./sampleData");
+    return SAMPLE_JSON;
+  } catch (error) {
+    console.warn('Erro ao carregar configuração de fallback:', error);
+    // Retornar configuração mínima para evitar erros
+    return {
+      forms: [],
+      lookups: {
+        SISTEMAS_ESSENCIAIS: [],
+        FERRAMENTAS_PPM: [],
+        TIPOS_DADOS_SINCRONIZAR: []
+      }
+    };
+  }
 }
 
 export function saveAnswers(formId: "f1" | "f2" | "f3", answers: Answers): void {

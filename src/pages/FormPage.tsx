@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { DraftBanner } from "@/components/DraftBanner";
 import { InterviewerFields } from "@/components/InterviewerFields";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Question } from "@/components/Question";
-import { loadConfig, loadConfigWithFallback, saveAnswers, loadAnswers, saveMeta, loadMeta, hasData, clearAnswersData } from "@/lib/storage";
-import type { FormSpec, PpmMeta, Answers } from "@/lib/types";
+import { loadConfig, saveAnswers, loadAnswers, saveMeta, loadMeta, hasData, clearAnswersData } from "@/lib/storage";
+import type { FormSpec, PpmMeta, Answers, Lookups } from "@/lib/types";
 
 interface FormPageProps {
   formId: "f1" | "f2" | "f3";
@@ -22,24 +22,46 @@ export function FormPage({ formId }: FormPageProps) {
   const [answers, setAnswers] = useState<Answers>({});
   const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [hasDraftData, setHasDraftData] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lookups, setLookups] = useState<Lookups>({
+    SISTEMAS_ESSENCIAIS: [],
+    FERRAMENTAS_PPM: [],
+    TIPOS_DADOS_SINCRONIZAR: []
+  });
 
   useEffect(() => {
-    const config = loadConfig();
-    if (!config) {
+    try {
+      const config = loadConfig();
+      if (!config) {
+        setIsLoading(false);
+        navigate("/config");
+        return;
+      }
+
+      const currentForm = config.forms.find(f => f.id === formId);
+      if (!currentForm) {
+        console.warn(`Formulário ${formId} não encontrado na configuração`);
+        setIsLoading(false);
+        navigate("/");
+        return;
+      }
+
+      setForm(currentForm);
+      setAnswers(loadAnswers(formId));
+      setMeta(loadMeta());
+      setHasDraftData(hasData());
+      setLookups(config.lookups || {
+        SISTEMAS_ESSENCIAIS: [],
+        FERRAMENTAS_PPM: [],
+        TIPOS_DADOS_SINCRONIZAR: []
+      });
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Erro ao carregar dados do formulário:', error);
+      setIsLoading(false);
+      // Em caso de erro, tentar navegar para configuração
       navigate("/config");
-      return;
     }
-
-    const currentForm = config.forms.find(f => f.id === formId);
-    if (!currentForm) {
-      navigate("/");
-      return;
-    }
-
-    setForm(currentForm);
-    setAnswers(loadAnswers(formId));
-    setMeta(loadMeta());
-    setHasDraftData(hasData());
   }, [formId, navigate]);
 
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
@@ -91,15 +113,41 @@ export function FormPage({ formId }: FormPageProps) {
     return progress.current === progress.total;
   };
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+              <p className="text-muted-foreground">Carregando formulário...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (!form) {
     return (
       <Layout>
-        <Alert className="border-destructive bg-[hsl(var(--ppm-error-bg))]">
-          <AlertCircle className="h-4 w-4 text-destructive" />
-          <AlertDescription>
-            Formulário não encontrado. Configure os formulários antes de continuar.
-          </AlertDescription>
-        </Alert>
+        <div className="max-w-4xl mx-auto">
+          <Alert className="border-destructive bg-[hsl(var(--ppm-error-bg))]">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <p>Formulário não encontrado. Configure os formulários antes de continuar.</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate("/config")}
+                >
+                  Ir para Configurações
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
       </Layout>
     );
   }
@@ -144,7 +192,7 @@ export function FormPage({ formId }: FormPageProps) {
                   question={question}
                   value={answers[question.id] || ""}
                   onChange={(value) => handleAnswerChange(question.id, value)}
-                  lookups={loadConfigWithFallback().lookups}
+                  lookups={lookups}
                 />
               ))}
             </div>

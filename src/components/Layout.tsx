@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Settings, Home, BarChart3, Linkedin } from "lucide-react";
+import { Settings, Home, BarChart3, Linkedin, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Deloitte Logo Component
@@ -63,6 +63,14 @@ export function Layout({ children }: LayoutProps) {
                   <Button variant="secondary" size="sm" className="flex items-center gap-2">
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
+                  </Button>
+                </Link>
+              )}
+              {location.pathname !== "/entrevistas" && (
+                <Link to="/entrevistas">
+                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Entrevistas
                   </Button>
                 </Link>
               )}

@@ -12,7 +12,12 @@ export default function Home() {
   const [hasDraftData, setHasDraftData] = useState(false);
 
   useEffect(() => {
-    setHasDraftData(hasData());
+    try {
+      setHasDraftData(hasData());
+    } catch (error) {
+      console.warn('Erro ao verificar dados de rascunho:', error);
+      setHasDraftData(false);
+    }
   }, []);
 
   const handleClearDraft = () => {

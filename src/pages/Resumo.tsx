@@ -11,6 +11,7 @@ import { loadConfig, loadConfigWithFallback, loadAnswers, loadMeta } from "@/lib
 import { generateCsvData, downloadCsv, generateFileName } from "@/lib/csv";
 import { analyzeAnswers } from "@/lib/analysis";
 import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
+import { consolidateFormInterviews, generateConsolidatedFormCsv, downloadConsolidatedFormCsv } from "@/lib/consolidatedFormExport";
 import { toast } from "@/hooks/use-toast";
 import type { PpmConfig, PpmMeta, FormAnswers, AnalysisResult } from "@/lib/types";
 
@@ -87,6 +88,43 @@ export default function Resumo() {
       toast({
         title: "Download realizado",
         description: `Arquivo ${filename} baixado com sucesso!`,
+      });
+    }
+  };
+
+  const handleConsolidatedDownload = async (formId: "f1" | "f2" | "f3") => {
+    if (!config) return;
+
+    try {
+      toast({
+        title: "Processando...",
+        description: "Buscando entrevistas do banco de dados...",
+      });
+
+      const { data, stats } = await consolidateFormInterviews(config, formId);
+      
+      if (data.length === 0) {
+        toast({
+          title: "Nenhuma entrevista encontrada",
+          description: `Não há entrevistas completadas para o formulário ${formId.toUpperCase()}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const csvContent = generateConsolidatedFormCsv(data, stats);
+      downloadConsolidatedFormCsv(csvContent, formId, stats);
+
+      toast({
+        title: "Consolidado gerado!",
+        description: `${stats.total_interviews} entrevistas do ${formId.toUpperCase()} consolidadas com sucesso!`,
+      });
+    } catch (error) {
+      console.error('Erro ao gerar consolidado:', error);
+      toast({
+        title: "Erro ao gerar consolidado",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
       });
     }
   };
@@ -251,44 +289,81 @@ export default function Resumo() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-4 gap-4">
-                  {["f1", "f2", "f3"].map((formId) => {
-                    const stats = getFormStats(formId as "f1" | "f2" | "f3");
-                    const form = config.forms.find(f => f.id === formId);
-                    
-                    return (
-                      <div key={formId}>
+                <div className="space-y-6">
+                  {/* Downloads Individuais */}
+                  <div>
+                    <h3 className="font-medium mb-3">Downloads Individuais (Entrevista Atual)</h3>
+                    <div className="grid md:grid-cols-4 gap-4">
+                      {["f1", "f2", "f3"].map((formId) => {
+                        const stats = getFormStats(formId as "f1" | "f2" | "f3");
+                        const form = config.forms.find(f => f.id === formId);
+                        
+                        return (
+                          <div key={formId}>
+                            <Button
+                              variant="outline"
+                              className="w-full mb-2"
+                              onClick={() => handleDownload(formId as "f1" | "f2" | "f3")}
+                              disabled={stats.answered === 0}
+                            >
+                              <FileText className="w-4 h-4 mr-2" />
+                              CSV {formId.toUpperCase()}
+                            </Button>
+                            <p className="text-xs text-muted-foreground text-center">
+                              {form?.title}
+                              <br />
+                              {stats.answered}/{stats.total} respondidas
+                            </p>
+                          </div>
+                        );
+                      })}
+                      
+                      <div>
                         <Button
-                          variant="outline"
-                          className="w-full mb-2"
-                          onClick={() => handleDownload(formId as "f1" | "f2" | "f3")}
-                          disabled={stats.answered === 0}
+                          className="ppm-button-accent w-full mb-2"
+                          onClick={() => handleDownload("consolidado")}
                         >
-                          <FileText className="w-4 h-4 mr-2" />
-                          CSV {formId.toUpperCase()}
+                          <Download className="w-4 h-4 mr-2" />
+                          Relatório Consolidado
                         </Button>
                         <p className="text-xs text-muted-foreground text-center">
-                          {form?.title}
+                          Análise completa com scores,
                           <br />
-                          {stats.answered}/{stats.total} respondidas
+                          insights e recomendações
                         </p>
                       </div>
-                    );
-                  })}
-                  
+                    </div>
+                  </div>
+
+                  {/* Downloads Consolidados por Formulário */}
                   <div>
-                    <Button
-                      className="ppm-button-accent w-full mb-2"
-                      onClick={() => handleDownload("consolidado")}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Relatório Consolidado
-                    </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Análise completa com scores,
-                      <br />
-                      insights e recomendações
+                    <h3 className="font-medium mb-3">Consolidados por Formulário (Todas as Entrevistas)</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Para coordenadores: consolida todas as entrevistas do banco de dados por formulário
                     </p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {["f1", "f2", "f3"].map((formId) => {
+                        const form = config.forms.find(f => f.id === formId);
+                        
+                        return (
+                          <div key={`consolidated-${formId}`}>
+                            <Button
+                              variant="default"
+                              className="w-full mb-2 bg-green-600 hover:bg-green-700"
+                              onClick={() => handleConsolidatedDownload(formId as "f1" | "f2" | "f3")}
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Consolidado {formId.toUpperCase()}
+                            </Button>
+                            <p className="text-xs text-muted-foreground text-center">
+                              {form?.title}
+                              <br />
+                              Todas as entrevistas do banco
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </CardContent>
