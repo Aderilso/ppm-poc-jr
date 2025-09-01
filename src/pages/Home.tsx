@@ -59,7 +59,7 @@ export default function Home() {
     }
   };
 
-  const handleAccessForm = (formId: string) => {
+  const handleAccessForm = async (formId: string) => {
     console.log(`🔍 Home - Acessando formulário ${formId}`);
     console.log(`🔍 Home - Estado atual:`, { hasDraftData, currentInterview, formId });
     
@@ -68,7 +68,20 @@ export default function Home() {
       navigate(`/${formId}`);
     } else {
       console.log("⚠️ Home - Sem dados de rascunho, iniciando nova entrevista...");
-      handleStartInterview();
+      try {
+        setIsStartingInterview(true);
+        console.log("🔍 Home - Chamando startInterview()...");
+        const result = await startInterview();
+        console.log("✅ Home - Entrevista iniciada com sucesso:", result);
+        // Navegar para o formulário específico, não sempre para F1
+        console.log(`🎯 Home - Navegando para formulário ${formId}`);
+        navigate(`/${formId}`);
+      } catch (error) {
+        console.error('❌ Home - Erro ao iniciar entrevista:', error);
+        // Mostrar erro para o usuário
+      } finally {
+        setIsStartingInterview(false);
+      }
     }
   };
 
