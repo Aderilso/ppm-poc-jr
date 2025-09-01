@@ -40,6 +40,30 @@ export function useInterview() {
         if (response.ok) {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
+          
+          // Se a API está online E não há currentInterviewId, buscar entrevista existente
+          if (!currentInterviewId) {
+            console.log("🔍 useInterview: Verificando se há entrevista existente para definir currentInterviewId...");
+            try {
+              const allInterviews = await interviewsApi.getAll();
+              console.log("🔍 useInterview: Total de entrevistas encontradas:", allInterviews.length);
+              
+              // Priorizar entrevistas com dados (respostas salvas)
+              const interviewWithData = allInterviews.find(interview => 
+                !interview.isCompleted && 
+                (interview.f1Answers || interview.f2Answers || interview.f3Answers)
+              );
+              
+              if (interviewWithData) {
+                console.log("✅ useInterview: Entrevista com dados encontrada, definindo currentInterviewId:", interviewWithData.id);
+                setCurrentInterviewId(interviewWithData.id);
+              } else {
+                console.log("🔍 useInterview: Nenhuma entrevista com dados encontrada");
+              }
+            } catch (error) {
+              console.log("🔍 useInterview: Erro ao verificar entrevistas existentes:", error);
+            }
+          }
         } else {
           console.log("❌ useInterview: API offline");
           setIsOnline(false);
