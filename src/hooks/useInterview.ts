@@ -40,6 +40,16 @@ export function useInterview() {
         if (response.ok) {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
+          
+          // Se a API está online, verificar se há entrevista ativa
+          if (!currentInterviewId) {
+            console.log("🔍 useInterview: Verificando entrevista ativa...");
+            try {
+              await findOrCreateInterview();
+            } catch (error) {
+              console.log("🔍 useInterview: Erro ao verificar entrevista ativa:", error);
+            }
+          }
         } else {
           console.log("❌ useInterview: API offline");
           setIsOnline(false);
@@ -135,13 +145,26 @@ export function useInterview() {
 
   // Função para salvar respostas
   const saveFormAnswers = async (formId: 'f1' | 'f2' | 'f3', answers: Answers) => {
+    console.log("🔍 useInterview - saveFormAnswers chamada:", { formId, answers, currentInterviewId, isOnline });
+    
     try {
       if (isOnline && currentInterviewId) {
+        console.log("✅ useInterview - Salvando respostas no banco...");
         // Sincronizar com banco de dados
-        await saveAnswersMutation.mutateAsync({ formId, answers });
+        const result = await saveAnswersMutation.mutateAsync({ formId, answers });
+        console.log("✅ useInterview - Respostas salvas com sucesso:", result);
+        
+        // Invalidar cache para refletir mudanças
+        queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        
+        return result;
+      } else {
+        console.log("❌ useInterview - Não foi possível salvar:", { isOnline, currentInterviewId });
+        throw new Error('Sistema offline ou sem entrevista ativa');
       }
     } catch (error) {
-      console.error('Erro ao salvar respostas:', error);
+      console.error('❌ useInterview - Erro ao salvar respostas:', error);
       throw error;
     }
   };
