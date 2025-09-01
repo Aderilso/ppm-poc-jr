@@ -1,28 +1,45 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Play, FileText, Settings, Download, BarChart3 } from "lucide-react";
+import { Play, FileText, Settings, Download, BarChart3, Loader2, Users } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { DraftBanner } from "@/components/DraftBanner";
-import { hasData, clearAnswersData } from "@/lib/storage";
+import { useInterview } from "@/hooks/useInterview";
 import { useState, useEffect } from "react";
 
 export default function Home() {
   const navigate = useNavigate();
   const [hasDraftData, setHasDraftData] = useState(false);
+  const [isStartingInterview, setIsStartingInterview] = useState(false);
+
+  // Usar o hook de entrevista
+  const { currentInterview, startInterview, isLoading, error } = useInterview();
 
   useEffect(() => {
-    try {
-      setHasDraftData(hasData());
-    } catch (error) {
-      console.warn('Erro ao verificar dados de rascunho:', error);
-      setHasDraftData(false);
-    }
-  }, []);
+    // Verificar se há uma entrevista em andamento
+    setHasDraftData(!!currentInterview);
+  }, [currentInterview]);
 
   const handleClearDraft = () => {
-    clearAnswersData();
+    // Limpar entrevista atual
+    if (currentInterview) {
+      // Aqui você pode implementar a lógica para limpar a entrevista
+      window.location.reload();
+    }
     setHasDraftData(false);
+  };
+
+  const handleStartInterview = async () => {
+    try {
+      setIsStartingInterview(true);
+      await startInterview();
+      navigate("/f1");
+    } catch (error) {
+      console.error('Erro ao iniciar entrevista:', error);
+      // Mostrar erro para o usuário
+    } finally {
+      setIsStartingInterview(false);
+    }
   };
 
   return (
@@ -56,9 +73,17 @@ export default function Home() {
             <Button 
               size="lg" 
               className="ppm-button-primary px-8 py-3 text-lg"
-              onClick={() => navigate("/f1")}
+              onClick={handleStartInterview}
+              disabled={isStartingInterview || isLoading}
             >
-              Iniciar Pesquisa
+              {isStartingInterview ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  Iniciando...
+                </>
+              ) : (
+                "Iniciar Pesquisa"
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -80,9 +105,17 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/f1")}
+                onClick={handleStartInterview}
+                disabled={isStartingInterview || isLoading}
               >
-                Acessar F1
+                {isStartingInterview ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    Iniciando...
+                  </>
+                ) : (
+                  "Acessar F1"
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -103,6 +136,7 @@ export default function Home() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => navigate("/f2")}
+                disabled={!hasDraftData}
               >
                 Acessar F2
               </Button>
@@ -125,6 +159,7 @@ export default function Home() {
                 variant="outline" 
                 className="w-full"
                 onClick={() => navigate("/f3")}
+                disabled={!hasDraftData}
               >
                 Acessar F3
               </Button>
@@ -158,20 +193,20 @@ export default function Home() {
           <Card className="ppm-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Configurações
+                <Users className="w-5 h-5" />
+                Entrevistas
               </CardTitle>
               <CardDescription>
-                Configure as perguntas dos formulários
+                Gerencie todas as entrevistas realizadas
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/config")}
+                onClick={() => navigate("/entrevistas")}
               >
-                Acessar Configurações
+                Ver Entrevistas
               </Button>
             </CardContent>
           </Card>
@@ -180,10 +215,10 @@ export default function Home() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Download className="w-5 h-5" />
-                Resumo e Download
+                Exportar
               </CardTitle>
               <CardDescription>
-                Revisar respostas e baixar relatórios
+                Baixe relatórios e dados consolidados
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -192,11 +227,33 @@ export default function Home() {
                 className="w-full"
                 onClick={() => navigate("/resumo")}
               >
-                Ver Resumo
+                Exportar Dados
               </Button>
             </CardContent>
           </Card>
         </div>
+
+        {/* Configuration Card */}
+        <Card className="ppm-card mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="w-5 h-5" />
+              Configurações
+            </CardTitle>
+            <CardDescription>
+              Configure formulários e parâmetros do sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate("/config")}
+            >
+              Configurar Sistema
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

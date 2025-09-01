@@ -9,7 +9,8 @@ import { DraftBanner } from "@/components/DraftBanner";
 import { InterviewerFields } from "@/components/InterviewerFields";
 import { ProgressBar } from "@/components/ProgressBar";
 import { Question } from "@/components/Question";
-import { loadConfig, saveAnswers, loadAnswers, saveMeta, loadMeta, hasData, clearAnswersData } from "@/lib/storage";
+import { useInterview } from "@/hooks/useInterview";
+import { loadConfig } from "@/lib/storage";
 import type { FormSpec, PpmMeta, Answers, Lookups } from "@/lib/types";
 
 interface FormPageProps {
@@ -23,11 +24,22 @@ export function FormPage({ formId }: FormPageProps) {
   const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [hasDraftData, setHasDraftData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showValidation, setShowValidation] = useState(false); // Nova state para controlar validação
   const [lookups, setLookups] = useState<Lookups>({
     SISTEMAS_ESSENCIAIS: [],
     FERRAMENTAS_PPM: [],
     TIPOS_DADOS_SINCRONIZAR: []
   });
+
+  // Usar o hook de entrevista para gerenciar dados no banco
+  const { 
+    currentInterview, 
+    updateAnswers, 
+    updateMeta, 
+    clearDraft,
+    isSaving,
+    error 
+  } = useInterview();
 
   useEffect(() => {
     try {
@@ -47,9 +59,6 @@ export function FormPage({ formId }: FormPageProps) {
       }
 
       setForm(currentForm);
-      setAnswers(loadAnswers(formId));
-      setMeta(loadMeta());
-      setHasDraftData(hasData());
       setLookups(config.lookups || {
         SISTEMAS_ESSENCIAIS: [],
         FERRAMENTAS_PPM: [],
@@ -59,24 +68,47 @@ export function FormPage({ formId }: FormPageProps) {
     } catch (error) {
       console.error('Erro ao carregar dados do formulário:', error);
       setIsLoading(false);
-      // Em caso de erro, tentar navegar para configuração
       navigate("/config");
     }
   }, [formId, navigate]);
 
+  // Carregar respostas do banco de dados quando a entrevista atual mudar
+  useEffect(() => {
+    if (currentInterview) {
+      // Carregar respostas do formulário atual
+      const formAnswers = currentInterview[`${formId}Answers`] || {};
+      setAnswers(formAnswers);
+      
+      // Carregar metadados
+      setMeta({
+        is_interviewer: currentInterview.isInterviewer || false,
+        interviewerName: currentInterview.interviewerName || "",
+        respondentName: currentInterview.respondentName || "",
+        respondentDepartment: currentInterview.respondentDepartment || ""
+      });
+      
+      // Verificar se há dados salvos
+      setHasDraftData(Object.keys(formAnswers).length > 0);
+    }
+  }, [currentInterview, formId]);
+
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
-    saveAnswers(formId, newAnswers);
+    
+    // Salvar no banco de dados
+    updateAnswers(formId, newAnswers);
   };
 
   const handleMetaChange = (newMeta: PpmMeta) => {
     setMeta(newMeta);
-    saveMeta(newMeta);
+    
+    // Salvar no banco de dados
+    updateMeta(newMeta);
   };
 
   const handleClearDraft = () => {
-    clearAnswersData();
+    clearDraft();
     setAnswers({});
     setMeta({ is_interviewer: false });
     setHasDraftData(false);
@@ -115,6 +147,7 @@ export function FormPage({ formId }: FormPageProps) {
 
   // Função para verificar se uma pergunta específica tem erro
   const hasQuestionError = (questionId: string) => {
+    if (!showValidation) return false; // Só mostrar erro se validação estiver ativa
     if (!form) return false;
     const question = form.questions.find(q => q.id === questionId);
     if (!question || question.active === false) return false;
@@ -125,11 +158,23 @@ export function FormPage({ formId }: FormPageProps) {
 
   // Função para obter todas as perguntas com erro
   const getQuestionsWithErrors = () => {
+    if (!showValidation) return []; // Só mostrar erros se validação estiver ativa
     if (!form) return [];
     return form.questions
       .filter(q => q.active !== false)
       .filter(q => hasQuestionError(q.id))
       .map(q => q.id);
+  };
+
+  // Função para tentar avançar (ativa validação se necessário)
+  const handleNext = () => {
+    if (canProceed()) {
+      // Se pode avançar, navegar normalmente
+      navigate(getNextRoute());
+    } else {
+      // Se não pode avançar, ativar validação para mostrar erros
+      setShowValidation(true);
+    }
   };
 
   if (isLoading) {
@@ -171,7 +216,33 @@ export function FormPage({ formId }: FormPageProps) {
     );
   }
 
+  // Mostrar erro se houver problema com o banco de dados
+  if (error) {
+    return (
+      <Layout>
+        <div className="max-w-4xl mx-auto">
+          <Alert className="border-destructive bg-[hsl(var(--ppm-error-bg))]">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <p>Erro ao conectar com o banco de dados: {error.message}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                >
+                  Tentar Novamente
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </Layout>
+    );
+  }
+
   const progress = getProgress();
+  const questionsWithErrors = getQuestionsWithErrors();
 
   return (
     <Layout>
@@ -190,8 +261,24 @@ export function FormPage({ formId }: FormPageProps) {
               total={progress.total} 
               className="flex-1 max-w-xs"
             />
+            {isSaving && (
+              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Salvando...
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Mostrar alerta de validação se houver erros */}
+        {showValidation && questionsWithErrors.length > 0 && (
+          <Alert className="border-destructive bg-[hsl(var(--ppm-error-bg))] mb-6">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription>
+              <p>Por favor, responda todas as perguntas obrigatórias antes de continuar.</p>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Interviewer Fields */}
         <InterviewerFields meta={meta} onMetaChange={handleMetaChange} />
@@ -231,16 +318,16 @@ export function FormPage({ formId }: FormPageProps) {
           </Button>
 
           <div className="text-center">
-            {!canProceed() && (
-              <p className="text-sm text-muted-foreground mb-2">
-                Responda todas as perguntas para continuar
+            {!canProceed() && showValidation && (
+              <p className="text-sm text-destructive mb-2">
+                {questionsWithErrors.length} pergunta{questionsWithErrors.length !== 1 ? 's' : ''} obrigatória{questionsWithErrors.length !== 1 ? 's' : ''} não respondida{questionsWithErrors.length !== 1 ? 's' : ''}
               </p>
             )}
           </div>
 
           <Button
-            onClick={() => navigate(getNextRoute())}
-            disabled={!canProceed()}
+            onClick={handleNext}
+            disabled={isSaving}
             className="ppm-button-primary flex items-center gap-2"
           >
             {formId === "f3" ? "Finalizar" : "Próximo"}

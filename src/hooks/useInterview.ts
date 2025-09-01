@@ -27,6 +27,7 @@ export const analysisKeys = {
 export function useCurrentInterview() {
   const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const queryClient = useQueryClient();
 
   // Verificar se a API está online
   useEffect(() => {
@@ -155,6 +156,38 @@ export function useCurrentInterview() {
     }
   };
 
+  // Função para atualizar respostas (alias para saveFormAnswers)
+  const updateAnswers = saveFormAnswers;
+
+  // Função para atualizar metadados
+  const updateMeta = async (meta: PpmMeta) => {
+    try {
+      // Salvar no localStorage
+      saveMeta(meta);
+      
+      if (isOnline && currentInterviewId) {
+        // Atualizar no banco de dados
+        await interviewsApi.update(currentInterviewId, {
+          isInterviewer: meta.is_interviewer,
+          interviewerName: meta.interviewerName,
+          respondentName: meta.respondentName,
+          respondentDepartment: meta.respondentDepartment
+        });
+        
+        // Invalidar cache para refletir mudanças
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar metadados:', error);
+    }
+  };
+
+  // Função para limpar rascunho
+  const clearDraft = () => {
+    clearAnswersData();
+    setCurrentInterviewId(null);
+  };
+
   // Função para completar entrevista
   const completeInterview = async () => {
     try {
@@ -190,6 +223,9 @@ export function useCurrentInterview() {
     isCompleting: completeInterviewMutation.isPending,
     startInterview,
     saveFormAnswers,
+    updateAnswers,
+    updateMeta,
+    clearDraft,
     completeInterview,
     error: createInterviewMutation.error || saveAnswersMutation.error || completeInterviewMutation.error,
   };
