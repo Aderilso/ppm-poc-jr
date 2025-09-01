@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interviewsApi, configsApi, analysesApi, type ApiInterview } from '@/lib/api';
 import type { PpmMeta, Answers } from '@/lib/types';
+import { toast } from '@/hooks/use-toast';
 
 // Chaves para React Query
 export const interviewKeys = {
@@ -217,16 +218,33 @@ export function useInterview() {
       const hasF3 = currentInterviewData.f3Answers && Object.keys(currentInterviewData.f3Answers).length > 0;
       
       console.log("🔍 useInterview - Status dos formulários:", { hasF1, hasF2, hasF3 });
+      console.log("🔍 useInterview - Entrevista já concluída:", currentInterviewData.isCompleted);
       
-      // Se todos os formulários estão preenchidos, marcar como concluída
+      // Se todos os formulários estão preenchidos E não está concluída, marcar como concluída
       if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
         console.log("✅ useInterview - Todos os formulários preenchidos, marcando como concluída...");
-        await interviewsApi.complete(currentInterviewId);
-        console.log("✅ useInterview - Entrevista marcada como concluída!");
         
-        // Invalidar cache para refletir mudanças
-        queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        try {
+          await interviewsApi.complete(currentInterviewId);
+          console.log("✅ useInterview - Entrevista marcada como concluída com sucesso!");
+          
+          // Invalidar cache para refletir mudanças
+          queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+          queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+          
+          // Mostrar toast de sucesso
+          toast({
+            title: "Entrevista Concluída!",
+            description: "Todos os formulários foram preenchidos. Análise sendo gerada...",
+          });
+          
+        } catch (completeError) {
+          console.error('❌ useInterview - Erro ao marcar como concluída:', completeError);
+        }
+      } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
+        console.log("✅ useInterview - Entrevista já está concluída");
+      } else {
+        console.log("🔍 useInterview - Formulários ainda não estão todos preenchidos");
       }
     } catch (error) {
       console.error('❌ useInterview - Erro ao verificar/completar entrevista:', error);
