@@ -192,7 +192,8 @@ ppm-poc-jr/
 │   ├── index.js          # Servidor Express
 │   ├── init-db.js        # Script de inicialização
 │   └── package.json      # Dependências do backend
-├── setup-database.sh     # Script de instalação
+├── setup-database.sh     # Script de instalação (macOS/Linux)
+├── setup-database.bat    # Script de instalação (Windows)
 ├── ppm_forms_consolidado_v2_normalizado.json # Configuração padrão (raiz)
 └── public/ppm_forms_consolidado_v2_normalizado.json # Configuração padrão (web)
 ```
@@ -214,7 +215,10 @@ cd ppm-poc-jr
 npm install
 
 # Configure o banco de dados
+# macOS/Linux:
 ./setup-database.sh
+# Windows:
+setup-database.bat
 
 # OU configure manualmente:
 cd server
@@ -413,7 +417,8 @@ npm run db:init      # Inicializar banco
 
 ### Setup Automático
 ```bash
-./setup-database.sh  # Configuração completa do banco
+./setup-database.sh  # Configuração completa do banco (macOS/Linux)
+setup-database.bat   # Configuração completa do banco (Windows)
 ```
 
 ## 🤝 Contribuição

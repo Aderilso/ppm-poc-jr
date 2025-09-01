@@ -8,7 +8,8 @@ Este documento contém instruções específicas para analistas que vão usar o 
 
 ### 📁 Arquivos Incluídos no Projeto
 - ✅ **`ppm_forms_consolidado_v2_normalizado.json`** - Configuração padrão com todas as perguntas
-- ✅ **`setup-database.sh`** - Script de configuração automática do banco
+- ✅ **`setup-database.sh`** - Script de configuração automática do banco (macOS/Linux)
+- ✅ **`setup-database.bat`** - Script de configuração automática do banco (Windows)
 - ✅ **`README.md`** - Documentação completa do sistema
 - ✅ **`CHANGELOG.md`** - Histórico de mudanças
 
@@ -23,7 +24,10 @@ cd ppm-poc-jr
 npm install
 
 # Configure o banco de dados (IMPORTANTE!)
+# macOS/Linux:
 ./setup-database.sh
+# Windows:
+setup-database.bat
 
 # Inicie o servidor backend
 cd server && npm run dev
@@ -134,16 +138,26 @@ npm run dev
 **Solução**: Verifique se o backend está rodando em `http://localhost:3001`
 
 ### Banco de dados não funciona
-**Solução**: Execute `./setup-database.sh` novamente
+**Solução**: Execute `./setup-database.sh` (macOS/Linux) ou `setup-database.bat` (Windows) novamente
 
 ### Flash de erro ao carregar
 **Solução**: Normal, aguarde o carregamento completo
+
+### Erro "Failed to fetch"
+**Solução**: 
+- **macOS/Linux**: Execute `./diagnostico.sh` para diagnóstico rápido
+- **Windows**: Execute `diagnostico.bat` para diagnóstico rápido
 
 ## 📞 Suporte
 
 ### Logs de Erro
 - **Frontend**: Console do navegador (F12)
 - **Backend**: Terminal onde está rodando o servidor
+
+### Diagnóstico Rápido
+- **macOS/Linux**: Execute `./diagnostico.sh` para verificar status completo
+- **Windows**: Execute `diagnostico.bat` para verificar status completo
+- **Consulte**: `TROUBLESHOOTING.md` para soluções detalhadas
 
 ### Contatos
 - **Desenvolvedor**: Aderilso Junior
