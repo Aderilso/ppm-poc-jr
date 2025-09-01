@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, Download, FileText, CheckCircle, AlertCircle, Info } from "lucide-react";
-import { downloadCsvTemplate, importCsvData } from "@/lib/csvImport";
+import { downloadFormCsvTemplate, importCsvData } from "@/lib/csvImport";
 import { toast } from "@/hooks/use-toast";
 import type { PpmConfig } from "@/lib/types";
 
@@ -16,9 +16,9 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<{ success: boolean; message: string; count: number } | null>(null);
 
-  const handleDownloadTemplate = () => {
+  const handleDownloadTemplate = (formId: "f1" | "f2" | "f3") => {
     try {
-      const filename = downloadCsvTemplate(config);
+      const filename = downloadFormCsvTemplate(config, formId);
       toast({
         title: "Template baixado",
         description: `Arquivo ${filename} baixado com sucesso!`,
@@ -109,19 +109,32 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
           </AlertDescription>
         </Alert>
 
-        {/* Botão para baixar template */}
+        {/* Botões para baixar templates por formulário */}
         <div className="space-y-3">
-          <h3 className="font-medium">1. Baixar Template</h3>
-          <Button
-            variant="outline"
-            onClick={handleDownloadTemplate}
-            className="w-full"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Baixar Template CSV
-          </Button>
+          <h3 className="font-medium">1. Baixar Template por Formulário</h3>
+          <div className="grid md:grid-cols-3 gap-3">
+            {config.forms.map((form) => {
+              const activeQuestions = form.questions.filter(q => q.active !== false);
+              return (
+                <div key={form.id} className="space-y-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadTemplate(form.id)}
+                    className="w-full"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {form.id.toUpperCase()}
+                  </Button>
+                  <div className="text-xs text-muted-foreground text-center">
+                    <div className="font-medium">{form.title}</div>
+                    <div>{activeQuestions.length} perguntas ativas</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <p className="text-sm text-muted-foreground">
-            O template contém todas as perguntas ativas do questionário com exemplos de preenchimento.
+            Cada template contém as perguntas específicas do formulário com exemplos de preenchimento e opções de resposta.
           </p>
         </div>
 
@@ -196,12 +209,23 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
               </ul>
             </div>
             <div>
+              <strong>Estrutura do Template:</strong>
+              <ul className="list-disc list-inside ml-4 mt-1">
+                <li><strong>Linha 1:</strong> Cabeçalhos (IDs das colunas)</li>
+                <li><strong>Linha 2:</strong> Texto das perguntas</li>
+                <li><strong>Linha 3:</strong> Opções de resposta disponíveis</li>
+                <li><strong>Linha 5:</strong> Exemplo de preenchimento</li>
+                <li><strong>Linha 8+:</strong> Seus dados aqui</li>
+              </ul>
+            </div>
+            <div>
               <strong>Tipos de resposta:</strong>
               <ul className="list-disc list-inside ml-4 mt-1">
                 <li><strong>Escalas:</strong> Números (ex: 1, 2, 3, 4, 5)</li>
                 <li><strong>Sim/Não:</strong> "Sim", "Não" ou "Parcialmente"</li>
                 <li><strong>Múltipla escolha:</strong> Separar por ";" (ex: "Opção1;Opção2")</li>
                 <li><strong>Texto livre:</strong> Qualquer texto</li>
+                <li><strong>Listas:</strong> Escolher uma das opções mostradas na linha 3</li>
               </ul>
             </div>
           </div>

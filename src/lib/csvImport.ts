@@ -2,8 +2,16 @@ import type { PpmConfig, FormAnswers, PpmMeta } from "./types";
 import { saveAnswers, saveMeta } from "./storage";
 import { toast } from "@/hooks/use-toast";
 
-// Gerar template CSV para importação
-export function generateCsvTemplate(config: PpmConfig): string {
+// Gerar template CSV para um formulário específico
+export function generateFormCsvTemplate(config: PpmConfig, formId: "f1" | "f2" | "f3"): string {
+  const form = config.forms.find(f => f.id === formId);
+  if (!form) {
+    throw new Error(`Formulário ${formId} não encontrado`);
+  }
+
+  const activeQuestions = form.questions.filter(q => q.active !== false);
+  
+  // Cabeçalhos básicos
   const headers = [
     "respondent_name",
     "respondent_department", 
@@ -11,75 +19,170 @@ export function generateCsvTemplate(config: PpmConfig): string {
     "timestamp"
   ];
 
-  // Adicionar todas as perguntas ativas como colunas
-  config.forms.forEach(form => {
-    form.questions
-      .filter(q => q.active !== false)
-      .forEach(question => {
-        headers.push(`${question.id}`);
-      });
+  // Adicionar IDs das perguntas como colunas
+  activeQuestions.forEach(question => {
+    headers.push(question.id);
   });
 
-  // Criar linha de exemplo com instruções
-  const exampleRow = [
-    "Nome do Respondente",
+  // Linha com as perguntas (para facilitar o preenchimento)
+  const questionRow = [
+    "PERGUNTA →",
     "Departamento/Área",
-    "Nome do Entrevistador (opcional)",
+    "Entrevistador (opcional)",
+    "Data/Hora"
+  ];
+
+  activeQuestions.forEach(question => {
+    questionRow.push(question.pergunta);
+  });
+
+  // Linha com as opções de resposta
+  const optionsRow = [
+    "OPÇÕES →",
+    "Ex: TI, Finanças, RH...",
+    "Nome do entrevistador",
+    "AAAA-MM-DD HH:MM"
+  ];
+
+  activeQuestions.forEach(question => {
+    let options = "";
+    
+    switch (question.tipo) {
+      case "escala_1_5":
+        options = "1, 2, 3, 4, 5";
+        break;
+      case "escala_0_10":
+        options = "0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10";
+        break;
+      case "sim/não":
+        options = "Sim, Não";
+        break;
+      case "sim/não/parcialmente_+_campo_para_especificar_quais":
+        options = "Sim, Não, Parcialmente";
+        break;
+      case "multipla":
+        options = getQuestionOptions(question, config) || "Opção1;Opção2;Opção3 (separar por ;)";
+        break;
+      case "selecionar_1":
+        options = getQuestionOptions(question, config) || "Escolher uma opção";
+        break;
+      case "texto":
+        options = "Resposta em texto livre";
+        break;
+      case "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)":
+        options = "1, 2, 3 (ordem de prioridade)";
+        break;
+      default:
+        if (question.tipo.includes("lista_suspensa")) {
+          options = getQuestionOptions(question, config) || "Ver opções na pergunta";
+        } else {
+          options = "Conforme tipo da pergunta";
+        }
+    }
+    
+    optionsRow.push(options);
+  });
+
+  // Linha de exemplo preenchida
+  const exampleRow = [
+    "João Silva",
+    "TI",
+    "Maria Santos",
     new Date().toISOString().slice(0, 19).replace('T', ' ')
   ];
 
-  // Adicionar exemplos de respostas baseados no tipo de pergunta
-  config.forms.forEach(form => {
-    form.questions
-      .filter(q => q.active !== false)
-      .forEach(question => {
-        let example = "";
-        
-        switch (question.tipo) {
-          case "escala_1_5":
-            example = "3";
-            break;
-          case "escala_0_10":
-            example = "7";
-            break;
-          case "sim/não":
-            example = "Sim";
-            break;
-          case "sim/não/parcialmente_+_campo_para_especificar_quais":
-            example = "Parcialmente";
-            break;
-          case "multipla":
-            example = "Opção 1;Opção 2";
-            break;
-          case "selecionar_1":
-            example = "Opção escolhida";
-            break;
-          case "texto":
-            example = "Resposta em texto livre";
-            break;
-          default:
-            example = "Resposta conforme tipo da pergunta";
-        }
-        
-        exampleRow.push(example);
-      });
+  activeQuestions.forEach(question => {
+    let example = "";
+    
+    switch (question.tipo) {
+      case "escala_1_5":
+        example = "4";
+        break;
+      case "escala_0_10":
+        example = "8";
+        break;
+      case "sim/não":
+        example = "Sim";
+        break;
+      case "sim/não/parcialmente_+_campo_para_especificar_quais":
+        example = "Parcialmente";
+        break;
+      case "multipla":
+        example = "Opção1;Opção2";
+        break;
+      case "selecionar_1":
+        example = "Opção1";
+        break;
+      case "texto":
+        example = "Exemplo de resposta em texto";
+        break;
+      case "lista_de_priorização_(arrastar_e_soltar_ou_ranking_1_3)":
+        example = "2";
+        break;
+      default:
+        example = "Exemplo";
+    }
+    
+    exampleRow.push(example);
   });
 
-  // Montar CSV
+  // Montar CSV com múltiplas linhas explicativas
   const csvLines = [
     headers.join(","),
-    exampleRow.map(cell => `"${cell}"`).join(",")
+    questionRow.map(cell => `"${cell}"`).join(","),
+    optionsRow.map(cell => `"${cell}"`).join(","),
+    "", // Linha vazia para separar
+    "// EXEMPLO DE PREENCHIMENTO:",
+    exampleRow.map(cell => `"${cell}"`).join(","),
+    "", // Linha vazia
+    "// SEUS DADOS AQUI (apague as linhas de exemplo acima):"
   ];
 
   return csvLines.join("\n");
 }
 
-// Baixar template CSV
-export function downloadCsvTemplate(config: PpmConfig) {
-  const csvContent = generateCsvTemplate(config);
+// Função auxiliar para extrair opções de uma pergunta
+function getQuestionOptions(question: any, config: PpmConfig): string | null {
+  // Verificar se é uma lista suspensa com opções definidas
+  if (question.tipo.includes("lista_suspensa")) {
+    // Extrair opções do tipo da pergunta
+    const match = question.tipo.match(/\(([^)]+)\)/);
+    if (match) {
+      const options = match[1].split(',').map((opt: string) => opt.trim().replace(/_/g, ' '));
+      return options.join(", ");
+    }
+  }
+
+  // Verificar lookups
+  if (question.tipo.includes("SISTEMAS_ESSENCIAIS")) {
+    return config.lookups.SISTEMAS_ESSENCIAIS.join(", ");
+  }
+  if (question.tipo.includes("FERRAMENTAS_PPM")) {
+    return config.lookups.FERRAMENTAS_PPM.join(", ");
+  }
+  if (question.tipo.includes("TIPOS_DADOS_SINCRONIZAR")) {
+    return config.lookups.TIPOS_DADOS_SINCRONIZAR.join(", ");
+  }
+
+  return null;
+}
+
+// Gerar template CSV consolidado (mantido para compatibilidade)
+export function generateCsvTemplate(config: PpmConfig): string {
+  return generateFormCsvTemplate(config, "f1"); // Padrão para F1
+}
+
+// Baixar template CSV para formulário específico
+export function downloadFormCsvTemplate(config: PpmConfig, formId: "f1" | "f2" | "f3") {
+  const form = config.forms.find(f => f.id === formId);
+  if (!form) {
+    throw new Error(`Formulário ${formId} não encontrado`);
+  }
+
+  const csvContent = generateFormCsvTemplate(config, formId);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
-  const filename = `PPM_Template_Import_${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `PPM_Template_${formId.toUpperCase()}_${form.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
   
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob);
@@ -93,6 +196,11 @@ export function downloadCsvTemplate(config: PpmConfig) {
   }
   
   return filename;
+}
+
+// Baixar template CSV (mantido para compatibilidade)
+export function downloadCsvTemplate(config: PpmConfig) {
+  return downloadFormCsvTemplate(config, "f1");
 }
 
 // Parsear CSV importado
@@ -191,11 +299,20 @@ export function validateImportedData(rows: any[], config: PpmConfig): { valid: b
 }
 
 // Processar dados importados e salvar
-export function processImportedData(rows: any[], config: PpmConfig): { success: boolean; message: string; count: number } {
+export function processImportedData(rows: any[], config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): { success: boolean; message: string; count: number } {
   try {
     let processedCount = 0;
 
     rows.forEach((row, index) => {
+      // Pular linhas de exemplo/comentário
+      if (row.respondent_name?.startsWith("PERGUNTA") || 
+          row.respondent_name?.startsWith("OPÇÕES") || 
+          row.respondent_name?.startsWith("//") ||
+          row.respondent_name === "" ||
+          !row.respondent_name) {
+        return;
+      }
+
       // Extrair metadados
       const meta: PpmMeta = {
         is_interviewer: !!row.interviewer_name,
@@ -207,7 +324,12 @@ export function processImportedData(rows: any[], config: PpmConfig): { success: 
       // Extrair respostas por formulário
       const answers: FormAnswers = { f1: {}, f2: {}, f3: {} };
 
-      config.forms.forEach(form => {
+      // Se targetFormId for especificado, processar apenas esse formulário
+      const formsToProcess = targetFormId ? [config.forms.find(f => f.id === targetFormId)!] : config.forms;
+
+      formsToProcess.forEach(form => {
+        if (!form) return;
+        
         form.questions
           .filter(q => q.active !== false)
           .forEach(question => {
@@ -250,7 +372,7 @@ export function processImportedData(rows: any[], config: PpmConfig): { success: 
 }
 
 // Função principal de importação
-export async function importCsvData(file: File, config: PpmConfig): Promise<{ success: boolean; message: string; count: number }> {
+export async function importCsvData(file: File, config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): Promise<{ success: boolean; message: string; count: number }> {
   try {
     const csvContent = await file.text();
     const rows = parseCsvContent(csvContent);
@@ -264,7 +386,7 @@ export async function importCsvData(file: File, config: PpmConfig): Promise<{ su
       };
     }
 
-    return processImportedData(rows, config);
+    return processImportedData(rows, config, targetFormId);
     
   } catch (error) {
     return {
