@@ -86,12 +86,12 @@ export function FormPage({ formId }: FormPageProps) {
       const formAnswers = currentInterview[`${formId}Answers`] || {};
       setAnswers(formAnswers);
       
-      // Carregar metadados
+      // Carregar metadados - usar nomes corretos da interface PpmMeta
       setMeta({
         is_interviewer: currentInterview.isInterviewer || false,
-        interviewerName: currentInterview.interviewerName || "",
-        respondentName: currentInterview.respondentName || "",
-        respondentDepartment: currentInterview.respondentDepartment || ""
+        interviewer_name: currentInterview.interviewerName || "",
+        respondent_name: currentInterview.respondentName || "",
+        respondent_department: currentInterview.respondentDepartment || ""
       });
       
       // Verificar se há dados salvos

@@ -63,20 +63,22 @@ export function useInterview() {
     checkOnline();
   }, []);
 
-  // Buscar entrevista atual - simplificado
+  // Buscar entrevista atual - otimizado para evitar re-renderizações
   const { data: currentInterview, isLoading, error: queryError } = useQuery({
     queryKey: interviewKeys.detail(currentInterviewId || ''),
     queryFn: () => {
       console.log("🔍 useInterview: Buscando entrevista:", currentInterviewId);
       if (!currentInterviewId) {
-        throw new Error("ID da entrevista não fornecido");
+        console.log("⚠️ useInterview: Sem ID da entrevista, retornando null");
+        return null; // Retornar null em vez de throw error
       }
       return interviewsApi.getById(currentInterviewId);
     },
     enabled: !!currentInterviewId && isOnline,
     retry: 1,
     retryDelay: 1000,
-    staleTime: 30000,
+    staleTime: 30000, // 30 segundos
+    gcTime: 60000, // 1 minuto
   });
 
   // Log de erros para debug

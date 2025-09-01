@@ -6,9 +6,17 @@ import type { PpmMeta } from "@/lib/types";
 interface InterviewerFieldsProps {
   meta: PpmMeta;
   onMetaChange: (meta: PpmMeta) => void;
+  showValidation?: boolean;
 }
 
-export function InterviewerFields({ meta, onMetaChange }: InterviewerFieldsProps) {
+export function InterviewerFields({ meta, onMetaChange, showValidation = false }: InterviewerFieldsProps) {
+  // Função para verificar se um campo tem erro
+  const hasFieldError = (fieldName: keyof PpmMeta, value: string) => {
+    if (!showValidation) return false;
+    if (fieldName === 'is_interviewer') return false;
+    return !value || value.trim() === "";
+  };
+
   return (
     <div className="ppm-card p-4 mb-6 bg-[hsl(var(--ppm-gray))]">
       <div className="flex items-center space-x-2 mb-4">
@@ -38,7 +46,11 @@ export function InterviewerFields({ meta, onMetaChange }: InterviewerFieldsProps
               }
               placeholder="Seu nome"
               required
+              className={hasFieldError('interviewer_name', meta.interviewer_name || "") ? "border-destructive" : ""}
             />
+            {hasFieldError('interviewer_name', meta.interviewer_name || "") && (
+              <p className="text-sm text-destructive mt-1">Preencha este campo.</p>
+            )}
           </div>
           <div>
             <Label htmlFor="respondent_name" className="text-sm">
@@ -52,7 +64,11 @@ export function InterviewerFields({ meta, onMetaChange }: InterviewerFieldsProps
               }
               placeholder="Nome do entrevistado"
               required
+              className={hasFieldError('respondent_name', meta.respondent_name || "") ? "border-destructive" : ""}
             />
+            {hasFieldError('respondent_name', meta.respondent_name || "") && (
+              <p className="text-sm text-destructive mt-1">Preencha este campo.</p>
+            )}
           </div>
           <div>
             <Label htmlFor="respondent_department" className="text-sm">
@@ -66,7 +82,11 @@ export function InterviewerFields({ meta, onMetaChange }: InterviewerFieldsProps
               }
               placeholder="Departamento"
               required
+              className={hasFieldError('respondent_department', meta.respondent_department || "") ? "border-destructive" : ""}
             />
+            {hasFieldError('respondent_department', meta.respondent_department || "") && (
+              <p className="text-sm text-destructive mt-1">Preencha este campo.</p>
+            )}
           </div>
         </div>
       )}
