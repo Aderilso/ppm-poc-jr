@@ -136,9 +136,9 @@ export function useInterview() {
         // Atualizar no banco de dados
         await interviewsApi.update(currentInterviewId, {
           isInterviewer: meta.is_interviewer,
-          interviewerName: meta.interviewerName,
-          respondentName: meta.respondentName,
-          respondentDepartment: meta.respondentDepartment
+          interviewerName: meta.interviewer_name,
+          respondentName: meta.respondent_name,
+          respondentDepartment: meta.respondent_department
         });
         
         // Invalidar cache para refletir mudanças

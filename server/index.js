@@ -14,7 +14,10 @@ app.use(express.json());
 // Rotas para Entrevistas
 app.post('/api/interviews', async (req, res) => {
   try {
+    console.log('📝 POST /api/interviews - Dados recebidos:', req.body);
     const { isInterviewer, interviewerName, respondentName, respondentDepartment } = req.body;
+    
+    console.log('🔍 Dados extraídos:', { isInterviewer, interviewerName, respondentName, respondentDepartment });
     
     const interview = await prisma.interview.create({
       data: {
@@ -25,10 +28,12 @@ app.post('/api/interviews', async (req, res) => {
       }
     });
     
+    console.log('✅ Entrevista criada com sucesso:', interview);
     res.json(interview);
   } catch (error) {
-    console.error('Erro ao criar entrevista:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro ao criar entrevista:', error);
+    console.error('❌ Stack trace:', error.stack);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
   }
 });
 

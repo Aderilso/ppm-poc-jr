@@ -15,14 +15,26 @@ export default function Home() {
   const [isStartingInterview, setIsStartingInterview] = useState(false);
 
   // Usar o hook de entrevista
-  const { currentInterview, startInterview, isLoading, error } = useInterview();
+  const { currentInterview, startInterview, isLoading, error, isOnline } = useInterview();
+
+  console.log("🔍 Home - Estado atual:", {
+    currentInterview,
+    hasDraftData,
+    isStartingInterview,
+    isLoading,
+    error,
+    isOnline
+  });
 
   useEffect(() => {
     // Verificar se há uma entrevista em andamento
-    setHasDraftData(!!currentInterview);
+    const hasData = !!currentInterview;
+    console.log("🔍 Home - useEffect: hasData =", hasData);
+    setHasDraftData(hasData);
   }, [currentInterview]);
 
   const handleClearDraft = () => {
+    console.log("🧹 Home - Limpando rascunho");
     // Limpar entrevista atual
     if (currentInterview) {
       // Aqui você pode implementar a lógica para limpar a entrevista
@@ -32,15 +44,28 @@ export default function Home() {
   };
 
   const handleStartInterview = async () => {
+    console.log("🚀 Home - Iniciando entrevista...");
     try {
       setIsStartingInterview(true);
-      await startInterview();
+      console.log("🔍 Home - Chamando startInterview()...");
+      const result = await startInterview();
+      console.log("✅ Home - Entrevista iniciada com sucesso:", result);
       navigate("/f1");
     } catch (error) {
-      console.error('Erro ao iniciar entrevista:', error);
+      console.error('❌ Home - Erro ao iniciar entrevista:', error);
       // Mostrar erro para o usuário
     } finally {
       setIsStartingInterview(false);
+    }
+  };
+
+  const handleAccessForm = (formId: string) => {
+    console.log(`🔍 Home - Acessando formulário ${formId}`);
+    if (hasDraftData) {
+      navigate(`/${formId}`);
+    } else {
+      console.log("⚠️ Home - Sem dados de rascunho, iniciando nova entrevista...");
+      handleStartInterview();
     }
   };
 
@@ -87,6 +112,11 @@ export default function Home() {
                 "Iniciar Pesquisa"
               )}
             </Button>
+            {error && (
+              <p className="text-red-500 text-sm mt-2">
+                Erro: {error.message || 'Erro desconhecido'}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -107,7 +137,7 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={handleStartInterview}
+                onClick={() => handleAccessForm("f1")}
                 disabled={isStartingInterview || isLoading}
               >
                 {isStartingInterview ? (
@@ -137,8 +167,8 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/f2")}
-                disabled={!hasDraftData}
+                onClick={() => handleAccessForm("f2")}
+                disabled={isStartingInterview || isLoading}
               >
                 Acessar F2
               </Button>
@@ -160,8 +190,8 @@ export default function Home() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate("/f3")}
-                disabled={!hasDraftData}
+                onClick={() => handleAccessForm("f3")}
+                disabled={isStartingInterview || isLoading}
               >
                 Acessar F3
               </Button>
