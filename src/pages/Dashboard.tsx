@@ -32,6 +32,7 @@ import {
 import { Layout } from "@/components/Layout";
 import { useQuery } from "@tanstack/react-query";
 import { interviewsApi } from "@/lib/api";
+import { interviewKeys } from "@/hooks/useInterview";
 import type { ApiInterview } from "@/lib/api";
 
 interface DashboardMetric {
@@ -78,15 +79,29 @@ export default function Dashboard() {
 
   // Buscar entrevistas do banco de dados
   const { data: interviews = [], isLoading, refetch } = useQuery({
-    queryKey: ['interviews'],
+    queryKey: interviewKeys.lists(),
     queryFn: interviewsApi.getAll,
     refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
   useEffect(() => {
+    console.log("🔍 Dashboard - Entrevistas carregadas:", interviews.length);
     if (interviews.length > 0) {
+      console.log("🔍 Dashboard - Dados das entrevistas:", interviews.map(i => ({
+        id: i.id,
+        isCompleted: i.isCompleted,
+        hasF1: !!i.f1Answers,
+        hasF2: !!i.f2Answers,
+        hasF3: !!i.f3Answers,
+        createdAt: i.createdAt
+      })));
       calculateOperationalMetrics(interviews);
       calculateAnalyticalMetrics(interviews);
+    } else {
+      console.log("🔍 Dashboard - Nenhuma entrevista encontrada");
+      // Limpar métricas quando não há entrevistas
+      setOperationalMetrics(null);
+      setAnalyticalMetrics(null);
     }
   }, [interviews]);
 
