@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, FileText, CheckCircle, BarChart3 } from "lucide-react";
+import { Download, FileText, CheckCircle, BarChart3, Upload } from "lucide-react";
 import { Layout } from "@/components/Layout";
 import { AnalysisReport } from "@/components/AnalysisReport";
+import { CsvImport } from "@/components/CsvImport";
 import { loadConfig, loadConfigWithFallback, loadAnswers, loadMeta } from "@/lib/storage";
 import { generateCsvData, downloadCsv, generateFileName } from "@/lib/csv";
 import { analyzeAnswers } from "@/lib/analysis";
@@ -19,7 +20,7 @@ export default function Resumo() {
   const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
 
-  useEffect(() => {
+  const loadData = () => {
     const configData = loadConfig();
     setConfig(configData);
     const answersData = {
@@ -34,8 +35,22 @@ export default function Resumo() {
     if (configData && (Object.keys(answersData.f1).length > 0 || Object.keys(answersData.f2).length > 0 || Object.keys(answersData.f3).length > 0)) {
       const analysisResult = analyzeAnswers(configData, answersData);
       setAnalysis(analysisResult);
+    } else {
+      setAnalysis(null);
     }
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleImportSuccess = () => {
+    loadData(); // Recarregar dados após importação
+    toast({
+      title: "Dados atualizados",
+      description: "As respostas importadas estão agora disponíveis para visualização e análise.",
+    });
+  };
 
   const handleDownload = (formId: "f1" | "f2" | "f3" | "consolidado") => {
     if (!config) return;
@@ -145,7 +160,7 @@ export default function Resumo() {
         )}
 
         <Tabs defaultValue="analysis" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="analysis" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Análise e Scores
@@ -157,6 +172,10 @@ export default function Resumo() {
             <TabsTrigger value="downloads" className="flex items-center gap-2">
               <Download className="w-4 h-4" />
               Downloads
+            </TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Importar CSV
             </TabsTrigger>
           </TabsList>
 
@@ -274,6 +293,21 @@ export default function Resumo() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Importar CSV */}
+          <TabsContent value="import" className="mt-6">
+            {config ? (
+              <CsvImport config={config} onImportSuccess={handleImportSuccess} />
+            ) : (
+              <Card className="ppm-card">
+                <CardContent className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    Carregue uma configuração primeiro para importar dados CSV
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
