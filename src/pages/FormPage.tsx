@@ -186,11 +186,15 @@ export function FormPage({ formId }: FormPageProps) {
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
     
+    console.log(`📝 FormPage - Resposta alterada em ${formId}:`, { questionId, value });
+    
     // Salvar no banco de dados
     updateAnswers(formId, newAnswers);
   };
 
   const handleMetaChange = (newMeta: PpmMeta) => {
+    console.log(`📝 FormPage - Metadados alterados em ${formId}:`, newMeta);
+    
     setMeta(newMeta);
     
     // Salvar no banco de dados

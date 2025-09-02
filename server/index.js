@@ -119,6 +119,9 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
     const { id } = req.params;
     const { formId, answers } = req.body;
     
+    console.log(`📝 PUT /api/interviews/:id/answers - Salvando ${formId} na entrevista ${id}`);
+    console.log(`📊 Dados recebidos:`, { formId, answersCount: Object.keys(answers).length });
+    
     const updateData = {};
     updateData[`${formId}Answers`] = JSON.stringify(answers);
     
@@ -126,6 +129,9 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
       where: { id },
       data: updateData
     });
+    
+    console.log(`✅ ${formId} salvo com sucesso na entrevista ${id}`);
+    console.log(`📊 Total de respostas em ${formId}: ${Object.keys(answers).length}`);
     
     // Converter campos JSON de volta para objetos
     const interviewWithJson = {
@@ -138,7 +144,7 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
     
     res.json(interviewWithJson);
   } catch (error) {
-    console.error('Erro ao salvar respostas:', error);
+    console.error(`❌ Erro ao salvar ${formId}:`, error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

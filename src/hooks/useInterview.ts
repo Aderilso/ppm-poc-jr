@@ -254,16 +254,22 @@ export function useInterview() {
       console.log("🔍 useInterview - Status dos formulários:", { hasF1, hasF2, hasF3 });
       console.log("🔍 useInterview - Entrevista já concluída:", currentInterviewData.isCompleted);
       
-              // NÃO marcar como concluída automaticamente - só quando botão Finalizar for clicado
-        if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
-          console.log("✅ useInterview - Todos os formulários preenchidos, mas aguardando botão Finalizar");
-        } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
-          console.log("✅ useInterview - Entrevista já está concluída");
-        } else {
-          console.log("🔍 useInterview - Formulários ainda não estão todos preenchidos");
-        }
+      // Logs de progresso
+      if (hasF1) console.log("✅ useInterview - F1 preenchido!");
+      if (hasF2) console.log("✅ useInterview - F2 preenchido!");
+      if (hasF3) console.log("✅ useInterview - F3 preenchido!");
+      
+      // NÃO marcar como concluída automaticamente - só quando botão Finalizar for clicado
+      if (hasF1 && hasF2 && hasF3 && !currentInterviewData.isCompleted) {
+        console.log("🎯 useInterview - Todos os formulários preenchidos, mas aguardando botão Finalizar");
+        console.log("🚀 useInterview - Entrevista pronta para finalização!");
+      } else if (hasF1 && hasF2 && hasF3 && currentInterviewData.isCompleted) {
+        console.log("✅ useInterview - Entrevista já está concluída");
+      } else {
+        console.log("🔍 useInterview - Formulários ainda não estão todos preenchidos");
+      }
     } catch (error) {
-              console.error('❌ useInterview - Erro ao verificar status da entrevista:', error);
+      console.error('❌ useInterview - Erro ao verificar status da entrevista:', error);
     }
   };
 
