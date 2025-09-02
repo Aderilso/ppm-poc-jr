@@ -98,14 +98,18 @@ app.put('/api/interviews/:id', async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     
+    console.log('📝 PUT /api/interviews/:id - Atualizando entrevista:', id);
+    console.log('📝 Dados recebidos:', updateData);
+    
     const interview = await prisma.interview.update({
       where: { id },
       data: updateData
     });
     
+    console.log('✅ Entrevista atualizada com sucesso:', interview);
     res.json(interview);
   } catch (error) {
-    console.error('Erro ao atualizar entrevista:', error);
+    console.error('❌ Erro ao atualizar entrevista:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

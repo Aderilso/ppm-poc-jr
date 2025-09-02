@@ -90,6 +90,7 @@ export function FormPage({ formId }: FormPageProps) {
     
     if (currentInterview && currentInterview.id) {
       console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
+      console.log("🔍 FormPage - Dados completos da entrevista:", currentInterview);
       
       // Verificar se a entrevista tem dados reais E não está concluída
       const formAnswers = currentInterview[`${formId}Answers`] || {};
@@ -118,6 +119,16 @@ export function FormPage({ formId }: FormPageProps) {
       // Se estamos no F1 ou não há dados no F1, usar metadados atuais ou padrão
       const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
       
+      console.log("🔍 FormPage - Debug metadados:", {
+        formId,
+        hasF1Data,
+        f1Answers: currentInterview.f1Answers,
+        isInterviewer: currentInterview.isInterviewer,
+        interviewerName: currentInterview.interviewerName,
+        respondentName: currentInterview.respondentName,
+        respondentDepartment: currentInterview.respondentDepartment
+      });
+      
       if ((formId === "f2" || formId === "f3") && hasF1Data) {
         // F2 ou F3 com F1 preenchido: carregar metadados do banco
         const bankMeta = {
@@ -133,6 +144,12 @@ export function FormPage({ formId }: FormPageProps) {
         // F1 ou sem dados no F1: preservar metadados existentes se houver
         setMeta(prevMeta => {
           const hasExistingMeta = prevMeta.interviewer_name || prevMeta.respondent_name || prevMeta.respondent_department;
+          
+          console.log("🔍 FormPage - Verificando metadados existentes:", {
+            prevMeta,
+            hasExistingMeta,
+            isCompleted
+          });
           
           if (hasExistingMeta && !isCompleted) {
             // Preservar metadados existentes se a entrevista não estiver concluída
