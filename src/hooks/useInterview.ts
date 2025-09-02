@@ -274,19 +274,39 @@ export function useInterview() {
   const updateMeta = async (meta: PpmMeta) => {
     try {
       if (isOnline && currentInterviewId) {
+        console.log("🔍 useInterview - Atualizando metadados:", meta);
+        
         // Atualizar no banco de dados
-        await interviewsApi.update(currentInterviewId, {
+        const result = await interviewsApi.update(currentInterviewId, {
           isInterviewer: meta.is_interviewer,
           interviewerName: meta.interviewer_name,
           respondentName: meta.respondent_name,
           respondentDepartment: meta.respondent_department
         });
         
+        console.log("✅ useInterview - Metadados atualizados com sucesso:", result);
+        
         // Invalidar cache para refletir mudanças
         queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+        
+        // Forçar re-render dos componentes que usam os dados
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: interviewKeys.all });
+        }, 100);
+        
+      } else if (!currentInterviewId) {
+        console.log("⚠️ useInterview - Tentativa de atualizar metadados sem entrevista ativa");
+      } else {
+        console.log("❌ useInterview - Sistema offline, não foi possível atualizar metadados");
       }
     } catch (error) {
-      console.error('Erro ao atualizar metadados:', error);
+      console.error('❌ useInterview - Erro ao atualizar metadados:', error);
+      toast({
+        title: "Erro ao salvar metadados",
+        description: "Não foi possível salvar as informações do entrevistador. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
