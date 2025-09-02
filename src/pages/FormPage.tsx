@@ -115,33 +115,32 @@ export function FormPage({ formId }: FormPageProps) {
       }
       
       // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
-      // Se estamos no F2 ou F3 E o F1 tem dados, carregar metadados do banco
-      // Se estamos no F1 ou não há dados no F1, usar metadados atuais ou padrão
-      const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
+      // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
+      // Sempre carregar metadados do banco se houver entrevista ativa
+      // Preservar estado local apenas se não houver dados no banco
+      const bankMeta = {
+        is_interviewer: currentInterview.isInterviewer || false,
+        interviewer_name: currentInterview.interviewerName || "",
+        respondent_name: currentInterview.respondentName || "",
+        respondent_department: currentInterview.respondentDepartment || ""
+      };
       
       console.log("🔍 FormPage - Debug metadados:", {
         formId,
-        hasF1Data,
+        bankMeta,
         f1Answers: currentInterview.f1Answers,
-        isInterviewer: currentInterview.isInterviewer,
-        interviewerName: currentInterview.interviewerName,
-        respondentName: currentInterview.respondentName,
-        respondentDepartment: currentInterview.respondentDepartment
+        isCompleted
       });
       
-      if ((formId === "f2" || formId === "f3") && hasF1Data) {
-        // F2 ou F3 com F1 preenchido: carregar metadados do banco
-        const bankMeta = {
-          is_interviewer: currentInterview.isInterviewer || false,
-          interviewer_name: currentInterview.interviewerName || "",
-          respondent_name: currentInterview.respondentName || "",
-          respondent_department: currentInterview.respondentDepartment || ""
-        };
-        
-        console.log("🔄 FormPage - F1 preenchido, carregando metadados do banco para", formId, ":", bankMeta);
+      // Verificar se o banco tem metadados válidos
+      const hasBankMeta = bankMeta.interviewer_name || bankMeta.respondent_name || bankMeta.respondent_department;
+      
+      if (hasBankMeta && !isCompleted) {
+        // Banco tem metadados válidos: usar dados do banco
+        console.log("🔄 FormPage - Carregando metadados do banco para", formId, ":", bankMeta);
         setMeta(bankMeta);
       } else {
-        // F1 ou sem dados no F1: preservar metadados existentes se houver
+        // Banco não tem metadados ou entrevista concluída: preservar estado local se houver
         setMeta(prevMeta => {
           const hasExistingMeta = prevMeta.interviewer_name || prevMeta.respondent_name || prevMeta.respondent_department;
           
@@ -156,15 +155,9 @@ export function FormPage({ formId }: FormPageProps) {
             console.log("✅ FormPage - Preservando metadados existentes:", prevMeta);
             return prevMeta;
           } else {
-            // Carregar metadados do banco (nova entrevista ou entrevista concluída)
-            const currentMeta = {
-              is_interviewer: currentInterview.isInterviewer || false,
-              interviewer_name: currentInterview.interviewerName || "",
-              respondent_name: currentInterview.respondentName || "",
-              respondent_department: currentInterview.respondentDepartment || ""
-            };
-            console.log("🔄 FormPage - Carregando metadados do banco:", currentMeta);
-            return currentMeta;
+            // Usar metadados do banco (mesmo que vazios)
+            console.log("🔄 FormPage - Usando metadados do banco (vazios):", bankMeta);
+            return bankMeta;
           }
         });
       }
@@ -223,7 +216,7 @@ export function FormPage({ formId }: FormPageProps) {
     switch (formId) {
       case "f1": return "/f2";
       case "f2": return "/f3";
-      case "f3": return "/resumo";
+      case "f3": return "/dashboard"; // Mudança: F3 agora vai para Dashboard em vez de Resumo
       default: return "/";
     }
   };
