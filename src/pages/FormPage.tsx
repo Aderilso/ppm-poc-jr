@@ -113,28 +113,44 @@ export function FormPage({ formId }: FormPageProps) {
         setHasDraftData(false);
       }
       
-      // Carregar metadados - PRESERVAR dados existentes se já estiverem preenchidos
-      const currentMeta = {
-        is_interviewer: currentInterview.isInterviewer || false,
-        interviewer_name: currentInterview.interviewerName || "",
-        respondent_name: currentInterview.respondentName || "",
-        respondent_department: currentInterview.respondentDepartment || ""
-      };
+      // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
+      // Se estamos no F2 ou F3 E o F1 tem dados, carregar metadados do banco
+      // Se estamos no F1 ou não há dados no F1, usar metadados atuais ou padrão
+      const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
       
-      // Só atualizar metadados se não houver dados existentes ou se forem diferentes
-      setMeta(prevMeta => {
-        const hasExistingMeta = prevMeta.interviewer_name || prevMeta.respondent_name || prevMeta.respondent_department;
+      if ((formId === "f2" || formId === "f3") && hasF1Data) {
+        // F2 ou F3 com F1 preenchido: carregar metadados do banco
+        const bankMeta = {
+          is_interviewer: currentInterview.isInterviewer || false,
+          interviewer_name: currentInterview.interviewerName || "",
+          respondent_name: currentInterview.respondentName || "",
+          respondent_department: currentInterview.respondentDepartment || ""
+        };
         
-        if (hasExistingMeta && !isCompleted) {
-          // Preservar metadados existentes se a entrevista não estiver concluída
-          console.log("✅ FormPage - Preservando metadados existentes:", prevMeta);
-          return prevMeta;
-        } else {
-          // Carregar metadados do banco (nova entrevista ou entrevista concluída)
-          console.log("🔄 FormPage - Carregando metadados do banco:", currentMeta);
-          return currentMeta;
-        }
-      });
+        console.log("🔄 FormPage - F1 preenchido, carregando metadados do banco para", formId, ":", bankMeta);
+        setMeta(bankMeta);
+      } else {
+        // F1 ou sem dados no F1: preservar metadados existentes se houver
+        setMeta(prevMeta => {
+          const hasExistingMeta = prevMeta.interviewer_name || prevMeta.respondent_name || prevMeta.respondent_department;
+          
+          if (hasExistingMeta && !isCompleted) {
+            // Preservar metadados existentes se a entrevista não estiver concluída
+            console.log("✅ FormPage - Preservando metadados existentes:", prevMeta);
+            return prevMeta;
+          } else {
+            // Carregar metadados do banco (nova entrevista ou entrevista concluída)
+            const currentMeta = {
+              is_interviewer: currentInterview.isInterviewer || false,
+              interviewer_name: currentInterview.interviewerName || "",
+              respondent_name: currentInterview.respondentName || "",
+              respondent_department: currentInterview.respondentDepartment || ""
+            };
+            console.log("🔄 FormPage - Carregando metadados do banco:", currentMeta);
+            return currentMeta;
+          }
+        });
+      }
       
       // Limpar validação visual quando nova entrevista é carregada
       setShowValidation(false);
