@@ -3,21 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, FileText, CheckCircle, BarChart3, Upload } from "lucide-react";
+import { Download, FileText, Upload } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { AnalysisReport } from "@/components/AnalysisReport";
 import { CsvImport } from "@/components/CsvImport";
 import { generateCsvData, downloadCsv, generateFileName } from "@/lib/csv";
-import { analyzeAnswers } from "@/lib/analysis";
 import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
 import { consolidateFormInterviews, generateConsolidatedFormCsv, downloadConsolidatedFormCsv } from "@/lib/consolidatedFormExport";
 import { toast } from "@/hooks/use-toast";
 import { useInterview } from "@/hooks/useInterview";
 import { loadConfig } from "@/lib/storage";
-import type { PpmConfig, PpmMeta, FormAnswers, AnalysisResult } from "@/lib/types";
+import type { PpmConfig, PpmMeta, FormAnswers } from "@/lib/types";
 
 export default function Resumo() {
-  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [config, setConfig] = useState<PpmConfig | null>(null);
   
   // Usar hook do banco de dados para entrevista
@@ -55,14 +52,14 @@ export default function Resumo() {
       });
       
       // Gerar análise se há dados suficientes
-      if (Object.keys(formAnswers.f1).length > 0 || Object.keys(formAnswers.f2).length > 0 || Object.keys(formAnswers.f3).length > 0) {
-        console.log("🔍 Resumo - Gerando análise com dados:", formAnswers);
-        const analysisResult = analyzeAnswers(config, formAnswers);
-        setAnalysis(analysisResult);
-      } else {
-        console.log("🔍 Resumo - Sem dados suficientes para análise");
-        setAnalysis(null);
-      }
+      // if (Object.keys(formAnswers.f1).length > 0 || Object.keys(formAnswers.f2).length > 0 || Object.keys(formAnswers.f3).length > 0) {
+      //   console.log("🔍 Resumo - Gerando análise com dados:", formAnswers);
+      //   const analysisResult = analyzeAnswers(config, formAnswers);
+      //   setAnalysis(analysisResult);
+      // } else {
+      //   console.log("🔍 Resumo - Sem dados suficientes para análise");
+      //   setAnalysis(null);
+      // }
     }
   }, [currentInterview, config]);
 
@@ -197,12 +194,11 @@ export default function Resumo() {
         {/* Meta Information */}
         {currentMeta.is_interviewer && (
           <Card className="ppm-card mb-6 bg-[hsl(var(--ppm-gray))]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-accent" />
-                Informações da Entrevista
-              </CardTitle>
-            </CardHeader>
+                          <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Informações da Entrevista
+                </CardTitle>
+              </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
@@ -219,12 +215,8 @@ export default function Resumo() {
           </Card>
         )}
 
-        <Tabs defaultValue="analysis" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="analysis" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Análise e Scores
-            </TabsTrigger>
+        <Tabs defaultValue="downloads" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="downloads" className="flex items-center gap-2">
               <Download className="w-4 h-4" />
               Downloads
@@ -234,21 +226,6 @@ export default function Resumo() {
               Importar CSV
             </TabsTrigger>
           </TabsList>
-
-          {/* Análise com Pesos */}
-          <TabsContent value="analysis" className="mt-6">
-            {analysis ? (
-              <AnalysisReport analysis={analysis} />
-            ) : (
-              <Card className="ppm-card">
-                <CardContent className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    Responda pelo menos algumas perguntas para ver a análise detalhada
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
 
           {/* Downloads */}
           <TabsContent value="downloads" className="mt-6">
