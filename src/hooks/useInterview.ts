@@ -279,21 +279,45 @@ export function useInterview() {
   // Função para atualizar metadados
   const updateMeta = async (meta: PpmMeta) => {
     try {
-      if (isOnline && currentInterviewId) {
+      if (isOnline) {
         console.log("🔍 useInterview - Atualizando metadados:", meta);
         
-        // Atualizar no banco de dados
-        const result = await interviewsApi.update(currentInterviewId, {
-          isInterviewer: meta.is_interviewer,
-          interviewerName: meta.interviewer_name,
-          respondentName: meta.respondent_name,
-          respondentDepartment: meta.respondent_department
-        });
+        let interviewId = currentInterviewId;
         
-        console.log("✅ useInterview - Metadados atualizados com sucesso:", result);
+        // Se não há entrevista ativa, criar uma com os metadados
+        if (!interviewId) {
+          console.log("🆕 useInterview - Criando nova entrevista com metadados...");
+          
+          const result = await createInterviewMutation.mutateAsync({
+            isInterviewer: meta.is_interviewer,
+            interviewerName: meta.interviewer_name || "",
+            respondentName: meta.respondent_name || "",
+            respondentDepartment: meta.respondent_department || ""
+          });
+          
+          console.log("✅ useInterview - Entrevista criada com metadados:", result.id);
+          setCurrentInterviewId(result.id);
+          interviewId = result.id;
+          
+          // Invalidar cache para refletir nova entrevista
+          queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+        } else {
+          // Atualizar entrevista existente
+          console.log(`💾 useInterview - Salvando metadados da entrevista ${interviewId} no banco...`);
+          
+          const result = await interviewsApi.update(interviewId, {
+            isInterviewer: meta.is_interviewer,
+            interviewerName: meta.interviewer_name,
+            respondentName: meta.respondent_name,
+            respondentDepartment: meta.respondent_department
+          });
+          
+          console.log("✅ useInterview - Metadados atualizados com sucesso:", result);
+          console.log(`🎯 useInterview - Entrevista ${interviewId} - Metadados salvos no banco de dados!`);
+        }
         
         // Invalidar cache para refletir mudanças
-        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
         queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
         
         // Forçar re-render dos componentes que usam os dados
@@ -301,8 +325,6 @@ export function useInterview() {
           queryClient.invalidateQueries({ queryKey: interviewKeys.all });
         }, 100);
         
-      } else if (!currentInterviewId) {
-        console.log("⚠️ useInterview - Tentativa de atualizar metadados sem entrevista ativa");
       } else {
         console.log("❌ useInterview - Sistema offline, não foi possível atualizar metadados");
       }
