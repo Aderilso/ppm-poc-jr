@@ -29,13 +29,18 @@ app.post('/api/interviews', async (req, res) => {
       });
     }
     
+    // Log dos dados que serão salvos no banco
+    const dataToSave = {
+      isInterviewer,
+      interviewerName,
+      respondentName,
+      respondentDepartment,
+    };
+    
+    console.log('💾 Dados que serão salvos no banco:', dataToSave);
+    
     const interview = await prisma.interview.create({
-      data: {
-        isInterviewer,
-        interviewerName,
-        respondentName,
-        respondentDepartment,
-      }
+      data: dataToSave
     });
     
     console.log('✅ Entrevista criada com sucesso:', interview.id);
@@ -47,6 +52,15 @@ app.post('/api/interviews', async (req, res) => {
       respondentName: interview.respondentName,
       respondentDepartment: interview.respondentDepartment,
       createdAt: interview.createdAt
+    });
+    
+    // Verificar se os dados foram realmente salvos
+    console.log('🔍 Verificação pós-criação - Dados no banco:', {
+      id: interview.id,
+      isInterviewer: interview.isInterviewer,
+      interviewerName: interview.interviewerName,
+      respondentName: interview.respondentName,
+      respondentDepartment: interview.respondentDepartment
     });
     
     res.json(interview);
@@ -139,12 +153,30 @@ app.put('/api/interviews/:id', async (req, res) => {
     console.log('📝 PUT /api/interviews/:id - Atualizando entrevista:', id);
     console.log('📝 Dados recebidos:', updateData);
     
+    // Log detalhado dos metadados
+    if (updateData.interviewerName || updateData.respondentName || updateData.respondentDepartment) {
+      console.log('🔍 Metadados sendo atualizados:', {
+        isInterviewer: updateData.isInterviewer,
+        interviewerName: updateData.interviewerName,
+        respondentName: updateData.respondentName,
+        respondentDepartment: updateData.respondentDepartment
+      });
+    }
+    
     const interview = await prisma.interview.update({
       where: { id },
       data: updateData
     });
     
-    console.log('✅ Entrevista atualizada com sucesso:', interview);
+    console.log('✅ Entrevista atualizada com sucesso:', {
+      id: interview.id,
+      isInterviewer: interview.isInterviewer,
+      interviewerName: interview.interviewerName,
+      respondentName: interview.respondentName,
+      respondentDepartment: interview.respondentDepartment,
+      updatedAt: interview.updatedAt
+    });
+    
     res.json(interview);
   } catch (error) {
     console.error('❌ Erro ao atualizar entrevista:', error);
