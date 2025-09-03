@@ -25,9 +25,21 @@ export const analysisKeys = {
 
 // Hook para gerenciar entrevista atual
 export function useInterview() {
-  const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(true);
+  console.log("🚀 useInterview - HOOK INICIADO");
+  
   const queryClient = useQueryClient();
+  const [currentInterviewId, setCurrentInterviewId] = useState<string | null>(() => {
+    const stored = localStorage.getItem('currentInterviewId');
+    console.log("🔍 useInterview - currentInterviewId inicial:", stored);
+    return stored;
+  });
+  
+  console.log("🔍 useInterview - Estado atual:", {
+    currentInterviewId,
+    hasStoredId: !!localStorage.getItem('currentInterviewId')
+  });
+  
+  const [isOnline, setIsOnline] = useState(true);
 
   // Verificar se a API está online - APENAS verificar conexão, SEM buscar entrevistas automaticamente
   useEffect(() => {

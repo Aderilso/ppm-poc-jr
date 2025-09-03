@@ -28,8 +28,26 @@ export default function FormPage({ formId }: FormPageProps) {
     currentInterviewId,
     hasSaveFormAnswers: !!saveFormAnswers,
     hasUpdateMeta: !!updateMeta,
-    hasClearDraft: !!clearDraft
+    hasClearDraft: !!clearDraft,
+    currentInterviewObject: currentInterview
   });
+  
+  // VERIFICAÇÃO IMEDIATA DOS DADOS
+  if (currentInterview) {
+    console.log("🔍 FormPage - DADOS IMEDIATOS da entrevista:", {
+      id: currentInterview.id,
+      isInterviewer: currentInterview.isInterviewer,
+      interviewerName: currentInterview.interviewerName,
+      respondentName: currentInterview.respondentName,
+      respondentDepartment: currentInterview.respondentDepartment,
+      f1Answers: currentInterview.f1Answers,
+      f2Answers: currentInterview.f2Answers,
+      f3Answers: currentInterview.f3Answers,
+      isCompleted: currentInterview.isCompleted
+    });
+  } else {
+    console.log("❌ FormPage - NENHUMA ENTREVISTA ATIVA!");
+  }
 
   const [form, setForm] = useState<FormSpec | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
