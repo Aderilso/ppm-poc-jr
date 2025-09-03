@@ -175,22 +175,15 @@ export function useInterview() {
   // Função para criar entrevista quando necessário (chamada internamente)
   const createInterviewIfNeeded = async () => {
     if (currentInterviewId) {
+      console.log("✅ useInterview - Entrevista já existe:", currentInterviewId);
       return currentInterviewId; // Já existe uma entrevista
     }
 
-    console.log("🔍 useInterview - Criando entrevista (primeira vez que salva dados)...");
+    console.log("⚠️ useInterview - AVISO: Tentativa de criar entrevista sem metadados!");
+    console.log("💡 useInterview - Metadados devem ser salvos primeiro via updateMeta()");
     
-    const result = await createInterviewMutation.mutateAsync({
-      isInterviewer: false,
-      interviewerName: "",
-      respondentName: "",
-      respondentDepartment: ""
-    });
-    
-    console.log("✅ useInterview - Entrevista criada:", result.id);
-    setCurrentInterviewId(result.id);
-    
-    return result.id;
+    // NÃO criar entrevista aqui - deve ser criada via updateMeta
+    throw new Error("Entrevista deve ser criada via updateMeta() com metadados completos");
   };
 
   // Função para salvar respostas
@@ -199,11 +192,20 @@ export function useInterview() {
     
     try {
       if (isOnline) {
-        // Criar entrevista se não existir (primeira vez que salva dados)
-        const interviewId = await createInterviewIfNeeded();
+        // Verificar se existe uma entrevista ativa
+        if (!currentInterviewId) {
+          console.log("❌ useInterview - Nenhuma entrevista ativa para salvar respostas");
+          console.log("💡 useInterview - Metadados devem ser salvos primeiro via updateMeta()");
+          toast({
+            title: "Entrevista não iniciada",
+            description: "Preencha os dados do entrevistador primeiro para iniciar a entrevista.",
+            variant: "destructive",
+          });
+          return;
+        }
         
         // Verificar se a entrevista atual não está finalizada
-        const currentInterviewData = await interviewsApi.getById(interviewId);
+        const currentInterviewData = await interviewsApi.getById(currentInterviewId);
         
         if (currentInterviewData.isCompleted) {
           console.log("❌ useInterview - Entrevista já finalizada, não é possível salvar mais dados");
@@ -225,12 +227,12 @@ export function useInterview() {
         
         // Invalidar cache para refletir mudanças
         queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
         
         return result;
       } else {
-        console.log("❌ useInterview - Sistema offline, não foi possível salvar");
-        throw new Error('Sistema offline');
+        console.log("❌ useInterview - Sistema offline, não foi possível salvar respostas");
+        throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
     } catch (error) {
       console.error('❌ useInterview - Erro ao salvar respostas:', error);
@@ -294,15 +296,30 @@ export function useInterview() {
           respondentDepartment: meta.respondent_department
         });
         
+        // Verificar se há metadados válidos para criar entrevista
+        const hasValidMeta = meta.interviewer_name && meta.respondent_name && meta.respondent_department;
+        console.log("🔍 useInterview - Metadados válidos?", hasValidMeta, {
+          hasInterviewerName: !!meta.interviewer_name,
+          hasRespondentName: !!meta.respondent_name,
+          hasDepartment: !!meta.respondent_department
+        });
+        
         let interviewId = currentInterviewId;
 
         if (!interviewId) {
-          console.log("🆕 useInterview - Criando nova entrevista com metadados...");
+          // Só criar entrevista se houver metadados válidos
+          if (!hasValidMeta) {
+            console.log("⚠️ useInterview - Metadados insuficientes para criar entrevista, aguardando...");
+            console.log("💡 useInterview - Entrevista será criada quando todos os campos obrigatórios forem preenchidos");
+            return; // Não criar entrevista ainda
+          }
+          
+          console.log("🆕 useInterview - Criando nova entrevista com metadados válidos...");
           const result = await createInterviewMutation.mutateAsync({
             isInterviewer: meta.is_interviewer,
-            interviewerName: meta.interviewer_name || "",
-            respondentName: meta.respondent_name || "",
-            respondentDepartment: meta.respondent_department || ""
+            interviewerName: meta.interviewer_name,
+            respondentName: meta.respondent_name,
+            respondentDepartment: meta.respondent_department
           });
           console.log("✅ useInterview - Entrevista criada com metadados:", result.id);
           console.log("🔍 useInterview - Dados da entrevista criada:", {

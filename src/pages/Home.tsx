@@ -33,14 +33,20 @@ export default function Home() {
       const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
       const hasF2Data = currentInterview.f2Answers && Object.keys(currentInterview.f2Answers).length > 0;
       const hasF3Data = currentInterview.f3Answers && Object.keys(currentInterview.f3Answers).length > 0;
+      const hasMetaData = currentInterview.interviewerName || currentInterview.respondentName || currentInterview.respondentDepartment;
       const isCompleted = currentInterview.isCompleted;
       
-      const hasRealData = (hasF1Data || hasF2Data || hasF3Data) && !isCompleted;
+      // Considerar metadados como dados válidos também
+      const hasRealData = (hasF1Data || hasF2Data || hasF3Data || hasMetaData) && !isCompleted;
       console.log("🔍 Home - useEffect: hasRealData =", hasRealData, {
         hasF1Data,
         hasF2Data,
         hasF3Data,
-        isCompleted
+        hasMetaData,
+        isCompleted,
+        interviewerName: currentInterview.interviewerName,
+        respondentName: currentInterview.respondentName,
+        respondentDepartment: currentInterview.respondentDepartment
       });
       setHasDraftData(hasRealData);
     } else {
@@ -82,11 +88,11 @@ export default function Home() {
     console.log(`🔍 Home - Acessando formulário ${formId}`);
     console.log(`🔍 Home - Estado atual:`, { hasDraftData, currentInterview, formId });
     
-    if (hasDraftData) {
-      console.log(`✅ Home - Com dados de rascunho, navegando para /${formId}`);
+    if (hasDraftData || currentInterview) {
+      console.log(`✅ Home - Com dados de rascunho ou entrevista ativa, navegando para /${formId}`);
       navigate(`/${formId}`);
     } else {
-      console.log("⚠️ Home - Sem dados de rascunho, iniciando nova entrevista...");
+      console.log("⚠️ Home - Sem dados de rascunho nem entrevista ativa, iniciando nova entrevista...");
       try {
         setIsStartingInterview(true);
         console.log("🔍 Home - Chamando startInterview()...");
