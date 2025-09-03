@@ -176,6 +176,26 @@ export default function Entrevistas() {
         createdAt: i.createdAt
       }))
     });
+    
+    // Log mais visível para debug
+    if (interviews.length > 0) {
+      console.log('🎯 DEBUG VISÍVEL - Primeira entrevista:', interviews[0]);
+      console.log('🎯 DEBUG VISÍVEL - Todos os campos:', {
+        id: interviews[0].id,
+        isInterviewer: interviews[0].isInterviewer,
+        interviewerName: interviews[0].interviewerName,
+        respondentName: interviews[0].respondentName,
+        respondentDepartment: interviews[0].respondentDepartment,
+        isCompleted: interviews[0].isCompleted
+      });
+      
+      // ALERT FORÇADO PARA DEBUG
+      alert(`DEBUG: Primeira entrevista encontrada!
+ID: ${interviews[0].id}
+Respondente: "${interviews[0].respondentName || 'NULL'}"
+Departamento: "${interviews[0].respondentDepartment || 'NULL'}"
+Total de entrevistas: ${interviews.length}`);
+    }
   }, [interviews, isLoading, error]);
 
   // Debug: Log quando a página carrega

@@ -418,6 +418,27 @@ export function useInterviews() {
     error,
     dataLength: interviews?.length || 0
   });
+  
+  // Log mais visível para debug
+  if (interviews && interviews.length > 0) {
+    console.log('🎯 DEBUG VISÍVEL - useInterviews - Primeira entrevista:', interviews[0]);
+    console.log('🎯 DEBUG VISÍVEL - useInterviews - Campos da primeira entrevista:', {
+      id: interviews[0].id,
+      isInterviewer: interviews[0].isInterviewer,
+      interviewerName: interviews[0].interviewerName,
+      respondentName: interviews[0].respondentName,
+      respondentDepartment: interviews[0].respondentDepartment,
+      isCompleted: interviews[0].isCompleted
+    });
+    
+    // ALERT FORÇADO PARA DEBUG
+    alert(`DEBUG useInterviews: Dados recebidos!
+Total: ${interviews.length}
+Primeira entrevista:
+- ID: ${interviews[0].id}
+- Respondente: "${interviews[0].respondentName || 'NULL'}"
+- Departamento: "${interviews[0].respondentDepartment || 'NULL'}"`);
+  }
 
   const deleteInterviewMutation = useMutation({
     mutationFn: interviewsApi.delete,
