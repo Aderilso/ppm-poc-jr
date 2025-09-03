@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -159,6 +159,22 @@ export default function Entrevistas() {
   const { interviews, isLoading, error, deleteInterview, isDeleting } = useInterviews();
   const { analyses } = useAnalyses();
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
+
+  // Debug: Log dos dados recebidos
+  useEffect(() => {
+    console.log('🔍 Entrevistas - Dados recebidos:', {
+      totalInterviews: interviews.length,
+      interviews: interviews.map(i => ({
+        id: i.id,
+        isInterviewer: i.isInterviewer,
+        interviewerName: i.interviewerName,
+        respondentName: i.respondentName,
+        respondentDepartment: i.respondentDepartment,
+        isCompleted: i.isCompleted,
+        createdAt: i.createdAt
+      }))
+    });
+  }, [interviews]);
 
   const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja deletar esta entrevista? Esta ação não pode ser desfeita.")) {

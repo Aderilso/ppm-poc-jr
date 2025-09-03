@@ -19,6 +19,16 @@ app.post('/api/interviews', async (req, res) => {
     
     console.log('🔍 Dados extraídos:', { isInterviewer, interviewerName, respondentName, respondentDepartment });
     
+    // Validar se os dados estão corretos
+    if (isInterviewer && (!interviewerName || !respondentName || !respondentDepartment)) {
+      console.log('⚠️ AVISO: Entrevistador marcado mas dados incompletos:', {
+        isInterviewer,
+        hasInterviewerName: !!interviewerName,
+        hasRespondentName: !!respondentName,
+        hasDepartment: !!respondentDepartment
+      });
+    }
+    
     const interview = await prisma.interview.create({
       data: {
         isInterviewer,
@@ -28,7 +38,17 @@ app.post('/api/interviews', async (req, res) => {
       }
     });
     
-    console.log('✅ Entrevista criada com sucesso:', interview);
+    console.log('✅ Entrevista criada com sucesso:', interview.id);
+    console.log('🎯 Entrevista X salva no banco de dados - Metadados salvos no banco de dados!');
+    console.log('📊 Detalhes da entrevista criada:', {
+      id: interview.id,
+      isInterviewer: interview.isInterviewer,
+      interviewerName: interview.interviewerName,
+      respondentName: interview.respondentName,
+      respondentDepartment: interview.respondentDepartment,
+      createdAt: interview.createdAt
+    });
+    
     res.json(interview);
   } catch (error) {
     console.error('❌ Erro ao criar entrevista:', error);
@@ -39,8 +59,25 @@ app.post('/api/interviews', async (req, res) => {
 
 app.get('/api/interviews', async (req, res) => {
   try {
+    console.log('🔍 GET /api/interviews - Buscando todas as entrevistas...');
+    
     const interviews = await prisma.interview.findMany({
       orderBy: { createdAt: 'desc' }
+    });
+    
+    console.log(`📊 Total de entrevistas encontradas: ${interviews.length}`);
+    
+    // Log detalhado de cada entrevista
+    interviews.forEach((interview, index) => {
+      console.log(`📋 Entrevista ${index + 1}:`, {
+        id: interview.id,
+        isInterviewer: interview.isInterviewer,
+        interviewerName: interview.interviewerName,
+        respondentName: interview.respondentName,
+        respondentDepartment: interview.respondentDepartment,
+        createdAt: interview.createdAt,
+        isCompleted: interview.isCompleted
+      });
     });
     
     // Converter campos JSON de volta para objetos
@@ -52,9 +89,10 @@ app.get('/api/interviews', async (req, res) => {
       configSnapshot: interview.configSnapshot ? JSON.parse(interview.configSnapshot) : null
     }));
     
+    console.log('✅ Entrevistas retornadas com sucesso');
     res.json(interviewsWithJson);
   } catch (error) {
-    console.error('Erro ao buscar entrevistas:', error);
+    console.error('❌ Erro ao buscar entrevistas:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
