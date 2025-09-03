@@ -217,7 +217,9 @@ export default function Entrevistas() {
         // AGUARDAR UM POUCO ANTES DE NAVEGAR
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        navigate(nextForm); // Usar window.location para garantir navegação
+        // FORÇAR RELOAD COMPLETO DA PÁGINA PARA GARANTIR EXECUÇÃO DO FORMPAGE
+        console.log("�� Entrevistas - Forçando reload completo para:", nextForm);
+        window.location.href = nextForm;
       }
     } catch (error) {
       console.error("❌ Entrevistas - Erro ao retomar entrevista:", error);
