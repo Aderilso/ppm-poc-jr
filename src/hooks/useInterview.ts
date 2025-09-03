@@ -276,65 +276,72 @@ export function useInterview() {
   // Função para atualizar respostas (alias para saveFormAnswers)
   const updateAnswers = saveFormAnswers;
 
-  // Função para atualizar metadados
+  // Função para atualizar metadados da entrevista
   const updateMeta = async (meta: PpmMeta) => {
     try {
       if (isOnline) {
         console.log("🔍 useInterview - Atualizando metadados:", meta);
+        console.log("🔍 useInterview - Tipo dos dados:", {
+          isInterviewer: typeof meta.is_interviewer,
+          interviewerName: typeof meta.interviewer_name,
+          respondentName: typeof meta.respondent_name,
+          respondentDepartment: typeof meta.respondent_department
+        });
+        console.log("🔍 useInterview - Valores dos dados:", {
+          isInterviewer: meta.is_interviewer,
+          interviewerName: meta.interviewer_name,
+          respondentName: meta.respondent_name,
+          respondentDepartment: meta.respondent_department
+        });
         
         let interviewId = currentInterviewId;
-        
-        // Se não há entrevista ativa, criar uma com os metadados
+
         if (!interviewId) {
           console.log("🆕 useInterview - Criando nova entrevista com metadados...");
-          
           const result = await createInterviewMutation.mutateAsync({
             isInterviewer: meta.is_interviewer,
             interviewerName: meta.interviewer_name || "",
             respondentName: meta.respondent_name || "",
             respondentDepartment: meta.respondent_department || ""
           });
-          
           console.log("✅ useInterview - Entrevista criada com metadados:", result.id);
+          console.log("🔍 useInterview - Dados da entrevista criada:", {
+            id: result.id,
+            isInterviewer: result.isInterviewer,
+            interviewerName: result.interviewerName,
+            respondentName: result.respondentName,
+            respondentDepartment: result.respondentDepartment
+          });
           setCurrentInterviewId(result.id);
           interviewId = result.id;
-          
-          // Invalidar cache para refletir nova entrevista
           queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
         } else {
-          // Atualizar entrevista existente
           console.log(`💾 useInterview - Salvando metadados da entrevista ${interviewId} no banco...`);
-          
           const result = await interviewsApi.update(interviewId, {
             isInterviewer: meta.is_interviewer,
             interviewerName: meta.interviewer_name,
             respondentName: meta.respondent_name,
             respondentDepartment: meta.respondent_department
           });
-          
           console.log("✅ useInterview - Metadados atualizados com sucesso:", result);
+          console.log("🔍 useInterview - Dados da entrevista atualizada:", {
+            id: result.id,
+            isInterviewer: result.isInterviewer,
+            interviewerName: result.interviewerName,
+            respondentName: result.respondentName,
+            respondentDepartment: result.respondentDepartment
+          });
           console.log(`🎯 useInterview - Entrevista ${interviewId} - Metadados salvos no banco de dados!`);
         }
-        
-        // Invalidar cache para refletir mudanças
         queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
         queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
-        
-        // Forçar re-render dos componentes que usam os dados
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: interviewKeys.all });
-        }, 100);
-        
+        setTimeout(() => { queryClient.invalidateQueries({ queryKey: interviewKeys.all }); }, 100);
       } else {
         console.log("❌ useInterview - Sistema offline, não foi possível atualizar metadados");
       }
     } catch (error) {
-      console.error('❌ useInterview - Erro ao atualizar metadados:', error);
-      toast({
-        title: "Erro ao salvar metadados",
-        description: "Não foi possível salvar as informações do entrevistador. Tente novamente.",
-        variant: "destructive",
-      });
+      console.error("❌ useInterview - Erro ao atualizar metadados:", error);
+      throw error;
     }
   };
 
