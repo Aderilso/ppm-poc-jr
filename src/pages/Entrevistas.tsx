@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -163,6 +164,7 @@ export default function Entrevistas() {
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isResumingInterview, setIsResumingInterview] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Função para atualizar status das entrevistas
   const handleUpdateStatuses = async () => {
@@ -179,6 +181,23 @@ export default function Entrevistas() {
     setIsResumingInterview(interviewId);
     try {
       console.log("🔄 Entrevistas - Retomando entrevista:", interviewId);
+      
+      // TESTE: Verificar dados antes de retomar
+      const testResponse = await fetch(`/api/interviews/${interviewId}`);
+      if (testResponse.ok) {
+        const testData = await testResponse.json();
+        console.log("🧪 Entrevistas - Dados da API ANTES de retomar:", {
+          id: testData.id,
+          isInterviewer: testData.isInterviewer,
+          interviewerName: testData.interviewerName,
+          respondentName: testData.respondentName,
+          respondentDepartment: testData.respondentDepartment,
+          f1AnswersCount: testData.f1Answers ? Object.keys(testData.f1Answers).length : 0,
+          f2AnswersCount: testData.f2Answers ? Object.keys(testData.f2Answers).length : 0,
+          f3AnswersCount: testData.f3Answers ? Object.keys(testData.f3Answers).length : 0
+        });
+      }
+      
       await resumeInterview(interviewId);
       
       // Navegar para o próximo formulário não preenchido
@@ -194,7 +213,11 @@ export default function Entrevistas() {
         }
         
         console.log("🎯 Entrevistas - Navegando para:", nextForm);
-        window.location.href = nextForm; // Usar window.location para garantir navegação
+        
+        // AGUARDAR UM POUCO ANTES DE NAVEGAR
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        navigate(nextForm); // Usar window.location para garantir navegação
       }
     } catch (error) {
       console.error("❌ Entrevistas - Erro ao retomar entrevista:", error);
