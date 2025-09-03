@@ -85,7 +85,8 @@ export function FormPage({ formId }: FormPageProps) {
       currentInterview: currentInterview?.id, 
       formId,
       hasRealData: currentInterview ? Object.keys(currentInterview[`${formId}Answers`] || {}).length > 0 : false,
-      isCompleted: currentInterview?.isCompleted
+      isCompleted: currentInterview?.isCompleted,
+      currentInterviewObject: currentInterview
     });
     
     if (currentInterview && currentInterview.id) {
@@ -102,6 +103,14 @@ export function FormPage({ formId }: FormPageProps) {
       const formAnswers = currentInterview[`${formId}Answers`] || {};
       const hasRealData = Object.keys(formAnswers).length > 0;
       const isCompleted = currentInterview.isCompleted;
+      
+      console.log("🔍 FormPage - Status da entrevista:", {
+        formId,
+        hasRealData,
+        isCompleted,
+        formAnswers,
+        formAnswersKeys: Object.keys(formAnswers)
+      });
       
       // NOVA LÓGICA: Carregar dados de TODOS os formulários quando retomar entrevista
       if (!isCompleted) {
@@ -152,7 +161,8 @@ export function FormPage({ formId }: FormPageProps) {
         formId,
         bankMeta,
         f1Answers: currentInterview.f1Answers,
-        isCompleted
+        isCompleted,
+        currentMeta: meta
       });
       
       // SIMPLIFICAÇÃO: Sempre carregar metadados do banco quando há entrevista ativa
@@ -162,7 +172,11 @@ export function FormPage({ formId }: FormPageProps) {
         
         // FORÇAR RE-RENDER DOS COMPONENTES
         setTimeout(() => {
-          setMeta(prevMeta => ({ ...bankMeta }));
+          console.log("⏰ FormPage - Timeout executado, forçando re-render");
+          setMeta(prevMeta => {
+            console.log("🔄 FormPage - setMeta executado:", { prevMeta, newMeta: bankMeta });
+            return { ...bankMeta };
+          });
           console.log("✅ FormPage - Metadados forçados após timeout:", bankMeta);
         }, 100);
       } else {
