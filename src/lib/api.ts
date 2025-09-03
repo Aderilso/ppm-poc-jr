@@ -1,4 +1,14 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Configuração da API baseada no ambiente
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = isDevelopment 
+  ? '/api'  // Usar proxy do Vite em desenvolvimento
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001/api');
+
+console.log('🔧 API - Configuração:', {
+  isDevelopment,
+  API_BASE_URL,
+  VITE_API_URL: import.meta.env.VITE_API_URL
+});
 
 // Tipos para a API
 export interface ApiInterview {
