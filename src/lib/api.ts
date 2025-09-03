@@ -114,17 +114,6 @@ export const interviewsApi = {
         }))
       });
       
-      // ALERT FORÇADO PARA DEBUG
-      if (data.length > 0) {
-        alert(`DEBUG API: Dados retornados do backend!
-Total: ${data.length}
-Primeira entrevista:
-- ID: ${data[0].id}
-- Respondente: "${data[0].respondentName || 'NULL'}"
-- Departamento: "${data[0].respondentDepartment || 'NULL'}"
-- isInterviewer: ${data[0].isInterviewer}`);
-      }
-      
       return data;
     }).catch(error => {
       console.error('❌ API - interviewsApi.getAll erro:', error);

@@ -188,13 +188,6 @@ export default function Entrevistas() {
         respondentDepartment: interviews[0].respondentDepartment,
         isCompleted: interviews[0].isCompleted
       });
-      
-      // ALERT FORÇADO PARA DEBUG
-      alert(`DEBUG: Primeira entrevista encontrada!
-ID: ${interviews[0].id}
-Respondente: "${interviews[0].respondentName || 'NULL'}"
-Departamento: "${interviews[0].respondentDepartment || 'NULL'}"
-Total de entrevistas: ${interviews.length}`);
     }
   }, [interviews, isLoading, error]);
 

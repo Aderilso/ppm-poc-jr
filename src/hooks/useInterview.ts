@@ -437,14 +437,6 @@ export function useInterviews() {
       respondentDepartment: interviews[0].respondentDepartment,
       isCompleted: interviews[0].isCompleted
     });
-    
-    // ALERT FORÇADO PARA DEBUG
-    alert(`DEBUG useInterviews: Dados recebidos!
-Total: ${interviews.length}
-Primeira entrevista:
-- ID: ${interviews[0].id}
-- Respondente: "${interviews[0].respondentName || 'NULL'}"
-- Departamento: "${interviews[0].respondentDepartment || 'NULL'}"`);
   }
 
   const deleteInterviewMutation = useMutation({
