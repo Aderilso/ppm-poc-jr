@@ -15,10 +15,11 @@ import {
   Calendar,
   User,
   Building,
-  AlertTriangle
+  AlertTriangle,
+  Play
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { useInterviews, useAnalyses } from "@/hooks/useInterview";
+import { useInterviews, useAnalyses, useInterview } from "@/hooks/useInterview";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -158,8 +159,10 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
 export default function Entrevistas() {
   const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses } = useInterviews();
   const { analyses } = useAnalyses(); // Manter para não quebrar funcionalidades
+  const { resumeInterview } = useInterview(); // Hook para retomar entrevista
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isResumingInterview, setIsResumingInterview] = useState<string | null>(null);
 
   // Função para atualizar status das entrevistas
   const handleUpdateStatuses = async () => {
@@ -168,6 +171,36 @@ export default function Entrevistas() {
       await updateInterviewStatuses();
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  // Função para retomar uma entrevista
+  const handleResumeInterview = async (interviewId: string) => {
+    setIsResumingInterview(interviewId);
+    try {
+      console.log("🔄 Entrevistas - Retomando entrevista:", interviewId);
+      await resumeInterview(interviewId);
+      
+      // Navegar para o próximo formulário não preenchido
+      const interview = interviews.find(i => i.id === interviewId);
+      if (interview) {
+        let nextForm = "/f1";
+        if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
+          if (interview.f2Answers && Object.keys(interview.f2Answers).length > 0) {
+            nextForm = "/f3"; // F1 e F2 preenchidos, ir para F3
+          } else {
+            nextForm = "/f2"; // Só F1 preenchido, ir para F2
+          }
+        }
+        
+        console.log("🎯 Entrevistas - Navegando para:", nextForm);
+        window.location.href = nextForm; // Usar window.location para garantir navegação
+      }
+    } catch (error) {
+      console.error("❌ Entrevistas - Erro ao retomar entrevista:", error);
+      alert(`Erro ao retomar entrevista: ${error.message}`);
+    } finally {
+      setIsResumingInterview(null);
     }
   };
 
@@ -386,6 +419,30 @@ export default function Entrevistas() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            
+                            {/* Botão Retomar Entrevista - só para entrevistas em andamento */}
+                            {!interview.isCompleted && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleResumeInterview(interview.id)}
+                                disabled={isResumingInterview === interview.id}
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                              >
+                                {isResumingInterview === interview.id ? (
+                                  <>
+                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-green-600" />
+                                    Retomando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-4 w-4" />
+                                    Retomar
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                            
                             <Button
                               variant="outline"
                               size="sm"

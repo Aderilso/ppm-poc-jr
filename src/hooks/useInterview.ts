@@ -393,6 +393,48 @@ export function useInterview() {
     console.log("✅ useInterview - Estado limpo completamente");
   };
 
+  // Função para retomar uma entrevista específica
+  const resumeInterview = async (interviewId: string) => {
+    try {
+      if (!isOnline) {
+        throw new Error('Sistema offline. Conecte-se à internet para continuar.');
+      }
+
+      console.log("🔄 useInterview - Retomando entrevista:", interviewId);
+      
+      // Buscar dados da entrevista
+      const interview = await interviewsApi.getById(interviewId);
+      
+      if (!interview) {
+        throw new Error('Entrevista não encontrada');
+      }
+      
+      if (interview.isCompleted) {
+        throw new Error('Esta entrevista já foi concluída');
+      }
+      
+      // Definir como entrevista atual
+      setCurrentInterviewId(interviewId);
+      
+      console.log("✅ useInterview - Entrevista retomada com sucesso:", interviewId);
+      console.log("📊 useInterview - Status da entrevista:", {
+        f1Answers: interview.f1Answers ? Object.keys(interview.f1Answers).length : 0,
+        f2Answers: interview.f2Answers ? Object.keys(interview.f2Answers).length : 0,
+        f3Answers: interview.f3Answers ? Object.keys(interview.f3Answers).length : 0,
+        isCompleted: interview.isCompleted
+      });
+      
+      // Invalidar cache para carregar dados atualizados
+      queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
+      queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+      
+      return interview;
+    } catch (error) {
+      console.error('❌ useInterview - Erro ao retomar entrevista:', error);
+      throw error;
+    }
+  };
+
   // Função para completar entrevista
   const completeInterview = async () => {
     try {
@@ -421,6 +463,7 @@ export function useInterview() {
     updateMeta,
     clearDraft: clearCurrentInterview,
     completeInterview,
+    resumeInterview,
     error: createInterviewMutation.error || saveAnswersMutation.error || queryError,
   };
 }
