@@ -119,25 +119,16 @@ export function FormPage({ formId }: FormPageProps) {
           hasAnyData
         });
         
+        // FORÇAR CARREGAMENTO DOS DADOS DO FORMULÁRIO ATUAL
+        console.log(`🔄 FormPage - Forçando carregamento de dados para ${formId}:`, formAnswers);
+        setAnswers(formAnswers);
+        
         if (hasAnyData) {
-          // Entrevista em andamento com dados - carregar dados do formulário atual
-          if (hasRealData) {
-            // Formulário atual tem dados - carregar normalmente
-            setAnswers(formAnswers);
-            setHasDraftData(true);
-            console.log("✅ FormPage - Dados do formulário atual carregados:", formId, currentInterview.id);
-          } else {
-            // Formulário atual não tem dados - limpar campos para novo preenchimento
-            setAnswers({});
-            setHasDraftData(false);
-            console.log("🧹 FormPage - Formulário atual limpo para novo preenchimento:", formId);
-          }
-          
           // IMPORTANTE: Marcar que há dados de entrevista em andamento
           setHasDraftData(true);
+          console.log("✅ FormPage - Entrevista em andamento detectada");
         } else {
           // Nova entrevista sem dados
-          setAnswers({});
           setHasDraftData(false);
           console.log("🧹 FormPage - Nova entrevista sem dados, limpando campos");
         }
@@ -149,7 +140,7 @@ export function FormPage({ formId }: FormPageProps) {
       }
       
       // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
-      // Sempre carregar metadados do banco se houver entrevista ativa
+      // FORÇAR CARREGAMENTO DOS METADADOS
       const bankMeta = {
         is_interviewer: currentInterview.isInterviewer || false,
         interviewer_name: currentInterview.interviewerName || "",
@@ -166,8 +157,14 @@ export function FormPage({ formId }: FormPageProps) {
       
       // SIMPLIFICAÇÃO: Sempre carregar metadados do banco quando há entrevista ativa
       if (!isCompleted) {
-        console.log("🔄 FormPage - Carregando metadados do banco para", formId, ":", bankMeta);
+        console.log("🔄 FormPage - FORÇANDO carregamento de metadados do banco para", formId, ":", bankMeta);
         setMeta(bankMeta);
+        
+        // FORÇAR RE-RENDER DOS COMPONENTES
+        setTimeout(() => {
+          setMeta(prevMeta => ({ ...bankMeta }));
+          console.log("✅ FormPage - Metadados forçados após timeout:", bankMeta);
+        }, 100);
       } else {
         // Entrevista concluída - limpar metadados
         console.log("🧹 FormPage - Entrevista concluída, limpando metadados");
