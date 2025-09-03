@@ -402,7 +402,11 @@ export function useInterview() {
 
       console.log("🔄 useInterview - Retomando entrevista:", interviewId);
       
-      // Buscar dados da entrevista
+      // Primeiro, limpar qualquer cache existente
+      queryClient.removeQueries({ queryKey: interviewKeys.all });
+      queryClient.clear();
+      
+      // Buscar dados da entrevista diretamente da API
       const interview = await interviewsApi.getById(interviewId);
       
       if (!interview) {
@@ -413,8 +417,28 @@ export function useInterview() {
         throw new Error('Esta entrevista já foi concluída');
       }
       
+      console.log("🔍 useInterview - Dados da entrevista retomada:", {
+        id: interview.id,
+        isInterviewer: interview.isInterviewer,
+        interviewerName: interview.interviewerName,
+        respondentName: interview.respondentName,
+        respondentDepartment: interview.respondentDepartment,
+        f1AnswersCount: interview.f1Answers ? Object.keys(interview.f1Answers).length : 0,
+        f2AnswersCount: interview.f2Answers ? Object.keys(interview.f2Answers).length : 0,
+        f3AnswersCount: interview.f3Answers ? Object.keys(interview.f3Answers).length : 0
+      });
+      
       // Definir como entrevista atual
       setCurrentInterviewId(interviewId);
+      
+      // Aguardar um pouco para garantir que o estado foi atualizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Forçar invalidação agressiva do cache
+      queryClient.setQueryData(interviewKeys.detail(interviewId), interview);
+      queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
+      queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: interviewKeys.all });
       
       console.log("✅ useInterview - Entrevista retomada com sucesso:", interviewId);
       console.log("📊 useInterview - Status da entrevista:", {
@@ -423,10 +447,6 @@ export function useInterview() {
         f3Answers: interview.f3Answers ? Object.keys(interview.f3Answers).length : 0,
         isCompleted: interview.isCompleted
       });
-      
-      // Invalidar cache para carregar dados atualizados
-      queryClient.invalidateQueries({ queryKey: interviewKeys.detail(interviewId) });
-      queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
       
       return interview;
     } catch (error) {

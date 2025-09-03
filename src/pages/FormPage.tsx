@@ -91,6 +91,12 @@ export function FormPage({ formId }: FormPageProps) {
     if (currentInterview && currentInterview.id) {
       console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
       console.log("🔍 FormPage - Dados completos da entrevista:", currentInterview);
+      console.log("🔍 FormPage - Metadados da entrevista:", {
+        isInterviewer: currentInterview.isInterviewer,
+        interviewerName: currentInterview.interviewerName,
+        respondentName: currentInterview.respondentName,
+        respondentDepartment: currentInterview.respondentDepartment
+      });
       
       // Verificar se a entrevista tem dados reais E não está concluída
       const formAnswers = currentInterview[`${formId}Answers`] || {};
@@ -104,6 +110,14 @@ export function FormPage({ formId }: FormPageProps) {
         const hasF2Data = currentInterview.f2Answers && Object.keys(currentInterview.f2Answers).length > 0;
         const hasF3Data = currentInterview.f3Answers && Object.keys(currentInterview.f3Answers).length > 0;
         const hasAnyData = hasF1Data || hasF2Data || hasF3Data;
+        
+        console.log("🔍 FormPage - Status dos formulários:", {
+          f1: hasF1Data ? "PREENCHIDO" : "VAZIO",
+          f2: hasF2Data ? "PREENCHIDO" : "VAZIO", 
+          f3: hasF3Data ? "PREENCHIDO" : "VAZIO",
+          formId,
+          hasAnyData
+        });
         
         if (hasAnyData) {
           // Entrevista em andamento com dados - carregar dados do formulário atual
@@ -121,11 +135,6 @@ export function FormPage({ formId }: FormPageProps) {
           
           // IMPORTANTE: Marcar que há dados de entrevista em andamento
           setHasDraftData(true);
-          console.log("📊 FormPage - Status dos formulários:", {
-            f1: hasF1Data ? "PREENCHIDO" : "VAZIO",
-            f2: hasF2Data ? "PREENCHIDO" : "VAZIO", 
-            f3: hasF3Data ? "PREENCHIDO" : "VAZIO"
-          });
         } else {
           // Nova entrevista sem dados
           setAnswers({});
@@ -141,7 +150,6 @@ export function FormPage({ formId }: FormPageProps) {
       
       // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
       // Sempre carregar metadados do banco se houver entrevista ativa
-      // Preservar estado local apenas se não houver dados no banco
       const bankMeta = {
         is_interviewer: currentInterview.isInterviewer || false,
         interviewer_name: currentInterview.interviewerName || "",
@@ -156,34 +164,14 @@ export function FormPage({ formId }: FormPageProps) {
         isCompleted
       });
       
-      // Verificar se o banco tem metadados válidos
-      const hasBankMeta = bankMeta.interviewer_name || bankMeta.respondent_name || bankMeta.respondent_department;
-      
-      if (hasBankMeta && !isCompleted) {
-        // Banco tem metadados válidos: usar dados do banco
+      // SIMPLIFICAÇÃO: Sempre carregar metadados do banco quando há entrevista ativa
+      if (!isCompleted) {
         console.log("🔄 FormPage - Carregando metadados do banco para", formId, ":", bankMeta);
         setMeta(bankMeta);
       } else {
-        // Banco não tem metadados ou entrevista concluída: preservar estado local se houver
-        setMeta(prevMeta => {
-          const hasExistingMeta = prevMeta.interviewer_name || prevMeta.respondent_name || prevMeta.respondent_department;
-          
-          console.log("🔍 FormPage - Verificando metadados existentes:", {
-            prevMeta,
-            hasExistingMeta,
-            isCompleted
-          });
-          
-          if (hasExistingMeta && !isCompleted) {
-            // Preservar metadados existentes se a entrevista não estiver concluída
-            console.log("✅ FormPage - Preservando metadados existentes:", prevMeta);
-            return prevMeta;
-          } else {
-            // Usar metadados do banco (mesmo que vazios)
-            console.log("🔄 FormPage - Usando metadados do banco (vazios):", bankMeta);
-            return bankMeta;
-          }
-        });
+        // Entrevista concluída - limpar metadados
+        console.log("🧹 FormPage - Entrevista concluída, limpando metadados");
+        setMeta({ is_interviewer: false });
       }
       
       // Limpar validação visual quando nova entrevista é carregada
