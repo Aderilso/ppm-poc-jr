@@ -446,12 +446,54 @@ export function useInterviews() {
     },
   });
 
+  // Função para atualizar status das entrevistas que têm todos os formulários preenchidos
+  const updateInterviewStatuses = async () => {
+    try {
+      console.log('🔧 useInterviews - Atualizando status das entrevistas...');
+      
+      if (!interviews) return;
+      
+      for (const interview of interviews) {
+        // Verificar se a entrevista tem todos os formulários preenchidos
+        const hasF1 = interview.f1Answers && Object.keys(interview.f1Answers).length > 0;
+        const hasF2 = interview.f2Answers && Object.keys(interview.f2Answers).length > 0;
+        const hasF3 = interview.f3Answers && Object.keys(interview.f3Answers).length > 0;
+        
+        // Se todos os formulários estão preenchidos mas não está marcada como concluída
+        if (hasF1 && hasF2 && hasF3 && !interview.isCompleted) {
+          console.log(`🔧 useInterviews - Atualizando entrevista ${interview.id} para CONCLUÍDA`);
+          
+          // Chamar API para marcar como concluída
+          const response = await fetch(`/api/interviews/${interview.id}/complete`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ configSnapshot: {} })
+          });
+          
+          if (response.ok) {
+            console.log(`✅ useInterviews - Entrevista ${interview.id} marcada como CONCLUÍDA`);
+          } else {
+            console.error(`❌ useInterviews - Erro ao marcar entrevista ${interview.id} como concluída`);
+          }
+        }
+      }
+      
+      // Invalidar cache para refletir mudanças
+      queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: interviewKeys.all });
+      
+    } catch (error) {
+      console.error('❌ useInterviews - Erro ao atualizar status:', error);
+    }
+  };
+
   return {
     interviews: interviews || [],
     isLoading,
     error,
     deleteInterview: deleteInterviewMutation.mutate,
     isDeleting: deleteInterviewMutation.isPending,
+    updateInterviewStatuses,
   };
 }
 

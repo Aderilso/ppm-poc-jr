@@ -156,9 +156,20 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
 }
 
 export default function Entrevistas() {
-  const { interviews, isLoading, error, deleteInterview, isDeleting } = useInterviews();
+  const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses } = useInterviews();
   const { analyses } = useAnalyses(); // Manter para não quebrar funcionalidades
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Função para atualizar status das entrevistas
+  const handleUpdateStatuses = async () => {
+    setIsUpdatingStatus(true);
+    try {
+      await updateInterviewStatuses();
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
 
   // Debug: Log dos dados recebidos
   useEffect(() => {
@@ -296,6 +307,26 @@ export default function Entrevistas() {
         <Card className="ppm-card">
           <CardHeader>
             <CardTitle>Lista de Entrevistas</CardTitle>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleUpdateStatuses}
+                disabled={isUpdatingStatus}
+                variant="outline"
+                size="sm"
+              >
+                {isUpdatingStatus ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                    Atualizando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Atualizar Status
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {interviews.length === 0 ? (
