@@ -157,7 +157,7 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
 
 export default function Entrevistas() {
   const { interviews, isLoading, error, deleteInterview, isDeleting } = useInterviews();
-  const { analyses } = useAnalyses();
+  const { analyses } = useAnalyses(); // Manter para não quebrar funcionalidades
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
 
   // Debug: Log dos dados recebidos
@@ -312,7 +312,6 @@ export default function Entrevistas() {
                     <TableHead>Respondente</TableHead>
                     <TableHead>Departamento</TableHead>
                     <TableHead>Criada em</TableHead>
-                    <TableHead>Análise</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -346,17 +345,6 @@ export default function Entrevistas() {
                             <Calendar className="h-4 w-4 text-muted-foreground" />
                             {format(new Date(interview.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {analysis ? (
-                            <Badge variant="outline" className="text-green-600">
-                              Score: {analysis.overallScore.toFixed(1)}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              Sem análise
-                            </Badge>
-                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
