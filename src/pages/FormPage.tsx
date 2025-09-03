@@ -187,6 +187,34 @@ export function FormPage({ formId }: FormPageProps) {
     }
   }, [currentInterview, formId]);
 
+  // NOVA FUNÇÃO: Forçar recarga da entrevista
+  const forceReloadInterview = async () => {
+    if (!currentInterview?.id) return;
+    
+    console.log("🔄 FormPage - Forçando recarga da entrevista:", currentInterview.id);
+    
+    try {
+      // Buscar dados diretamente da API
+      const response = await fetch(`/api/interviews/${currentInterview.id}`);
+      if (response.ok) {
+        const interview = await response.json();
+        console.log("✅ FormPage - Entrevista recarregada da API:", interview);
+        
+        // Atualizar estado local com os dados da API
+        if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
+          console.log("📊 FormPage - F1 tem dados:", Object.keys(interview.f1Answers).length, "respostas");
+        }
+        
+        // Forçar re-render
+        window.location.reload();
+      } else {
+        console.error("❌ FormPage - Erro ao recarregar entrevista:", response.status);
+      }
+    } catch (error) {
+      console.error("❌ FormPage - Erro ao recarregar entrevista:", error);
+    }
+  };
+
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
@@ -376,6 +404,17 @@ export function FormPage({ formId }: FormPageProps) {
                 <Loader2 className="w-3 h-3 animate-spin" />
                 Salvando...
               </span>
+            )}
+            {/* Botão de Sincronizar Dados */}
+            {currentInterview?.id && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={forceReloadInterview}
+                className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                🔄 Sincronizar Dados
+              </Button>
             )}
           </div>
         </div>
