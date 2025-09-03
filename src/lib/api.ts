@@ -64,6 +64,8 @@ async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  console.log(`🔍 API - Fazendo requisição para: ${url}`);
+  
   const response = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -72,12 +74,46 @@ async function apiRequest<T>(
     ...options,
   });
 
+  console.log(`🔍 API - Resposta recebida: ${response.status} ${response.statusText}`);
+  console.log(`🔍 API - Content-Type: ${response.headers.get('content-type')}`);
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
+    console.error(`❌ API - Erro HTTP ${response.status}: ${response.statusText}`);
+    
+    // Tentar ler o corpo da resposta para debug
+    let errorBody = '';
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorBody = JSON.stringify(errorData);
+      } else {
+        errorBody = await response.text();
+        console.error(`❌ API - Corpo da resposta (não-JSON):`, errorBody.substring(0, 200));
+      }
+    } catch (parseError) {
+      console.error(`❌ API - Erro ao ler corpo da resposta:`, parseError);
+      errorBody = 'Erro ao ler resposta do servidor';
+    }
+    
+    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorBody.substring(0, 100)}`);
   }
 
-  return response.json();
+  // Verificar se a resposta é JSON
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    console.error(`❌ API - Resposta não é JSON: ${contentType}`);
+    throw new Error(`Resposta não é JSON: ${contentType}`);
+  }
+
+  try {
+    const data = await response.json();
+    console.log(`✅ API - Dados recebidos com sucesso para ${endpoint}`);
+    return data;
+  } catch (parseError) {
+    console.error(`❌ API - Erro ao fazer parse JSON:`, parseError);
+    throw new Error(`Erro ao fazer parse da resposta JSON: ${parseError.message}`);
+  }
 }
 
 // API de Entrevistas
