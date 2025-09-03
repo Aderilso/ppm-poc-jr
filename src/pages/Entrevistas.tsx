@@ -162,8 +162,10 @@ export default function Entrevistas() {
 
   // Debug: Log dos dados recebidos
   useEffect(() => {
-    console.log('🔍 Entrevistas - Dados recebidos:', {
+    console.log('🔍 Entrevistas - Hook useInterviews retornou:', {
       totalInterviews: interviews.length,
+      isLoading,
+      error,
       interviews: interviews.map(i => ({
         id: i.id,
         isInterviewer: i.isInterviewer,
@@ -174,7 +176,13 @@ export default function Entrevistas() {
         createdAt: i.createdAt
       }))
     });
-  }, [interviews]);
+  }, [interviews, isLoading, error]);
+
+  // Debug: Log quando a página carrega
+  useEffect(() => {
+    console.log('🚀 Entrevistas - Página carregada');
+    console.log('🔍 Entrevistas - Estado inicial:', { interviews, isLoading, error });
+  }, []);
 
   const handleDelete = (id: string) => {
     if (confirm("Tem certeza que deseja deletar esta entrevista? Esta ação não pode ser desfeita.")) {

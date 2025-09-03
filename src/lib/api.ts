@@ -97,7 +97,27 @@ export const interviewsApi = {
 
   // Buscar todas as entrevistas
   getAll: (): Promise<ApiInterview[]> => {
-    return apiRequest<ApiInterview[]>('/interviews');
+    console.log('🔍 API - interviewsApi.getAll chamada');
+    console.log('🔍 API - URL base:', API_BASE_URL);
+    console.log('🔍 API - Endpoint completo:', `${API_BASE_URL}/interviews`);
+    
+    return apiRequest<ApiInterview[]>('/interviews').then(data => {
+      console.log('✅ API - interviewsApi.getAll retornou:', {
+        totalInterviews: data.length,
+        interviews: data.map(i => ({
+          id: i.id,
+          isInterviewer: i.isInterviewer,
+          interviewerName: i.interviewerName,
+          respondentName: i.respondentName,
+          respondentDepartment: i.respondentDepartment,
+          isCompleted: i.isCompleted
+        }))
+      });
+      return data;
+    }).catch(error => {
+      console.error('❌ API - interviewsApi.getAll erro:', error);
+      throw error;
+    });
   },
 
   // Buscar entrevista por ID

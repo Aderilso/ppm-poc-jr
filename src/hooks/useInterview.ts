@@ -405,9 +405,18 @@ export function useInterview() {
 export function useInterviews() {
   const queryClient = useQueryClient();
 
+  console.log('🔍 useInterviews - Hook iniciado');
+
   const { data: interviews, isLoading, error } = useQuery({
     queryKey: interviewKeys.lists(),
     queryFn: interviewsApi.getAll,
+  });
+
+  console.log('🔍 useInterviews - React Query retornou:', {
+    data: interviews,
+    isLoading,
+    error,
+    dataLength: interviews?.length || 0
   });
 
   const deleteInterviewMutation = useMutation({
