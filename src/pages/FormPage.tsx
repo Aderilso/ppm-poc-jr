@@ -97,24 +97,48 @@ export function FormPage({ formId }: FormPageProps) {
       const hasRealData = Object.keys(formAnswers).length > 0;
       const isCompleted = currentInterview.isCompleted;
       
-      if (hasRealData && !isCompleted) {
-        // Carregar dados existentes de entrevista em andamento
-        setAnswers(formAnswers);
-        setHasDraftData(true);
-        console.log("✅ FormPage - Dados de entrevista em andamento carregados:", currentInterview.id);
-      } else if (hasRealData && isCompleted) {
+      // NOVA LÓGICA: Carregar dados de TODOS os formulários quando retomar entrevista
+      if (!isCompleted) {
+        // Verificar se há dados em qualquer formulário (entrevista em andamento)
+        const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
+        const hasF2Data = currentInterview.f2Answers && Object.keys(currentInterview.f2Answers).length > 0;
+        const hasF3Data = currentInterview.f3Answers && Object.keys(currentInterview.f3Answers).length > 0;
+        const hasAnyData = hasF1Data || hasF2Data || hasF3Data;
+        
+        if (hasAnyData) {
+          // Entrevista em andamento com dados - carregar dados do formulário atual
+          if (hasRealData) {
+            // Formulário atual tem dados - carregar normalmente
+            setAnswers(formAnswers);
+            setHasDraftData(true);
+            console.log("✅ FormPage - Dados do formulário atual carregados:", formId, currentInterview.id);
+          } else {
+            // Formulário atual não tem dados - limpar campos para novo preenchimento
+            setAnswers({});
+            setHasDraftData(false);
+            console.log("🧹 FormPage - Formulário atual limpo para novo preenchimento:", formId);
+          }
+          
+          // IMPORTANTE: Marcar que há dados de entrevista em andamento
+          setHasDraftData(true);
+          console.log("📊 FormPage - Status dos formulários:", {
+            f1: hasF1Data ? "PREENCHIDO" : "VAZIO",
+            f2: hasF2Data ? "PREENCHIDO" : "VAZIO", 
+            f3: hasF3Data ? "PREENCHIDO" : "VAZIO"
+          });
+        } else {
+          // Nova entrevista sem dados
+          setAnswers({});
+          setHasDraftData(false);
+          console.log("🧹 FormPage - Nova entrevista sem dados, limpando campos");
+        }
+      } else {
         // Entrevista concluída - limpar campos para nova pesquisa
         console.log("🧹 FormPage - Entrevista concluída, limpando campos para nova pesquisa");
         setAnswers({});
         setHasDraftData(false);
-      } else {
-        // Nova entrevista ou sem dados - limpar campos
-        console.log("🧹 FormPage - Nova entrevista ou sem dados, limpando campos");
-        setAnswers({});
-        setHasDraftData(false);
       }
       
-      // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
       // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
       // Sempre carregar metadados do banco se houver entrevista ativa
       // Preservar estado local apenas se não houver dados no banco
