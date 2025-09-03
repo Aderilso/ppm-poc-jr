@@ -68,8 +68,8 @@ const App = () => {
   
   return (
     <ErrorBoundary>
-              <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
