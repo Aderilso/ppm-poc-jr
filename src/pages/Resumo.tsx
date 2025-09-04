@@ -331,7 +331,7 @@ export default function Resumo() {
                           <div key={`consolidated-${formId}`}>
                             <Button
                               variant="default"
-                              className="w-full mb-2 bg-green-600 hover:bg-green-700"
+                              className="w-full mb-2 bg-lime-600 hover:bg-lime-700 text-white"
                               onClick={() => { setPendingAction({ type: 'form', formId: formId as 'f1'|'f2'|'f3' }); setFormatDialogOpen(true); }}
                             >
                               <Download className="w-4 h-4 mr-2" />
@@ -359,7 +359,7 @@ export default function Resumo() {
                           Integra F1 + F2 + F3 em um único arquivo com scores, insights e recomendações
                         </p>
                         <Button
-                          className="ppm-button-accent w-full mb-2"
+                          className="w-full mb-2 bg-black text-white hover:bg-zinc-900"
                           onClick={() => { setPendingAction({ type: 'global' }); setFormatDialogOpen(true); }}
                         >
                           <Download className="w-4 h-4 mr-2" />
