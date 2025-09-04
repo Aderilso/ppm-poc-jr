@@ -146,20 +146,22 @@ export default function Dashboard() {
     });
     
     // Progresso por formulário
+    const hasAnyAnswer = (ans?: Record<string, any>) => !!ans && Object.keys(ans).length > 0;
+
     const formProgress = {
       f1: {
-        started: interviews.filter(i => i.f1Answers).length,
-        completed: interviews.filter(i => i.f1Answers && i.isCompleted).length,
+        started: interviews.filter(i => hasAnyAnswer(i.f1Answers)).length,
+        completed: interviews.filter(i => hasAnyAnswer(i.f1Answers) && i.isCompleted).length,
         rate: 0
       },
       f2: {
-        started: interviews.filter(i => i.f2Answers).length,
-        completed: interviews.filter(i => i.f2Answers && i.isCompleted).length,
+        started: interviews.filter(i => hasAnyAnswer(i.f2Answers)).length,
+        completed: interviews.filter(i => hasAnyAnswer(i.f2Answers) && i.isCompleted).length,
         rate: 0
       },
       f3: {
-        started: interviews.filter(i => i.f3Answers).length,
-        completed: interviews.filter(i => i.f3Answers && i.isCompleted).length,
+        started: interviews.filter(i => hasAnyAnswer(i.f3Answers)).length,
+        completed: interviews.filter(i => hasAnyAnswer(i.f3Answers) && i.isCompleted).length,
         rate: 0
       }
     };
@@ -484,7 +486,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="ppm-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-2xl">
                         <Target className="w-5 h-5 text-blue-600" />
                         Formulário 1 - Avaliação Geral
               </CardTitle>
@@ -510,13 +512,13 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
 
-                  <Card className="ppm-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-green-600" />
-                        Formulário 2 - Funcionalidades
-                      </CardTitle>
-                    </CardHeader>
+          <Card className="ppm-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[1.35rem] leading-tight">
+                <BarChart3 className="w-5 h-5 text-green-600" />
+                Formulário 2 - Funcionalidades
+              </CardTitle>
+            </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -540,7 +542,7 @@ export default function Dashboard() {
 
           <Card className="ppm-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-2xl">
                         <Zap className="w-5 h-5 text-purple-600" />
                         Formulário 3 - Integração
               </CardTitle>

@@ -13,6 +13,7 @@ import { toast } from "@/hooks/use-toast";
 import { useInterview, useInterviews } from "@/hooks/useInterview";
 import { useConfig } from "@/hooks/useInterview";
 import type { PpmConfig, PpmMeta, FormAnswers } from "@/lib/types";
+import { Separator } from "@/components/ui/separator";
 
 export default function Resumo() {
   // Config do banco de dados (ativa)
@@ -272,36 +273,16 @@ export default function Resumo() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {/* Relatório Consolidado (Todas as Entrevistas) */}
-                  <div>
-                    <h3 className="font-medium mb-3">Relatório Consolidado (Todas as Entrevistas)</h3>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="md:col-span-1">
-                        <Button
-                          className="ppm-button-accent w-full mb-2"
-                          onClick={handleDownloadAllConsolidated}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Consolidado
-                        </Button>
-                        <p className="text-xs text-muted-foreground text-center">
-                          Todos os formulários (F1+F2+F3)<br/>de todas as entrevistas
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Downloads Consolidados por Formulário */}
+                <div className="space-y-10">
+                  {/* Consolidados por Formulário (Todas as Entrevistas) */}
                   <div>
                     <h3 className="font-medium mb-3">Consolidados por Formulário (Todas as Entrevistas)</h3>
                     <p className="text-sm text-muted-foreground mb-3">
-                      Para coordenadores: consolida todas as entrevistas do banco de dados por formulário
+                      Para coordenadores: CSV por formulário com todas as entrevistas do banco (cada resposta em uma linha)
                     </p>
                     <div className="grid md:grid-cols-3 gap-4">
                       {["f1", "f2", "f3"].map((formId) => {
                         const form = config.forms.find(f => f.id === formId);
-                        
                         return (
                           <div key={`consolidated-${formId}`}>
                             <Button
@@ -320,6 +301,30 @@ export default function Resumo() {
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+
+                  <Separator className="my-2" />
+
+                  {/* Relatório Consolidado (Todas as Entrevistas) */}
+                  <div className="pt-2">
+                    <h3 className="font-medium mb-2">Relatório Consolidado (Todas as Entrevistas)</h3>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="md:col-span-1">
+                        <p className="text-sm text-muted-foreground mb-3 leading-snug">
+                          Integra F1 + F2 + F3 em um único arquivo com scores, insights e recomendações
+                        </p>
+                        <Button
+                          className="ppm-button-accent w-full mb-2"
+                          onClick={handleDownloadAllConsolidated}
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Consolidado
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Todos os formulários (F1+F2+F3)<br/>de todas as entrevistas
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

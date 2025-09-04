@@ -10,7 +10,7 @@ import { X, Plus, Save, RotateCcw } from "lucide-react";
 import type { Question, QuestionType } from "@/lib/types";
 
 interface NewQuestionFormProps {
-  onSave: (formId: "f1" | "f2" | "f3", question: Question) => void;
+  onSave: (formId: "f1" | "f2" | "f3", question: Question, weight: number, category: string) => void;
   onCancel: () => void;
 }
 
@@ -108,16 +108,19 @@ export function NewQuestionForm({ onSave, onCancel }: NewQuestionFormProps) {
       return;
     }
 
-    // Construir tipo com opções se necessário
+    // Construir tipo com opções embutidas quando aplicável
     let finalTipo = formData.tipo;
     if (needsOptions() && formData.opcoes.length > 0) {
-      if (formData.tipo === "multipla" || formData.tipo === "selecionar_1") {
-        // Para múltipla e seleção única, usar lookup ou definir inline
-        finalTipo = formData.tipo; // Mantém o tipo base, as opções serão tratadas no lookup
+      const opcoesFormatadas = formData.opcoes.join(",_").replace(/\s/g, "_");
+      if (formData.tipo === "multipla") {
+        // Embute opções mantendo semântica de múltipla escolha
+        finalTipo = (`multipla_(${opcoesFormatadas})` as unknown) as QuestionType;
+      } else if (formData.tipo === "selecionar_1") {
+        // Embute opções mantendo semântica de seleção única
+        finalTipo = (`selecionar_1_(${opcoesFormatadas})` as unknown) as QuestionType;
       } else {
-        // Para outros tipos, incluir opções no tipo
-        const opcoesFormatadas = formData.opcoes.join(",_").replace(/\s/g, "_");
-        finalTipo = `lista_suspensa_(${opcoesFormatadas})` as QuestionType;
+        // Para listas suspensas genéricas
+        finalTipo = (`lista_suspensa_(${opcoesFormatadas})` as unknown) as QuestionType;
       }
     }
 
@@ -130,7 +133,7 @@ export function NewQuestionForm({ onSave, onCancel }: NewQuestionFormProps) {
       active: true // Novas perguntas são ativas por padrão
     };
 
-    onSave(formData.formId, newQuestion);
+    onSave(formData.formId, newQuestion, formData.peso, formData.categoria || "Sem Categoria");
   };
 
   const handleReset = () => {

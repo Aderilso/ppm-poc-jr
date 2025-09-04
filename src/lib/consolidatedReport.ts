@@ -293,6 +293,13 @@ export function exportConsolidatedReportToCsv(reportData: ConsolidatedReportData
   // Seção 1: Metadados
   sections.push("=== METADADOS ===");
   sections.push(`Data de Geração,${reportData.metadata.generated_at}`);
+  // Metadados da entrevista (quando disponíveis)
+  if (reportData.metadata.respondent_info) {
+    const meta: any = reportData.metadata.respondent_info as any;
+    if (meta.interviewer_name) sections.push(`Entrevistador,${meta.interviewer_name}`);
+    if (meta.respondent_name) sections.push(`Respondente,${meta.respondent_name}`);
+    if (meta.respondent_department) sections.push(`Departamento,${meta.respondent_department}`);
+  }
   sections.push(`Total de Perguntas,${reportData.metadata.total_questions}`);
   sections.push(`Perguntas Respondidas,${reportData.metadata.answered_questions}`);
   sections.push(`Taxa de Conclusão,${reportData.metadata.completion_rate.toFixed(1)}%`);

@@ -15,6 +15,7 @@ import {
   Download,
   Calendar,
   User,
+  UserCheck,
   Building,
   AlertTriangle,
   Play
@@ -460,6 +461,7 @@ export default function Entrevistas() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Entrevistador</TableHead>
                     <TableHead>Respondente</TableHead>
                     <TableHead>Departamento</TableHead>
                     <TableHead>Criada em</TableHead>
@@ -478,6 +480,12 @@ export default function Entrevistas() {
                           <Badge variant={interview.isCompleted ? "default" : "secondary"}>
                             {interview.isCompleted ? "Concluída" : "Em andamento"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="h-4 w-4 text-muted-foreground" />
+                            {interview.interviewerName || "Não informado"}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

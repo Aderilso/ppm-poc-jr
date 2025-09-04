@@ -15,7 +15,7 @@ app.use(express.json());
 app.post('/api/interviews', async (req, res) => {
   try {
     console.log('📝 POST /api/interviews - Dados recebidos:', req.body);
-    const { isInterviewer, interviewerName, respondentName, respondentDepartment } = req.body;
+    const { isInterviewer, interviewerName, respondentName, respondentDepartment, createdAt } = req.body;
     
     console.log('🔍 Dados extraídos:', { isInterviewer, interviewerName, respondentName, respondentDepartment });
     
@@ -36,6 +36,15 @@ app.post('/api/interviews', async (req, res) => {
       respondentName,
       respondentDepartment,
     };
+    // Permitir definir createdAt opcionalmente (importações)
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!isNaN(parsed.getTime())) {
+        dataToSave.createdAt = parsed;
+      } else {
+        console.warn('⚠️ createdAt inválido recebido, ignorando:', createdAt);
+      }
+    }
     
     console.log('💾 Dados que serão salvos no banco:', dataToSave);
     
@@ -346,13 +355,9 @@ app.delete('/api/database/clear', async (req, res) => {
     const deletedInterviews = await prisma.interview.deleteMany({});
     console.log(`🗑️ ${deletedInterviews.count} entrevistas deletadas`);
     
-    // Deletar todas as configurações (exceto a ativa)
-    const deletedConfigs = await prisma.config.deleteMany({
-      where: {
-        isActive: false
-      }
-    });
-    console.log(`🗑️ ${deletedConfigs.count} configurações inativas deletadas`);
+    // Deletar todas as configurações (inclusive a ativa) para zerar o sistema
+    const deletedConfigs = await prisma.config.deleteMany({});
+    console.log(`🗑️ ${deletedConfigs.count} configurações deletadas (inclui ativa)`);
     
     console.log('✅ Banco de dados limpo com sucesso!');
     
