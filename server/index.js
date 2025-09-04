@@ -4,17 +4,79 @@ import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Garantir que DATABASE_URL aponte para o arquivo correto independentemente do CWD
-if (!process.env.DATABASE_URL) {
-  const sqlitePath = `file:${path.join(__dirname, 'prisma', 'dev.db')}`;
-  process.env.DATABASE_URL = sqlitePath;
-  console.log('🔧 DATABASE_URL não definido; usando fallback:', sqlitePath);
+// Resolve um caminho de arquivo de uma URL sqlite do Prisma (file:...)
+function resolveSqlitePath(dbUrl) {
+  if (!dbUrl || !dbUrl.startsWith('file:')) return null;
+  let p = dbUrl.replace(/^file:/, '');
+  // Se for relativo, resolva a partir do diretório do servidor
+  if (!path.isAbsolute(p)) p = path.join(__dirname, p);
+  return p;
 }
-console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: process.env.DATABASE_URL });
+
+// Verifica se conseguimos escrever no arquivo/diretório
+function canWrite(targetPath) {
+  try {
+    fs.accessSync(targetPath, fs.constants.W_OK);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+// Garante um DATABASE_URL funcional e gravável, com fallbacks
+function ensureWritableDatabaseUrl() {
+  let current = process.env.DATABASE_URL;
+  const defaultUrl = `file:${path.join('prisma', 'dev.db')}`; // relativo ao __dirname
+  if (!current) current = defaultUrl;
+
+  const tryUrls = [current, defaultUrl, `file:${path.join('prisma', 'dev_rw.db')}`];
+  // Último recurso: pasta do usuário
+  const homeDir = os.homedir();
+  const userDataDir = path.join(homeDir || __dirname, '.ppm-data');
+  const userUrl = `file:${path.join(userDataDir, 'dev.db')}`;
+  tryUrls.push(userUrl);
+
+  for (const url of tryUrls) {
+    try {
+      const filePath = resolveSqlitePath(url);
+      const dir = path.dirname(filePath);
+      // Criar diretório se necessário
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      // Se o arquivo existir mas estiver somente-leitura, tentar ajustar permissões
+      if (fs.existsSync(filePath) && !canWrite(filePath)) {
+        try { fs.chmodSync(filePath, 0o600); } catch (_) {}
+      }
+      // Validar permissão de escrita (no arquivo ou na pasta)
+      if (!fs.existsSync(filePath)) {
+        if (!canWrite(dir)) {
+          console.warn('⚠️ Sem permissão de escrita no diretório:', dir);
+          continue; // tentar próximo
+        }
+      } else if (!canWrite(filePath)) {
+        console.warn('⚠️ Arquivo SQLite não gravável:', filePath);
+        continue;
+      }
+      // Escolhido
+      if (process.env.DATABASE_URL !== url) {
+        process.env.DATABASE_URL = url;
+        console.log('🔧 Definindo DATABASE_URL:', url);
+      }
+      return url;
+    } catch (e) {
+      console.warn('⚠️ Falha ao preparar URL do banco:', url, e?.message || e);
+    }
+  }
+  return current; // melhor esforço
+}
+
+const finalDbUrl = ensureWritableDatabaseUrl();
+console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: finalDbUrl });
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
