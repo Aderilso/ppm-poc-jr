@@ -1,6 +1,7 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 chcp 65001 >nul
+title PPM - Setup para Analistas
 
 echo ============================================================
 echo   PPM - Preparador de Ambiente (Windows)
@@ -10,7 +11,8 @@ echo ============================================================
 echo.
 
 REM Ir para o diretório do script (raiz do repo)
-cd /d %~dp0
+set "ROOT=%~dp0"
+cd /d "%ROOT%"
 
 echo [1/7] Verificando Node.js e npm...
 node -v >nul 2>&1
@@ -46,7 +48,7 @@ call npm install || goto :error
 echo.
 
 echo [3/7] Instalando dependencias do backend (server)...
-pushd server >nul
+pushd "server" >nul
 if exist package-lock.json (
   call npm ci || goto :npm_srv_fallback
 ) else (
@@ -74,14 +76,15 @@ set SEED_CHOICE=N
 set /p SEED_CHOICE="Digite S para carregar dados de exemplo (S/N): "
 if /I "!SEED_CHOICE!"=="S" (
   echo Carregando dados de exemplo...
-  node init-db.js || goto :error
+  node "%ROOT%server\init-db.js" || goto :error
 )
 popd >nul
 
 echo.
 echo [7/7] Iniciando API e Frontend em janelas separadas...
-start "PPM API" cmd /k "cd /d %~dp0server && npm run dev"
-start "PPM Frontend" cmd /k "cd /d %~dp0 && npm run dev"
+REM Observação: as aspas duplas duplas a seguir ("") são intencionais para preservar aspas internas
+start "PPM API" cmd /k ""cd /d "%ROOT%server" && npm run dev""
+start "PPM Frontend" cmd /k ""cd /d "%ROOT%" && npm run dev""
 timeout /t 3 >nul
 start "" http://localhost:8080
 
@@ -99,4 +102,3 @@ echo.
 echo Ocorreu um erro durante a preparacao. Verifique as mensagens acima.
 pause
 exit /b 1
-
