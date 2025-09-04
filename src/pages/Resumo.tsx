@@ -14,6 +14,8 @@ import { useInterview, useInterviews } from "@/hooks/useInterview";
 import { useConfig } from "@/hooks/useInterview";
 import type { PpmConfig, PpmMeta, FormAnswers } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { downloadXlsx, type WorksheetSpec } from "@/lib/xlsx";
 
 export default function Resumo() {
   // Config do banco de dados (ativa)
@@ -26,6 +28,7 @@ export default function Resumo() {
   // Carregar dados da entrevista atual
   const [currentAnswers, setCurrentAnswers] = useState<FormAnswers>({ f1: {}, f2: {}, f3: {} });
   const [currentMeta, setCurrentMeta] = useState<PpmMeta>({ is_interviewer: false });
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('csv');
 
   // Sem carregamento de config via localStorage — usamos a ativa do banco.
 
@@ -130,8 +133,33 @@ export default function Resumo() {
         return;
       }
 
-      const csvContent = generateConsolidatedFormCsv(data, stats);
-      downloadConsolidatedFormCsv(csvContent, formId, stats);
+      if (exportFormat === 'xlsx') {
+        const headers = [
+          "form_id","form_title","question_id","pergunta","question_type","category",
+          "respondent_name","respondent_department","interviewer_name","resposta","timestamp","interview_id","is_completed"
+        ];
+        const rows = data.map(row => headers.map(h => (row as any)[h] ?? ''));
+        const sheets: WorksheetSpec[] = [
+          {
+            name: `Resumo_${formId.toUpperCase()}`,
+            headers: ["Métrica","Valor"],
+            rows: [
+              ["Formulário", stats.form_title],
+              ["Total de Entrevistas", stats.total_interviews],
+              ["Entrevistas Completas", stats.completed_interviews],
+              ["Taxa de Conclusão", `${stats.completion_rate.toFixed(1)}%`],
+              ["Período (início)", new Date(stats.date_range.earliest).toLocaleString('pt-BR')],
+              ["Período (fim)", new Date(stats.date_range.latest).toLocaleString('pt-BR')],
+            ]
+          },
+          { name: `Respostas_${formId.toUpperCase()}`, headers, rows }
+        ];
+        const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g,'').replace('T','-');
+        downloadXlsx(sheets, `PPM_Consolidado_${formId.toUpperCase()}_${stats.total_interviews}entrevistas_${ts}.xlsx`);
+      } else {
+        const csvContent = generateConsolidatedFormCsv(data, stats);
+        downloadConsolidatedFormCsv(csvContent, formId, stats);
+      }
 
       toast({
         title: "Consolidado gerado!",
@@ -156,36 +184,50 @@ export default function Resumo() {
       const f2 = await consolidateFormInterviews(config, "f2");
       const f3 = await consolidateFormInterviews(config, "f3");
 
-      const csvF1 = generateConsolidatedFormCsv(f1.data, f1.stats);
-      const csvF2 = generateConsolidatedFormCsv(f2.data, f2.stats);
-      const csvF3 = generateConsolidatedFormCsv(f3.data, f3.stats);
-
-      // Combinar em um único arquivo com separadores
-      const combined = [
-        csvF1,
-        "",
-        "",
-        csvF2,
-        "",
-        "",
-        csvF3,
-      ].join("\n");
-
-      const blob = new Blob([combined], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const filename = `PPM_Relatorio_Consolidado_Todas_${new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-')}.csv`;
-
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      if (exportFormat === 'xlsx') {
+        const mkSheets = (data: any[], stats: any, formId: string): WorksheetSpec[] => {
+          const headers = [
+            "form_id","form_title","question_id","pergunta","question_type","category",
+            "respondent_name","respondent_department","interviewer_name","resposta","timestamp","interview_id","is_completed"
+          ];
+          const rows = data.map(row => headers.map(h => (row as any)[h] ?? ''));
+          return [
+            { name: `Resumo_${formId.toUpperCase()}`, headers: ["Métrica","Valor"], rows: [
+              ["Formulário", stats.form_title],
+              ["Total de Entrevistas", stats.total_interviews],
+              ["Entrevistas Completas", stats.completed_interviews],
+              ["Taxa de Conclusão", `${stats.completion_rate.toFixed(1)}%`],
+              ["Período (início)", new Date(stats.date_range.earliest).toLocaleString('pt-BR')],
+              ["Período (fim)", new Date(stats.date_range.latest).toLocaleString('pt-BR')],
+            ] },
+            { name: `Respostas_${formId.toUpperCase()}`, headers, rows }
+          ];
+        };
+        const sheets: WorksheetSpec[] = [
+          ...mkSheets(f1.data, f1.stats, 'f1'),
+          ...mkSheets(f2.data, f2.stats, 'f2'),
+          ...mkSheets(f3.data, f3.stats, 'f3'),
+        ];
+        const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-');
+        downloadXlsx(sheets, `PPM_Relatorio_Consolidado_Todas_${ts}.xlsx`);
+      } else {
+        const csvF1 = generateConsolidatedFormCsv(f1.data, f1.stats);
+        const csvF2 = generateConsolidatedFormCsv(f2.data, f2.stats);
+        const csvF3 = generateConsolidatedFormCsv(f3.data, f3.stats);
+        const combined = [csvF1, "", "", csvF2, "", "", csvF3].join("\n");
+        const blob = new Blob([combined], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const filename = `PPM_Relatorio_Consolidado_Todas_${new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-')}.csv`;
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", filename);
+          link.style.visibility = "hidden";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       }
-      
-      toast({ title: "Consolidado gerado", description: `${filename} baixado com F1+F2+F3 de todas as entrevistas.` });
     } catch (error) {
       console.error('Erro ao gerar consolidado global:', error);
       toast({ title: "Erro ao gerar consolidado", description: error instanceof Error ? error.message : 'Erro desconhecido', variant: 'destructive' });
@@ -276,10 +318,22 @@ export default function Resumo() {
                 <div className="space-y-10">
                   {/* Consolidados por Formulário (Todas as Entrevistas) */}
                   <div>
-                    <h3 className="font-medium mb-3">Consolidados por Formulário (Todas as Entrevistas)</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Para coordenadores: CSV por formulário com todas as entrevistas do banco (cada resposta em uma linha)
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-medium">Consolidados por Formulário (Todas as Entrevistas)</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Formato:</span>
+                        <Select value={exportFormat} onValueChange={(v: 'csv' | 'xlsx') => setExportFormat(v)}>
+                          <SelectTrigger className="w-36 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="csv">CSV (padrão)</SelectItem>
+                            <SelectItem value="xlsx">XLSX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">Gera um arquivo por formulário com todas as entrevistas do banco (cada resposta em uma linha).</p>
                     <div className="grid md:grid-cols-3 gap-4">
                       {["f1", "f2", "f3"].map((formId) => {
                         const form = config.forms.find(f => f.id === formId);
@@ -308,7 +362,21 @@ export default function Resumo() {
 
                   {/* Relatório Consolidado (Todas as Entrevistas) */}
                   <div className="pt-2">
-                    <h3 className="font-medium mb-2">Relatório Consolidado (Todas as Entrevistas)</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium">Relatório Consolidado (Todas as Entrevistas)</h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">Formato:</span>
+                        <Select value={exportFormat} onValueChange={(v: 'csv' | 'xlsx') => setExportFormat(v)}>
+                          <SelectTrigger className="w-36 h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="csv">CSV (padrão)</SelectItem>
+                            <SelectItem value="xlsx">XLSX</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="md:col-span-1">
                         <p className="text-sm text-muted-foreground mb-3 leading-snug">
