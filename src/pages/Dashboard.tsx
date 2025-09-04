@@ -342,7 +342,7 @@ export default function Dashboard() {
             </Button>
             <Button 
               onClick={handleNewSurvey}
-              className="ppm-button-accent flex items-center gap-2"
+              className="flex items-center gap-2 bg-black text-white hover:bg-zinc-900"
             >
               <Upload className="w-4 h-4" />
               Nova Pesquisa

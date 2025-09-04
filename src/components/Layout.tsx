@@ -22,8 +22,8 @@ export function Layout({ children }: LayoutProps) {
 
   const links = [
     { to: "/", label: "Home" },
-    { to: "/dashboard", label: "Dashboard" },
     { to: "/entrevistas", label: "Entrevistas" },
+    { to: "/dashboard", label: "Dashboard" },
     { to: "/resumo", label: "Relatórios" },
     { to: "/config", label: "Configurações" },
   ];
