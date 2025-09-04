@@ -52,13 +52,13 @@ function ensureWritableDatabaseUrl() {
       if (fs.existsSync(filePath) && !canWrite(filePath)) {
         try { fs.chmodSync(filePath, 0o600); } catch (_) {}
       }
-      // Validar permissão de escrita (no arquivo ou na pasta)
-      if (!fs.existsSync(filePath)) {
-        if (!canWrite(dir)) {
-          console.warn('⚠️ Sem permissão de escrita no diretório:', dir);
-          continue; // tentar próximo
-        }
-      } else if (!canWrite(filePath)) {
+      // Validar permissão de escrita SEMPRE na pasta (SQLite cria -wal/-shm)
+      if (!canWrite(dir)) {
+        console.warn('⚠️ Diretório do banco não é gravável:', dir);
+        continue; // tentar próximo
+      }
+      // Se o arquivo existir e ainda assim não for gravável, pular
+      if (fs.existsSync(filePath) && !canWrite(filePath)) {
         console.warn('⚠️ Arquivo SQLite não gravável:', filePath);
         continue;
       }
@@ -656,6 +656,51 @@ app.get('/api/stats', async (req, res) => {
 // Rota de health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Endpoint de debug: informações do banco e teste de escrita
+app.get('/api/debug/dbinfo', async (req, res) => {
+  try {
+    const dbUrl = process.env.DATABASE_URL || null;
+    const filePath = resolveSqlitePath(dbUrl);
+    const dir = filePath ? path.dirname(filePath) : null;
+    const info = {
+      DATABASE_URL: dbUrl,
+      resolvedPath: filePath,
+      dir,
+      cwd: process.cwd(),
+      dirname: __dirname,
+      perms: {
+        canWriteFile: filePath ? canWrite(filePath) : null,
+        canWriteDir: dir ? canWrite(dir) : null,
+      },
+    };
+    // Teste de escrita não destrutivo: criar um arquivo temporário na pasta do DB
+    if (dir && canWrite(dir)) {
+      const tmpFile = path.join(dir, `.write-test-${Date.now()}.tmp`);
+      try {
+        fs.writeFileSync(tmpFile, 'ok');
+        fs.unlinkSync(tmpFile);
+        info.writeTest = 'ok';
+      } catch (e) {
+        info.writeTest = `fail: ${e?.message || e}`;
+      }
+    } else {
+      info.writeTest = 'dir-not-writable';
+    }
+
+    // Consultar o schema real da tabela para validar conexão
+    try {
+      const columns = await prisma.$queryRawUnsafe('PRAGMA table_info("interviews")');
+      info.tableInfo = columns;
+    } catch (e) {
+      info.tableInfo = `fail: ${e?.message || e}`;
+    }
+
+    res.json(info);
+  } catch (error) {
+    res.status(500).json({ error: 'debug-failed', details: error?.message || String(error) });
+  }
 });
 
 // Inicializar servidor
