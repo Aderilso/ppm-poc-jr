@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Settings, Home, BarChart3, Linkedin, Users, FileText } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Linkedin } from "lucide-react";
 
 // Deloitte Logo Component
 const DeloitteLogo = ({ className }: { className?: string }) => (
@@ -38,65 +37,52 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground shadow-lg">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2">
-              <DeloitteLogo className="" />
-              <h1 className="text-xl font-bold">Pesquisa PPM</h1>
-            </Link>
+  const links = [
+    { to: "/", label: "Home" },
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/entrevistas", label: "Entrevistas" },
+    { to: "/resumo", label: "Relatórios" },
+    { to: "/config", label: "Configurações" },
+  ];
 
-            <div className="flex items-center gap-2">
-              {location.pathname !== "/" && (
-                <Link to="/">
-                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                    <Home className="w-4 h-4" />
-                    Home
-                  </Button>
-                </Link>
-              )}
-              {location.pathname !== "/dashboard" && (
-                <Link to="/dashboard">
-                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    Dashboard
-                  </Button>
-                </Link>
-              )}
-              {location.pathname !== "/entrevistas" && (
-                <Link to="/entrevistas">
-                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Entrevistas
-                  </Button>
-                </Link>
-              )}
-              {location.pathname !== "/resumo" && (
-                <Link to="/resumo">
-                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    Resumo
-                  </Button>
-                </Link>
-              )}
-              {location.pathname !== "/config" && (
-                <Link to="/config">
-                  <Button variant="secondary" size="sm" className="flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Configurações
-                  </Button>
-                </Link>
-              )}
-            </div>
+  const isActive = (to: string) => (location.pathname === to) || (to !== '/' && location.pathname.startsWith(to));
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header style inspirado no exemplo: fundo preto + destaque verde */}
+      <header className="sticky top-0 z-40 bg-black text-zinc-100 border-b border-zinc-800/50">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-14">
+            <Link to="/" className="flex items-center gap-3">
+              <DeloitteLogo />
+              <span className="sr-only">Ir para Home</span>
+            </Link>
+            <nav aria-label="Main" className="hidden md:block">
+              <ul className="flex items-center gap-6">
+                {links.map(link => (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      aria-current={isActive(link.to) ? 'page' : undefined}
+                      className={[
+                        'relative group px-1 py-2 text-sm font-medium transition-colors',
+                        'after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:w-0 after:bg-lime-500 after:transition-all',
+                        'hover:text-lime-400 group-hover:after:w-full',
+                        isActive(link.to) ? 'text-lime-400 after:w-full' : 'text-zinc-300'
+                      ].join(' ')}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1 w-full">
         {children}
       </main>
 
