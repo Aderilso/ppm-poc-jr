@@ -331,7 +331,7 @@ export default function Resumo() {
                           <div key={`consolidated-${formId}`}>
                             <Button
                               variant="default"
-                              className="w-full mb-2 bg-lime-600 hover:bg-lime-700 text-white"
+                              className="w-full mb-2 bg-[hsl(var(--ppm-green))] hover:bg-[hsl(var(--ppm-green-light))] text-white"
                               onClick={() => { setPendingAction({ type: 'form', formId: formId as 'f1'|'f2'|'f3' }); setFormatDialogOpen(true); }}
                             >
                               <Download className="w-4 h-4 mr-2" />

@@ -228,8 +228,8 @@ export function CsvImport({ config, onImportSuccess }: CsvImportProps) {
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-lg file:border-0
                         file:text-sm file:font-medium
-                        file:bg-primary file:text-primary-foreground
-                        hover:file:bg-primary/90
+                        file:bg-black file:text-white
+                        hover:file:bg-zinc-900
                         disabled:opacity-50 disabled:cursor-not-allowed"
             />
             {isUploading && (

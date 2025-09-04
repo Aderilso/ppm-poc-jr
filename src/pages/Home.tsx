@@ -242,7 +242,7 @@ export default function Home() {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="ppm-card">
+          <Card className="ppm-card hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
@@ -263,7 +263,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="ppm-card">
+          <Card className="ppm-card hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -284,7 +284,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="ppm-card">
+          <Card className="ppm-card hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Download className="w-5 h-5" />
@@ -307,7 +307,7 @@ export default function Home() {
         </div>
 
         {/* Configuration Card */}
-        <Card className="ppm-card mt-8">
+        <Card className="ppm-card hover:shadow-lg transition-shadow mt-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="w-5 h-5" />
