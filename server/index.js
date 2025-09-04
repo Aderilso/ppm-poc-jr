@@ -35,12 +35,11 @@ function ensureWritableDatabaseUrl() {
   const defaultUrl = `file:${path.join('prisma', 'dev.db')}`; // relativo ao __dirname
   if (!current) current = defaultUrl;
 
-  const tryUrls = [current, defaultUrl, `file:${path.join('prisma', 'dev_rw.db')}`];
-  // Último recurso: pasta do usuário
+  // Primeiro recurso: pasta do usuário (mais confiável p/ escrita)
   const homeDir = os.homedir();
   const userDataDir = path.join(homeDir || __dirname, '.ppm-data');
   const userUrl = `file:${path.join(userDataDir, 'dev.db')}`;
-  tryUrls.push(userUrl);
+  const tryUrls = [userUrl, current, defaultUrl, `file:${path.join('prisma', 'dev_rw.db')}`];
 
   for (const url of tryUrls) {
     try {
