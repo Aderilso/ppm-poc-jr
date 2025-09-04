@@ -15,11 +15,18 @@ app.use(express.json());
 app.post('/api/interviews', async (req, res) => {
   try {
     console.log('📝 POST /api/interviews - Dados recebidos:', req.body);
-    const { isInterviewer, interviewerName, respondentName, respondentDepartment, createdAt } = req.body;
-    
-    console.log('🔍 Dados extraídos:', { isInterviewer, interviewerName, respondentName, respondentDepartment });
-    
-    // Validar se os dados estão corretos
+    const body = req.body || {};
+
+    // Sanitizar e normalizar entrada para evitar valores undefined/strings indevidas
+    const isInterviewer = typeof body.isInterviewer === 'boolean' ? body.isInterviewer : false;
+    const interviewerName = typeof body.interviewerName === 'string' ? body.interviewerName.trim() : undefined;
+    const respondentName = typeof body.respondentName === 'string' ? body.respondentName.trim() : undefined;
+    const respondentDepartment = typeof body.respondentDepartment === 'string' ? body.respondentDepartment.trim() : undefined;
+    const createdAt = body.createdAt;
+
+    console.log('🔍 Dados extraídos (sanitizados):', { isInterviewer, interviewerName, respondentName, respondentDepartment });
+
+    // Avisar sobre metadados incompletos quando marcado como entrevistador
     if (isInterviewer && (!interviewerName || !respondentName || !respondentDepartment)) {
       console.log('⚠️ AVISO: Entrevistador marcado mas dados incompletos:', {
         isInterviewer,
@@ -28,15 +35,14 @@ app.post('/api/interviews', async (req, res) => {
         hasDepartment: !!respondentDepartment
       });
     }
-    
-    // Log dos dados que serão salvos no banco
-    const dataToSave = {
-      isInterviewer,
-      interviewerName,
-      respondentName,
-      respondentDepartment,
-    };
-    // Permitir definir createdAt opcionalmente (importações)
+
+    // Montar payload apenas com campos definidos
+    const dataToSave = { isInterviewer };
+    if (interviewerName) dataToSave.interviewerName = interviewerName;
+    if (respondentName) dataToSave.respondentName = respondentName;
+    if (respondentDepartment) dataToSave.respondentDepartment = respondentDepartment;
+
+    // createdAt opcional (ex.: importações)
     if (createdAt) {
       const parsed = new Date(createdAt);
       if (!isNaN(parsed.getTime())) {
@@ -45,9 +51,9 @@ app.post('/api/interviews', async (req, res) => {
         console.warn('⚠️ createdAt inválido recebido, ignorando:', createdAt);
       }
     }
-    
-    console.log('💾 Dados que serão salvos no banco:', dataToSave);
-    
+
+    console.log('💾 Dados que serão salvos no banco (sanitizados):', dataToSave);
+
     const interview = await prisma.interview.create({
       data: dataToSave
     });
