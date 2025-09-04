@@ -309,9 +309,16 @@ export default function FormPage({ formId }: FormPageProps) {
     console.log(`📝 FormPage - Metadados alterados em ${formId}:`, newMeta);
     
     setMeta(newMeta);
-    
-    // Salvar no banco de dados
-    updateMetaHook(newMeta);
+  };
+
+  // Commit explícito de metadados: cria/atualiza somente quando chamado
+  const commitMeta = () => {
+    try {
+      console.log("📝 FormPage - Commit de metadados solicitado", meta);
+      updateMetaHook(meta);
+    } catch (e) {
+      console.error("❌ FormPage - Erro no commit de metadados:", e);
+    }
   };
 
   const handleClearDraft = () => {
@@ -518,7 +525,13 @@ export default function FormPage({ formId }: FormPageProps) {
         )}
 
         {/* Interviewer Fields */}
-        <InterviewerFields meta={meta} onMetaChange={handleMetaChange} />
+        <InterviewerFields 
+          meta={meta} 
+          onMetaChange={handleMetaChange}
+          onCommit={commitMeta}
+          canCommit={!!(meta.is_interviewer && meta.interviewer_name && meta.respondent_name && meta.respondent_department)}
+          actionLabel={currentInterviewId ? 'Salvar Metadados' : 'Iniciar Entrevista'}
+        />
 
         {/* Questions */}
         <Card className="ppm-card mb-8">

@@ -1,15 +1,19 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import type { PpmMeta } from "@/lib/types";
 
 interface InterviewerFieldsProps {
   meta: PpmMeta;
   onMetaChange: (meta: PpmMeta) => void;
   showValidation?: boolean;
+  onCommit?: () => void;
+  canCommit?: boolean;
+  actionLabel?: string;
 }
 
-export function InterviewerFields({ meta, onMetaChange, showValidation = false }: InterviewerFieldsProps) {
+export function InterviewerFields({ meta, onMetaChange, showValidation = false, onCommit, canCommit = false, actionLabel = "Salvar" }: InterviewerFieldsProps) {
   // Função para verificar se um campo tem erro
   const hasFieldError = (fieldName: keyof PpmMeta, value: string) => {
     if (!showValidation) return false;
@@ -77,9 +81,8 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false }
             <Input
               id="respondent_department"
               value={meta.respondent_department || ""}
-              onChange={(e) =>
-                onMetaChange({ ...meta, respondent_department: e.target.value })
-              }
+              onChange={(e) => onMetaChange({ ...meta, respondent_department: e.target.value })}
+              onBlur={() => { if (onCommit && canCommit) onCommit(); }}
               placeholder="Departamento"
               required
               className={hasFieldError('respondent_department', meta.respondent_department || "") ? "border-destructive" : ""}
@@ -88,6 +91,11 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false }
               <p className="text-sm text-destructive mt-1">Preencha este campo.</p>
             )}
           </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button onClick={() => onCommit && onCommit()} disabled={!canCommit}>
+            {actionLabel}
+          </Button>
         </div>
       )}
     </div>
