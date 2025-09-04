@@ -69,7 +69,10 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
                 </div>
                 <div>
                   <strong className="text-sm text-muted-foreground">Status:</strong>
-                  <Badge variant={interview.isCompleted ? "default" : "secondary"}>
+                  <Badge
+                    variant={interview.isCompleted ? "default" : "secondary"}
+                    className={interview.isCompleted ? "bg-black text-lime-400 border-black" : undefined}
+                  >
                     {interview.isCompleted ? "Concluída" : "Em andamento"}
                   </Badge>
                 </div>
@@ -541,7 +544,10 @@ export default function Entrevistas() {
                           {interview.id.substring(0, 8)}...
                         </TableCell>
                         <TableCell>
-                          <Badge variant={interview.isCompleted ? "default" : "secondary"}>
+                          <Badge
+                            variant={interview.isCompleted ? "default" : "secondary"}
+                            className={interview.isCompleted ? "bg-black text-lime-400 border-black" : undefined}
+                          >
                             {interview.isCompleted ? "Concluída" : "Em andamento"}
                           </Badge>
                         </TableCell>
