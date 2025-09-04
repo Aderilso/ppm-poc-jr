@@ -6,14 +6,46 @@ export class WeightManager {
   private static instance: WeightManager;
   private questionWeights: QuestionWeight[] = [...QUESTION_WEIGHTS];
   private categoryWeights: CategoryWeight[] = [...CATEGORY_WEIGHTS];
+  private readonly STORAGE_KEY = 'ppm.weights';
 
-  private constructor() {}
+  private constructor() {
+    // Tentar carregar de localStorage
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem(this.STORAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data?.questionWeights && data?.categoryWeights) {
+            this.questionWeights = data.questionWeights;
+            this.categoryWeights = data.categoryWeights;
+          }
+        }
+      }
+    } catch (e) {
+      // Silencioso: permanece com defaults
+      console.warn('WeightManager: falha ao carregar pesos do localStorage', e);
+    }
+  }
 
   static getInstance(): WeightManager {
     if (!WeightManager.instance) {
       WeightManager.instance = new WeightManager();
     }
     return WeightManager.instance;
+  }
+
+  private persist(): void {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const payload = JSON.stringify({
+          questionWeights: this.questionWeights,
+          categoryWeights: this.categoryWeights,
+        });
+        localStorage.setItem(this.STORAGE_KEY, payload);
+      }
+    } catch (e) {
+      console.warn('WeightManager: falha ao salvar pesos no localStorage', e);
+    }
   }
 
   // Adicionar peso para nova pergunta
@@ -35,6 +67,7 @@ export class WeightManager {
     if (!this.categoryWeights.find(c => c.category === category)) {
       this.addCategoryWeight(category, weight, `Categoria adicionada dinamicamente: ${category}`);
     }
+    this.persist();
   }
 
   // Adicionar peso para nova categoria
@@ -50,6 +83,7 @@ export class WeightManager {
     
     // Adicionar nova categoria
     this.categoryWeights.push(newCategoryWeight);
+    this.persist();
   }
 
   // Obter peso de uma pergunta
@@ -75,6 +109,7 @@ export class WeightManager {
   // Remover peso de pergunta
   removeQuestionWeight(questionId: string): void {
     this.questionWeights = this.questionWeights.filter(w => w.questionId !== questionId);
+    this.persist();
   }
 
   // Atualizar peso de pergunta existente
@@ -82,6 +117,7 @@ export class WeightManager {
     const index = this.questionWeights.findIndex(w => w.questionId === questionId);
     if (index !== -1) {
       this.questionWeights[index] = { ...this.questionWeights[index], ...updates };
+      this.persist();
     }
   }
 
@@ -97,12 +133,14 @@ export class WeightManager {
   importWeights(weights: { questionWeights: QuestionWeight[], categoryWeights: CategoryWeight[] }): void {
     this.questionWeights = [...weights.questionWeights];
     this.categoryWeights = [...weights.categoryWeights];
+    this.persist();
   }
 
   // Reset para pesos padrão
   resetToDefaults(): void {
     this.questionWeights = [...QUESTION_WEIGHTS];
     this.categoryWeights = [...CATEGORY_WEIGHTS];
+    this.persist();
   }
 }
 

@@ -134,6 +134,7 @@ export const interviewsApi = {
     interviewerName?: string;
     respondentName?: string;
     respondentDepartment?: string;
+    createdAt?: string; // opcional, permite definir o createdAt (ex.: importação via CSV)
   }): Promise<ApiInterview> => {
     return apiRequest<ApiInterview>('/interviews', {
       method: 'POST',

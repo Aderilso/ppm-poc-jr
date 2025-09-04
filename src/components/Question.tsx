@@ -21,13 +21,11 @@ interface QuestionProps {
 export function Question({ question, value, onChange, lookups, hasError = false }: QuestionProps) {
   
   const parseDropdownOptions = (tipo: string): string[] => {
-    // Extrair opções de tipos lista_suspensa_()
-    const match = tipo.match(/lista_suspensa_\(([^)]+)\)/);
+    // Extrair opções quando tipo possui sufixo _(...)
+    // Suportado: lista_suspensa_(...), multipla_(...), selecionar_1_(...)
+    const match = tipo.match(/^(lista_suspensa|multipla|selecionar_1)_\(([^)]+)\)$/);
     if (match) {
-      return match[1].split(',').map(opt => {
-        // Remover underscores do início e substituir underscores internos por espaços
-        return opt.replace(/^_/, '').replace(/_/g, ' ').trim();
-      });
+      return match[2].split(',').map(opt => opt.replace(/^_/, '').replace(/_/g, ' ').trim());
     }
     return [];
   };
@@ -39,7 +37,11 @@ export function Question({ question, value, onChange, lookups, hasError = false 
       return dropdownOptions;
     }
 
-    switch (tipo) {
+    const baseType = tipo.startsWith('multipla_(') ? 'multipla'
+      : tipo.startsWith('selecionar_1_(') ? 'selecionar_1'
+      : tipo;
+
+    switch (baseType) {
       case "multipla":
         // Determinar qual lookup usar baseado no ID da pergunta ou categoria
         if (question.id.toLowerCase().includes("sistema") || 
@@ -88,7 +90,11 @@ export function Question({ question, value, onChange, lookups, hasError = false 
     const stringValue = Array.isArray(value) ? value.join(",") : String(value || "");
     const arrayValue = Array.isArray(value) ? value : [];
 
-    switch (question.tipo) {
+    const baseType = question.tipo.startsWith('multipla_(') ? 'multipla'
+      : question.tipo.startsWith('selecionar_1_(') ? 'selecionar_1'
+      : question.tipo;
+
+    switch (baseType) {
       case "escala_1_5":
         return (
           <Likert15

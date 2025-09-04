@@ -7,7 +7,6 @@ export interface ConsolidatedFormData {
   question_id: string;
   pergunta: string;
   question_type: string;
-  category?: string;
   respondent_name: string;
   respondent_department: string;
   interviewer_name: string;
@@ -54,9 +53,17 @@ export async function consolidateFormInterviews(
   }
 
   const consolidatedData: ConsolidatedFormData[] = [];
+  // Aceitar tanto string JSON quanto objeto já parseado
   const formInterviews = interviews.filter(interview => {
-    const answers = interview[`${formId}Answers`];
-    return answers && typeof answers === 'string' && answers.trim() !== '';
+    const answersAny = (interview as any)[`${formId}Answers`];
+    if (!answersAny) return false;
+    if (typeof answersAny === 'string') {
+      return answersAny.trim() !== '';
+    }
+    if (typeof answersAny === 'object') {
+      return Object.keys(answersAny).length > 0;
+    }
+    return false;
   });
 
   let earliestDate = new Date();
@@ -64,13 +71,8 @@ export async function consolidateFormInterviews(
 
   for (const interview of formInterviews) {
     try {
-      const answersString = interview[`${formId}Answers`];
-      if (!answersString || typeof answersString !== 'string') {
-        console.warn(`Entrevista ${interview.id} não tem respostas válidas para ${formId}`);
-        continue;
-      }
-
-      const answers = JSON.parse(answersString);
+      const answersRaw = (interview as any)[`${formId}Answers`];
+      const answers = typeof answersRaw === 'string' ? JSON.parse(answersRaw) : answersRaw;
       const interviewDate = new Date(interview.createdAt);
       
       if (interviewDate < earliestDate) earliestDate = interviewDate;
@@ -92,7 +94,6 @@ export async function consolidateFormInterviews(
             question_id: question.id,
             pergunta: question.pergunta,
             question_type: question.tipo,
-            category: question.categoria,
             respondent_name: interview.respondentName || 'Anônimo',
             respondent_department: interview.respondentDepartment || '',
             interviewer_name: interview.interviewerName || '',
@@ -134,7 +135,6 @@ export function generateConsolidatedFormCsv(data: ConsolidatedFormData[], stats:
     "question_id",
     "pergunta",
     "question_type",
-    "category",
     "respondent_name",
     "respondent_department",
     "interviewer_name",

@@ -26,7 +26,7 @@ export async function importConsolidatedCsv(
   try {
     // Parse CSV
     const lines = csvContent.split('\n').filter(line => line.trim());
-    const headers = lines[0]?.split(',').map(h => h.replace(/"/g, '').trim()) || [];
+    const headers = lines[0] ? parseCsvLine(lines[0]).map(h => h.replace(/"/g, '').trim()) : [];
     
     if (headers.length === 0) {
       result.message = "Arquivo CSV inválido: cabeçalhos não encontrados";
@@ -54,7 +54,7 @@ export async function importConsolidatedCsv(
       const line = lines[i];
       if (!line.trim()) continue;
       
-      const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      const values = parseCsvLine(line).map(v => v.replace(/"/g, '').trim());
       const respondentName = values[respondentNameIndex];
       const timestamp = values[timestampIndex] || new Date().toISOString();
       
@@ -78,29 +78,17 @@ export async function importConsolidatedCsv(
     }
 
     // Processar cada entrevista
+    // Buscar entrevistas existentes uma vez para deduplicação simples
+    const allExisting = await interviewsApi.getAll();
+
     for (const [interviewKey, responses] of interviewsMap) {
       try {
-        // Verificar se já existe uma entrevista similar
-        const existingInterviews = await interviewsApi.getAll();
         const [respondentName, timestamp] = interviewKey.split('_');
-        
-        const existingInterview = existingInterviews.find(interview => 
+        // Deduplicação básica por respondente + data de criação (string exata)
+        const existingInterview = allExisting.find(interview => 
           interview.respondentName === respondentName && 
           interview.createdAt === timestamp
         );
-
-        if (existingInterview) {
-          result.skippedInterviews++;
-          continue;
-        }
-
-        // Criar nova entrevista
-        const interview = await interviewsApi.create({
-          isInterviewer: !!responses[0]?.interviewerName,
-          interviewerName: responses[0]?.interviewerName || undefined,
-          respondentName: responses[0]?.respondentName,
-          respondentDepartment: responses[0]?.respondentDepartment || undefined,
-        });
 
         // Organizar respostas por formulário
         const answers: Record<string, any> = {};
@@ -119,17 +107,35 @@ export async function importConsolidatedCsv(
           }
         });
 
-        // Salvar respostas do formulário
-        if (Object.keys(answers).length > 0) {
-          await interviewsApi.saveAnswers(interview.id, formId, answers);
+        if (existingInterview) {
+          // Atualizar entrevista existente (merge)
+          const detail = await interviewsApi.getById(existingInterview.id);
+          const existingAns = (detail as any)[`${formId}Answers`] || {};
+          const merged = { ...existingAns, ...answers };
+          if (Object.keys(merged).length > 0) {
+            await interviewsApi.saveAnswers(existingInterview.id, formId, merged);
+          }
+          if (responses[0]?.isCompleted) {
+            await interviewsApi.complete(existingInterview.id, JSON.stringify(config));
+          }
+          result.importedInterviews++;
+        } else {
+          // Criar nova entrevista
+          const interview = await interviewsApi.create({
+            isInterviewer: !!responses[0]?.interviewerName,
+            interviewerName: responses[0]?.interviewerName || undefined,
+            respondentName: responses[0]?.respondentName,
+            respondentDepartment: responses[0]?.respondentDepartment || undefined,
+            createdAt: timestamp,
+          });
+          if (Object.keys(answers).length > 0) {
+            await interviewsApi.saveAnswers(interview.id, formId, answers);
+          }
+          if (responses[0]?.isCompleted) {
+            await interviewsApi.complete(interview.id, JSON.stringify(config));
+          }
+          result.importedInterviews++;
         }
-
-        // Marcar como completa se necessário
-        if (responses[0]?.isCompleted) {
-          await interviewsApi.complete(interview.id, JSON.stringify(config));
-        }
-
-        result.importedInterviews++;
         
       } catch (error) {
         const errorMsg = `Erro ao importar entrevista ${interviewKey}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
@@ -165,7 +171,7 @@ export function validateConsolidatedCsv(csvContent: string): { valid: boolean; e
       return { valid: false, errors };
     }
 
-    const headers = lines[0]?.split(',').map(h => h.replace(/"/g, '').trim()) || [];
+    const headers = lines[0] ? parseCsvLine(lines[0]).map(h => h.replace(/"/g, '').trim()) : [];
     const requiredHeaders = ['respondent_name', 'question_id', 'resposta'];
     
     for (const required of requiredHeaders) {
@@ -179,8 +185,7 @@ export function validateConsolidatedCsv(csvContent: string): { valid: boolean; e
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
       if (!line.trim()) continue;
-      
-      const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      const values = parseCsvLine(line).map(v => v.replace(/"/g, '').trim());
       const respondentName = values[headers.indexOf('respondent_name')];
       
       if (respondentName && respondentName !== 'respondent_name' && respondentName !== '') {
@@ -199,4 +204,30 @@ export function validateConsolidatedCsv(csvContent: string): { valid: boolean; e
     errors.push(`Erro ao validar arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     return { valid: false, errors };
   }
+}
+
+// Parser robusto para CSV (suporta vírgulas entre aspas)
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      // Duas aspas seguidas no modo quoted viram uma aspas literal
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++; // pular a segunda aspas
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
 }

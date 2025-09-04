@@ -9,7 +9,7 @@ import { NewQuestionForm } from "@/components/NewQuestionForm";
 import { Upload, Download, CheckCircle, AlertCircle, FileText, Plus, Settings, Database, FileUp, Trash2, RefreshCw } from "lucide-react";
 import { validatePpmConfig } from "@/lib/schema";
 import { saveConfig, loadConfig } from "@/lib/storage";
-import { addNewQuestionWeight } from "@/lib/weightManager";
+import { addNewQuestionWeight, WeightManager } from "@/lib/weightManager";
 import { SAMPLE_JSON, loadDefaultConfig } from "@/lib/sampleData";
 import { toast } from "@/hooks/use-toast";
 import { criticalApi } from "@/lib/api";
@@ -31,6 +31,7 @@ export default function Config() {
 
   // Hidden file input for custom JSON upload
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const weightsFileInputRef = useRef<HTMLInputElement>(null);
 
   // Query client para limpar cache
   const queryClient = useQueryClient();
@@ -148,6 +149,52 @@ export default function Config() {
     }
   };
 
+  // ===== Pesos (Exportar/Importar) =====
+  const handleExportWeights = () => {
+    try {
+      const manager = WeightManager.getInstance();
+      const data = manager.exportWeights();
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+      const fileName = `ppm-weights-${timestamp}.json`;
+
+      const payload = JSON.stringify(data, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: 'Pesos exportados', description: `Arquivo ${fileName} baixado com sucesso.` });
+    } catch (e) {
+      toast({ title: 'Erro ao exportar pesos', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+    }
+  };
+
+  const handleImportWeightsClick = () => {
+    weightsFileInputRef.current?.click();
+  };
+
+  const handleImportWeightsFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const json = JSON.parse(text);
+      if (!json || !Array.isArray(json.questionWeights) || !Array.isArray(json.categoryWeights)) {
+        throw new Error('JSON inválido. Esperado: { questionWeights: [], categoryWeights: [] }');
+      }
+      const manager = WeightManager.getInstance();
+      manager.importWeights({ questionWeights: json.questionWeights, categoryWeights: json.categoryWeights });
+      toast({ title: 'Pesos importados', description: 'Pesos e categorias atualizados com sucesso.' });
+      e.target.value = '';
+    } catch (err) {
+      toast({ title: 'Erro ao importar pesos', description: err instanceof Error ? err.message : 'Erro desconhecido', variant: 'destructive' });
+    }
+  };
+
   const handleLoadCustom = () => {
     // Usar a ref para acessar o input de arquivo
     if (fileInputRef.current) {
@@ -255,12 +302,13 @@ export default function Config() {
   const handleClearConfig = () => {
     if (window.confirm("Tem certeza que deseja limpar a configuração atual? Isso removerá todas as perguntas e voltará para a tela inicial.")) {
       try {
-        // Limpar localStorage - configuração e dados relacionados
-        localStorage.removeItem('ppm-config');
-        localStorage.removeItem('ppm-answers-f1');
-        localStorage.removeItem('ppm-answers-f2');
-        localStorage.removeItem('ppm-answers-f3');
-        localStorage.removeItem('ppm-meta');
+        // Limpar localStorage - configuração e dados relacionados (chaves corretas)
+        localStorage.removeItem('ppm.config.json');
+        localStorage.removeItem('ppm.answers.f1');
+        localStorage.removeItem('ppm.answers.f2');
+        localStorage.removeItem('ppm.answers.f3');
+        localStorage.removeItem('ppm.meta');
+        localStorage.removeItem('currentInterviewId');
         localStorage.removeItem('ppm-config-timestamp');
         
         // Resetar estado
@@ -296,11 +344,22 @@ export default function Config() {
         description: `${result.deleted.interviews} entrevistas, ${result.deleted.analyses} análises e ${result.deleted.configs} configurações removidas.`,
       });
       
-      // Limpar dados do localStorage também
-      localStorage.removeItem('ppm-answers-f1');
-      localStorage.removeItem('ppm-answers-f2');
-      localStorage.removeItem('ppm-answers-f3');
-      localStorage.removeItem('ppm-meta');
+      // Limpar dados do localStorage também (chaves corretas) e configuração
+      localStorage.removeItem('ppm.answers.f1');
+      localStorage.removeItem('ppm.answers.f2');
+      localStorage.removeItem('ppm.answers.f3');
+      localStorage.removeItem('ppm.meta');
+      localStorage.removeItem('currentInterviewId');
+      localStorage.removeItem('ppm.config.json');
+      localStorage.removeItem('ppm-config-timestamp');
+
+      // Resetar estado local de configuração
+      setCurrentConfig(null);
+      setJsonText("");
+      setErrors([]);
+      setIsValid(false);
+      setShowLoadOptions(false);
+      setLastUpdated(null);
       
       // Limpar cache da query
       queryClient.invalidateQueries({ queryKey: ['interviews'] });
@@ -405,7 +464,7 @@ export default function Config() {
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Configurações</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Configurações</h1>
           <p className="text-muted-foreground">
             Configure as perguntas dos formulários através de JSON ou arquivo
           </p>
@@ -496,6 +555,17 @@ export default function Config() {
           onChange={handleFileUpload}
           className="hidden"
           title="Selecionar arquivo JSON"
+          style={{ display: 'none' }}
+        />
+
+        {/* Hidden File Input - Pesos */}
+        <input
+          ref={weightsFileInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={handleImportWeightsFile}
+          className="hidden"
+          title="Selecionar arquivo de pesos"
           style={{ display: 'none' }}
         />
 
@@ -609,11 +679,28 @@ export default function Config() {
                             <Download className="w-4 h-4 mr-2" />
                             Baixar JSON Atualizado
                           </Button>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={handleExportWeights}
+                              className="w-full border-blue-300 text-blue-700 hover:bg-transparent hover:text-blue-700 focus-visible:ring-0"
+                            >
+                              Exportar Pesos
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={handleImportWeightsClick}
+                              className="w-full border-blue-300 text-blue-700 hover:bg-transparent hover:text-blue-700 focus-visible:ring-0"
+                            >
+                              Importar Pesos
+                            </Button>
+                          </div>
                           
                           <Button
                             onClick={handleClearConfig}
                             variant="outline"
-                            className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                            className="w-full border-red-300 text-red-600 hover:bg-transparent hover:text-red-600 focus-visible:ring-0"
                             disabled={!currentConfig}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -623,7 +710,7 @@ export default function Config() {
                           <Button
                             onClick={handleClearDatabaseClick}
                             variant="outline"
-                            className="w-full border-red-500 text-red-700 hover:bg-red-100 hover:border-red-600"
+                            className="w-full border-red-500 text-red-700 hover:bg-transparent hover:text-red-700 focus-visible:ring-0"
                             disabled={isClearingDatabase}
                           >
                             {isClearingDatabase ? (
@@ -646,6 +733,7 @@ export default function Config() {
                             <p><strong>📅 Última atualização:</strong> {lastUpdated}</p>
                           )}
                           <p><strong>💡 Dica:</strong> Use "Baixar JSON Atualizado" para compartilhar com outros analistas.</p>
+                          <p><strong>💾 Pesos:</strong> Você também pode <em>Exportar/Importar Pesos</em> para manter a análise consistente entre ambientes.</p>
                           <p><strong>⚠️ Atenção:</strong> "Limpar Configuração" remove todas as perguntas e volta para a tela inicial.</p>
                           <p><strong>🚨 CRÍTICO:</strong> "Apagar Banco de Dados" remove TODAS as entrevistas e análises permanentemente!</p>
                         </div>

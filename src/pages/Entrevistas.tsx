@@ -15,12 +15,17 @@ import {
   Download,
   Calendar,
   User,
+  UserCheck,
   Building,
   AlertTriangle,
   Play
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { useInterviews, useAnalyses, useInterview } from "@/hooks/useInterview";
+import { useInterviews, useAnalyses, useInterview, useConfig } from "@/hooks/useInterview";
+import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
+import { downloadXlsx, type WorksheetSpec } from "@/lib/xlsx";
+import type { PpmMeta, Answers } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -64,7 +69,10 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
                 </div>
                 <div>
                   <strong className="text-sm text-muted-foreground">Status:</strong>
-                  <Badge variant={interview.isCompleted ? "default" : "secondary"}>
+                  <Badge
+                    variant={interview.isCompleted ? "default" : "secondary"}
+                    className={interview.isCompleted ? "bg-white text-lime-600 border border-lime-500 hover:bg-white hover:text-lime-600" : undefined}
+                  >
                     {interview.isCompleted ? "Concluída" : "Em andamento"}
                   </Badge>
                 </div>
@@ -158,10 +166,13 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
 }
 
 export default function Entrevistas() {
-  const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses } = useInterviews();
+  const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses, refetchList } = useInterviews();
   const { analyses } = useAnalyses(); // Manter para não quebrar funcionalidades
   const { resumeInterview } = useInterview(); // Hook para retomar entrevista
+  const { config, isLoading: isConfigLoading } = useConfig();
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [downloadInterviewTarget, setDownloadInterviewTarget] = useState<any>(null);
+  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isResumingInterview, setIsResumingInterview] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -171,6 +182,8 @@ export default function Entrevistas() {
     setIsUpdatingStatus(true);
     try {
       await updateInterviewStatuses();
+      // Garantir atualização imediata da lista após marcar concluídas
+      await refetchList();
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -203,23 +216,37 @@ export default function Entrevistas() {
       // Navegar para o próximo formulário não preenchido
       const interview = interviews.find(i => i.id === interviewId);
       if (interview) {
-        let nextForm = "/f1";
-        if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
-          if (interview.f2Answers && Object.keys(interview.f2Answers).length > 0) {
-            nextForm = "/f3"; // F1 e F2 preenchidos, ir para F3
-          } else {
-            nextForm = "/f2"; // Só F1 preenchido, ir para F2
+        const decideNextForm = (): string => {
+          // Se não há config ainda, usar fallback simples
+          if (!config || !config.forms) {
+            let fallback = "/f1";
+            if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
+              fallback = interview.f2Answers && Object.keys(interview.f2Answers).length > 0 ? "/f3" : "/f2";
+            }
+            return fallback;
           }
-        }
+
+          const order: Array<'f1'|'f2'|'f3'> = ['f1', 'f2', 'f3'];
+          for (const fid of order) {
+            const form = config.forms.find(f => f.id === fid);
+            if (!form) continue;
+            const activeQs = form.questions.filter(q => q.active !== false);
+            const ans: Record<string, any> = (interview as any)[`${fid}Answers`] || {};
+            const answeredCount = activeQs.reduce((acc, q) => acc + (ans[q.id] !== undefined && ans[q.id] !== '' ? 1 : 0), 0);
+            const totalActive = activeQs.length;
+            console.log(`🔎 Resume decide - ${fid}: ${answeredCount}/${totalActive}`);
+            if (answeredCount < totalActive) return `/${fid}`;
+          }
+          // Todos completos? Voltar ao F3 como fallback
+          return '/f3';
+        };
+
+        const nextForm = decideNextForm();
         
         console.log("🎯 Entrevistas - Navegando para:", nextForm);
         
-        // AGUARDAR UM POUCO ANTES DE NAVEGAR
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // FORÇAR RELOAD COMPLETO DA PÁGINA PARA GARANTIR EXECUÇÃO DO FORMPAGE
-        console.log("�� Entrevistas - Forçando reload completo para:", nextForm);
-        window.location.href = nextForm;
+        // Navegação suave sem reload completo
+        navigate(nextForm);
       }
     } catch (error) {
       console.error("❌ Entrevistas - Erro ao retomar entrevista:", error);
@@ -276,6 +303,109 @@ export default function Entrevistas() {
     return analyses.find(analysis => analysis.interviewId === interviewId);
   };
 
+  // Download consolidado de uma entrevista específica (F1+F2+F3)
+  const handleDownloadInterview = (interview: any, format: 'csv' | 'xlsx' = 'csv') => {
+    try {
+      if (!config) {
+        toast({ title: 'Configuração não encontrada', description: 'Carregue uma configuração ativa para exportar.', variant: 'destructive' });
+        return;
+      }
+      const answers: { f1: Answers; f2: Answers; f3: Answers } = {
+        f1: interview.f1Answers || {},
+        f2: interview.f2Answers || {},
+        f3: interview.f3Answers || {},
+      };
+      const meta: PpmMeta = {
+        is_interviewer: interview.isInterviewer || false,
+        interviewer_name: interview.interviewerName || '',
+        respondent_name: interview.respondentName || '',
+        respondent_department: interview.respondentDepartment || '',
+      };
+      const report = generateConsolidatedReport(config, answers, meta);
+      const filenameBase = interview.respondentName ? interview.respondentName.replace(/[^a-zA-Z0-9-_]/g, '_') : interview.id.substring(0,8);
+      const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-');
+      if (format === 'xlsx') {
+        const sheets: WorksheetSpec[] = [
+          {
+            name: 'Metadados',
+            headers: ['Campo','Valor'],
+            rows: [
+              ['Data de Geração', report.metadata.generated_at],
+              ['Entrevistador', meta.interviewer_name || ''],
+              ['Respondente', meta.respondent_name || ''],
+              ['Departamento', meta.respondent_department || ''],
+              ['Total de Perguntas', report.metadata.total_questions],
+              ['Perguntas Respondidas', report.metadata.answered_questions],
+              ['Taxa de Conclusão', `${report.metadata.completion_rate.toFixed(1)}%`],
+            ]
+          },
+          {
+            name: 'Scores',
+            headers: ['Indicador','Percentual'],
+            rows: [
+              ['Score Geral', `${report.analysis.overallScore.percentage.toFixed(1)}%`],
+              ['Satisfação', `${report.analysis.satisfactionScore.percentage.toFixed(1)}%`],
+              ['Funcionalidades', `${report.analysis.functionalityScore.percentage.toFixed(1)}%`],
+              ['Integração', `${report.analysis.integrationScore.percentage.toFixed(1)}%`],
+              ['Uso e Adoção', `${report.analysis.usageScore.percentage.toFixed(1)}%`],
+            ]
+          },
+          {
+            name: 'Categorias',
+            headers: ['Categoria','Perguntas','Score%','Peso','Status','Insights'],
+            rows: report.category_summary.map(c => [
+              c.category,
+              c.total_questions,
+              `${c.score_percentage.toFixed(1)}%`,
+              c.weight,
+              c.status,
+              (c.key_insights || []).join('; ')
+            ])
+          },
+          {
+            name: 'Recomendacoes',
+            headers: ['Prioridade','Categoria','Recomendacao','Impacto','Esforço','Timeline'],
+            rows: report.prioritized_recommendations.map(r => [r.priority, r.category, r.recommendation, r.impact, r.effort, r.timeline])
+          },
+          {
+            name: 'Detalhado',
+            headers: ['Formulário','Pergunta','Categoria','Peso','Resposta','Score','Score%'],
+            rows: report.detailed_responses.map(d => [
+              d.form_title,
+              d.question_text,
+              d.category,
+              d.weight,
+              Array.isArray(d.raw_answer) ? d.raw_answer.join('; ') : (d.raw_answer || ''),
+              d.numeric_score,
+              `${d.score_percentage.toFixed(1)}%`
+            ])
+          }
+        ];
+        downloadXlsx(sheets, `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.xlsx`);
+        toast({ title: 'Download realizado', description: `Arquivo XLSX baixado com sucesso!` });
+      } else {
+        const csvContent = exportConsolidatedReportToCsv(report);
+        const filename = `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.csv`;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', filename);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+        toast({ title: 'Download realizado', description: `${filename} baixado com sucesso!` });
+      }
+    } catch (error:any) {
+      console.error('Erro ao gerar relatório consolidado:', error);
+      toast({ title: 'Erro ao gerar relatório', description: error?.message || 'Erro desconhecido', variant: 'destructive' });
+    }
+  };
+
   if (isLoading) {
     return (
       <Layout>
@@ -310,7 +440,7 @@ export default function Entrevistas() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Gerenciar Entrevistas</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Gerenciar Entrevistas</h1>
           <p className="text-muted-foreground">
             Visualize e gerencie todas as entrevistas realizadas no sistema
           </p>
@@ -398,6 +528,7 @@ export default function Entrevistas() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Entrevistador</TableHead>
                     <TableHead>Respondente</TableHead>
                     <TableHead>Departamento</TableHead>
                     <TableHead>Criada em</TableHead>
@@ -413,9 +544,18 @@ export default function Entrevistas() {
                           {interview.id.substring(0, 8)}...
                         </TableCell>
                         <TableCell>
-                          <Badge variant={interview.isCompleted ? "default" : "secondary"}>
+                          <Badge
+                            variant={interview.isCompleted ? "default" : "secondary"}
+                            className={interview.isCompleted ? "bg-white text-lime-600 border border-lime-500 hover:bg-white hover:text-lime-600" : undefined}
+                          >
                             {interview.isCompleted ? "Concluída" : "Em andamento"}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="h-4 w-4 text-muted-foreground" />
+                            {interview.interviewerName || "Não informado"}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -471,6 +611,7 @@ export default function Entrevistas() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => { setDownloadInterviewTarget(interview); setIsDownloadDialogOpen(true); }}
                               disabled={!interview.isCompleted}
                             >
                               <Download className="h-4 w-4" />
@@ -500,6 +641,24 @@ export default function Entrevistas() {
             interview={selectedInterview}
             onClose={() => setSelectedInterview(null)}
           />
+        )}
+
+        {/* Dialogo de formato de download */}
+        {isDownloadDialogOpen && downloadInterviewTarget && (
+          <Dialog open onOpenChange={(open) => { if (!open) { setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); } }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Baixar Relatório</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Escolha o formato do arquivo para a entrevista de <strong>{downloadInterviewTarget.respondentName || downloadInterviewTarget.id.substring(0,8)}</strong>.</p>
+                <div className="flex gap-3">
+                  <Button className="flex-1" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'csv'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>CSV</Button>
+                  <Button className="flex-1" variant="outline" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'xlsx'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>XLSX</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </Layout>

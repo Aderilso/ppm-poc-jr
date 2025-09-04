@@ -1,5 +1,5 @@
 import type { PpmConfig, FormAnswers, PpmMeta } from "./types";
-import { saveAnswers, saveMeta } from "./storage";
+import { interviewsApi } from "./api";
 import { toast } from "@/hooks/use-toast";
 
 // Gerar template CSV para um formulário específico
@@ -299,18 +299,23 @@ export function validateImportedData(rows: any[], config: PpmConfig): { valid: b
 }
 
 // Processar dados importados e salvar
-export function processImportedData(rows: any[], config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): { success: boolean; message: string; count: number } {
+export async function processImportedDataToDb(rows: any[], config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): Promise<{ success: boolean; message: string; count: number }> {
   try {
     let processedCount = 0;
+    let skippedCount = 0;
+    const warnings: string[] = [];
 
-    rows.forEach((row, index) => {
+    // Buscar entrevistas existentes para deduplicação
+    const existing = await interviewsApi.getAll();
+
+    for (const row of rows) {
       // Pular linhas de exemplo/comentário
       if (row.respondent_name?.startsWith("PERGUNTA") || 
           row.respondent_name?.startsWith("OPÇÕES") || 
           row.respondent_name?.startsWith("//") ||
           row.respondent_name === "" ||
           !row.respondent_name) {
-        return;
+        continue;
       }
 
       // Extrair metadados
@@ -337,28 +342,85 @@ export function processImportedData(rows: any[], config: PpmConfig, targetFormId
             if (answer && answer.trim() !== '') {
               // Processar resposta baseada no tipo
               let processedAnswer: string | string[] = answer.trim();
-              
+               
               if (question.tipo === "multipla" && answer.includes(';')) {
                 processedAnswer = answer.split(';').map((a: string) => a.trim()).filter((a: string) => a);
               }
-              
+
+              // Validação "soft" para listas suspensas explícitas (gera aviso, não bloqueia)
+              const opts = parseDropdownOptions(question.tipo);
+              if (opts.length > 0) {
+                const checkValues = Array.isArray(processedAnswer) ? processedAnswer : [processedAnswer];
+                checkValues.forEach(v => {
+                  if (v && !opts.includes(v)) {
+                    warnings.push(`Valor não listado para ${question.id}: "${v}" (linha com respondente ${row.respondent_name})`);
+                  }
+                });
+              }
+               
               answers[form.id][question.id] = processedAnswer;
             }
           });
       });
 
-      // Salvar dados (sobrescreve dados existentes)
-      saveMeta(meta);
-      saveAnswers("f1", answers.f1);
-      saveAnswers("f2", answers.f2);
-      saveAnswers("f3", answers.f3);
-      
-      processedCount++;
-    });
+      // Normalizar timestamp
+      const ts = normalizeTimestamp(row.timestamp);
 
+      // Deduplicação por respondente + departamento + timestamp (createdAt)
+      const already = existing.find(i => 
+        i.respondentName === (meta.respondent_name || '') &&
+        i.respondentDepartment === (meta.respondent_department || '') &&
+        (ts ? (new Date(i.createdAt).getTime() === new Date(ts).getTime()) : false)
+      );
+      if (already) {
+        // Atualizar entrevista existente (merge de respostas)
+        try {
+          const detail = await interviewsApi.getById(already.id);
+          const forms: Array<'f1'|'f2'|'f3'> = ['f1','f2','f3'];
+          for (const fid of forms) {
+            const newAns = answers[fid];
+            if (newAns && Object.keys(newAns).length > 0) {
+              const existingAns = (detail as any)[`${fid}Answers`] || {};
+              const merged = { ...existingAns, ...newAns };
+              await interviewsApi.saveAnswers(already.id, fid, merged);
+            }
+          }
+          processedCount++;
+        } catch (e) {
+          warnings.push(`Falha ao atualizar entrevista existente (${already.id}): ${e instanceof Error ? e.message : 'erro'}`);
+        }
+        continue;
+      }
+
+      // Criar entrevista com metadados (e createdAt se informado)
+      const created = await interviewsApi.create({
+        isInterviewer: !!meta.interviewer_name,
+        interviewerName: meta.interviewer_name,
+        respondentName: meta.respondent_name,
+        respondentDepartment: meta.respondent_department,
+        createdAt: ts || undefined,
+      });
+
+      // Salvar respostas por formulário, quando houver
+      if (Object.keys(answers.f1).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f1', answers.f1);
+      }
+      if (Object.keys(answers.f2).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f2', answers.f2);
+      }
+      if (Object.keys(answers.f3).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f3', answers.f3);
+      }
+
+      processedCount++;
+    }
+
+    let message = `${processedCount} registro(s) importado(s) com sucesso`;
+    if (skippedCount > 0) message += ` | ${skippedCount} registro(s) ignorado(s) (duplicados)`;
+    if (warnings.length > 0) message += ` | ${warnings.length} aviso(s)`;
     return {
       success: true,
-      message: `${processedCount} registro(s) importado(s) com sucesso`,
+      message,
       count: processedCount
     };
 
@@ -369,6 +431,32 @@ export function processImportedData(rows: any[], config: PpmConfig, targetFormId
       count: 0
     };
   }
+}
+
+function parseDropdownOptions(tipo: string): string[] {
+  const match = tipo.match(/lista_suspensa_\(([^)]+)\)/);
+  if (!match) return [];
+  return match[1]
+    .split(',')
+    .map((opt: string) => opt.replace(/^_/, '').replace(/_/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function normalizeTimestamp(raw?: string): string | null {
+  if (!raw || typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  // Tentar parse direto
+  const direct = new Date(trimmed);
+  if (!isNaN(direct.getTime())) return direct.toISOString();
+  // Tentar formato "YYYY-MM-DD HH:MM" -> ISO
+  const m = trimmed.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2})?$/);
+  if (m) {
+    const iso = `${m[1]}T${m[2]}:00.000Z`;
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  return null;
 }
 
 // Função principal de importação
@@ -386,7 +474,7 @@ export async function importCsvData(file: File, config: PpmConfig, targetFormId?
       };
     }
 
-    return processImportedData(rows, config, targetFormId);
+    return await processImportedDataToDb(rows, config, targetFormId);
     
   } catch (error) {
     return {

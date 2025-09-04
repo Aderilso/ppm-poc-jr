@@ -15,7 +15,7 @@ app.use(express.json());
 app.post('/api/interviews', async (req, res) => {
   try {
     console.log('📝 POST /api/interviews - Dados recebidos:', req.body);
-    const { isInterviewer, interviewerName, respondentName, respondentDepartment } = req.body;
+    const { isInterviewer, interviewerName, respondentName, respondentDepartment, createdAt } = req.body;
     
     console.log('🔍 Dados extraídos:', { isInterviewer, interviewerName, respondentName, respondentDepartment });
     
@@ -36,6 +36,15 @@ app.post('/api/interviews', async (req, res) => {
       respondentName,
       respondentDepartment,
     };
+    // Permitir definir createdAt opcionalmente (importações)
+    if (createdAt) {
+      const parsed = new Date(createdAt);
+      if (!isNaN(parsed.getTime())) {
+        dataToSave.createdAt = parsed;
+      } else {
+        console.warn('⚠️ createdAt inválido recebido, ignorando:', createdAt);
+      }
+    }
     
     console.log('💾 Dados que serão salvos no banco:', dataToSave);
     
@@ -94,6 +103,34 @@ app.get('/api/interviews', async (req, res) => {
       });
     });
     
+    // Auto-conclusão defensiva ao listar
+    const completedIds = [];
+    for (let i = 0; i < interviews.length; i++) {
+      const itw = interviews[i];
+      try {
+        const f1 = itw.f1Answers ? JSON.parse(itw.f1Answers) : null;
+        const f2 = itw.f2Answers ? JSON.parse(itw.f2Answers) : null;
+        const f3 = itw.f3Answers ? JSON.parse(itw.f3Answers) : null;
+        const hasF1 = f1 && Object.keys(f1).length > 0;
+        const hasF2 = f2 && Object.keys(f2).length > 0;
+        const hasF3 = f3 && Object.keys(f3).length > 0;
+        if (hasF1 && hasF2 && hasF3 && !itw.isCompleted) {
+          await prisma.interview.update({
+            where: { id: itw.id },
+            data: { isCompleted: true, completedAt: new Date() }
+          });
+          itw.isCompleted = true;
+          itw.completedAt = new Date();
+          completedIds.push(itw.id);
+        }
+      } catch (e) {
+        console.warn('⚠️ Erro ao verificar/atualizar conclusão ao listar:', itw.id, e);
+      }
+    }
+    if (completedIds.length > 0) {
+      console.log('✅ Entrevistas marcadas como concluídas ao listar:', completedIds);
+    }
+
     // Converter campos JSON de volta para objetos
     const interviewsWithJson = interviews.map(interview => ({
       ...interview,
@@ -114,7 +151,7 @@ app.get('/api/interviews', async (req, res) => {
 app.get('/api/interviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const interview = await prisma.interview.findUnique({
+    let interview = await prisma.interview.findUnique({
       where: { id },
       include: { analyses: true }
     });
@@ -123,6 +160,26 @@ app.get('/api/interviews/:id', async (req, res) => {
       return res.status(404).json({ error: 'Entrevista não encontrada' });
     }
     
+    // Auto-conclusão defensiva ao buscar por ID
+    try {
+      const f1 = interview.f1Answers ? JSON.parse(interview.f1Answers) : null;
+      const f2 = interview.f2Answers ? JSON.parse(interview.f2Answers) : null;
+      const f3 = interview.f3Answers ? JSON.parse(interview.f3Answers) : null;
+      const hasF1 = f1 && Object.keys(f1).length > 0;
+      const hasF2 = f2 && Object.keys(f2).length > 0;
+      const hasF3 = f3 && Object.keys(f3).length > 0;
+      if (hasF1 && hasF2 && hasF3 && !interview.isCompleted) {
+        console.log(`🎯 Marcando entrevista ${id} como CONCLUÍDA automaticamente (GET by id)`);
+        interview = await prisma.interview.update({
+          where: { id },
+          data: { isCompleted: true, completedAt: new Date() },
+          include: { analyses: true }
+        });
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao verificar/atualizar conclusão em GET by id:', id, e);
+    }
+
     // Converter campos JSON de volta para objetos
     const interviewWithJson = {
       ...interview,
@@ -195,14 +252,36 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
     const updateData = {};
     updateData[`${formId}Answers`] = JSON.stringify(answers);
     
-    const interview = await prisma.interview.update({
+    let interview = await prisma.interview.update({
       where: { id },
       data: updateData
     });
-    
+
     console.log(`✅ ${formId} salvo com sucesso na entrevista ${id}`);
     console.log(`📊 Total de respostas em ${formId}: ${Object.keys(answers).length}`);
-    
+
+    // Verificar se todos os formulários possuem respostas para concluir automaticamente
+    try {
+      const f1 = interview.f1Answers ? JSON.parse(interview.f1Answers) : null;
+      const f2 = interview.f2Answers ? JSON.parse(interview.f2Answers) : null;
+      const f3 = interview.f3Answers ? JSON.parse(interview.f3Answers) : null;
+      const hasF1 = f1 && Object.keys(f1).length > 0;
+      const hasF2 = f2 && Object.keys(f2).length > 0;
+      const hasF3 = f3 && Object.keys(f3).length > 0;
+
+      console.log('🔍 Verificação automática de conclusão:', { id, hasF1, hasF2, hasF3, isCompleted: interview.isCompleted });
+
+      if (hasF1 && hasF2 && hasF3 && !interview.isCompleted) {
+        console.log(`🎯 Marcando entrevista ${id} como CONCLUÍDA automaticamente`);
+        interview = await prisma.interview.update({
+          where: { id },
+          data: { isCompleted: true, completedAt: new Date() }
+        });
+      }
+    } catch (autoErr) {
+      console.warn('⚠️ Erro ao verificar conclusão automática:', autoErr);
+    }
+
     // Converter campos JSON de volta para objetos
     const interviewWithJson = {
       ...interview,
@@ -211,7 +290,7 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
       f3Answers: interview.f3Answers ? JSON.parse(interview.f3Answers) : null,
       configSnapshot: interview.configSnapshot ? JSON.parse(interview.configSnapshot) : null
     };
-    
+
     res.json(interviewWithJson);
   } catch (error) {
     console.error(`❌ Erro ao salvar ${formId}:`, error);
@@ -276,13 +355,9 @@ app.delete('/api/database/clear', async (req, res) => {
     const deletedInterviews = await prisma.interview.deleteMany({});
     console.log(`🗑️ ${deletedInterviews.count} entrevistas deletadas`);
     
-    // Deletar todas as configurações (exceto a ativa)
-    const deletedConfigs = await prisma.config.deleteMany({
-      where: {
-        isActive: false
-      }
-    });
-    console.log(`🗑️ ${deletedConfigs.count} configurações inativas deletadas`);
+    // Deletar todas as configurações (inclusive a ativa) para zerar o sistema
+    const deletedConfigs = await prisma.config.deleteMany({});
+    console.log(`🗑️ ${deletedConfigs.count} configurações deletadas (inclui ativa)`);
     
     console.log('✅ Banco de dados limpo com sucesso!');
     
