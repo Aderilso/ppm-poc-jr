@@ -1,5 +1,5 @@
 import type { PpmConfig, FormAnswers, PpmMeta } from "./types";
-import { saveAnswers, saveMeta } from "./storage";
+import { interviewsApi } from "./api";
 import { toast } from "@/hooks/use-toast";
 
 // Gerar template CSV para um formulário específico
@@ -299,18 +299,18 @@ export function validateImportedData(rows: any[], config: PpmConfig): { valid: b
 }
 
 // Processar dados importados e salvar
-export function processImportedData(rows: any[], config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): { success: boolean; message: string; count: number } {
+export async function processImportedDataToDb(rows: any[], config: PpmConfig, targetFormId?: "f1" | "f2" | "f3"): Promise<{ success: boolean; message: string; count: number }> {
   try {
     let processedCount = 0;
 
-    rows.forEach((row, index) => {
+    for (const row of rows) {
       // Pular linhas de exemplo/comentário
       if (row.respondent_name?.startsWith("PERGUNTA") || 
           row.respondent_name?.startsWith("OPÇÕES") || 
           row.respondent_name?.startsWith("//") ||
           row.respondent_name === "" ||
           !row.respondent_name) {
-        return;
+        continue;
       }
 
       // Extrair metadados
@@ -347,14 +347,27 @@ export function processImportedData(rows: any[], config: PpmConfig, targetFormId
           });
       });
 
-      // Salvar dados (sobrescreve dados existentes)
-      saveMeta(meta);
-      saveAnswers("f1", answers.f1);
-      saveAnswers("f2", answers.f2);
-      saveAnswers("f3", answers.f3);
-      
+      // Criar entrevista com metadados
+      const created = await interviewsApi.create({
+        isInterviewer: !!meta.interviewer_name,
+        interviewerName: meta.interviewer_name,
+        respondentName: meta.respondent_name,
+        respondentDepartment: meta.respondent_department,
+      });
+
+      // Salvar respostas por formulário, quando houver
+      if (Object.keys(answers.f1).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f1', answers.f1);
+      }
+      if (Object.keys(answers.f2).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f2', answers.f2);
+      }
+      if (Object.keys(answers.f3).length > 0) {
+        await interviewsApi.saveAnswers(created.id, 'f3', answers.f3);
+      }
+
       processedCount++;
-    });
+    }
 
     return {
       success: true,
@@ -386,7 +399,7 @@ export async function importCsvData(file: File, config: PpmConfig, targetFormId?
       };
     }
 
-    return processImportedData(rows, config, targetFormId);
+    return await processImportedDataToDb(rows, config, targetFormId);
     
   } catch (error) {
     return {

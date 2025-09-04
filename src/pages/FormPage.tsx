@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -21,14 +21,23 @@ export default function FormPage({ formId }: FormPageProps) {
   console.log("🚀 FormPage - COMPONENTE MONTADO para:", formId);
   
   const navigate = useNavigate();
-  const { currentInterview, currentInterviewId, saveFormAnswers, updateMeta, clearDraft } = useInterview();
+  const {
+    currentInterview,
+    currentInterviewId,
+    updateAnswers,
+    updateMeta: updateMetaHook,
+    clearDraft: clearDraftHook,
+    completeInterview,
+    isSaving,
+    error
+  } = useInterview();
   
   console.log("🔍 FormPage - Hook useInterview retornou:", {
     currentInterview: currentInterview?.id,
     currentInterviewId,
-    hasSaveFormAnswers: !!saveFormAnswers,
-    hasUpdateMeta: !!updateMeta,
-    hasClearDraft: !!clearDraft,
+    hasUpdateAnswers: !!updateAnswers,
+    hasUpdateMeta: !!updateMetaHook,
+    hasClearDraft: !!clearDraftHook,
     currentInterviewObject: currentInterview
   });
   
@@ -62,14 +71,7 @@ export default function FormPage({ formId }: FormPageProps) {
   });
 
   // Usar o hook de entrevista para gerenciar dados no banco
-  const { 
-    currentInterview: currentInterviewHook, 
-    updateAnswers, 
-    updateMeta: updateMetaHook, 
-    clearDraft: clearDraftHook,
-    isSaving,
-    error 
-  } = useInterview();
+  // useInterview já utilizado acima
 
   // Usar o hook de configuração para carregar formulários
   const { config, isLoading: configLoading } = useConfig();
@@ -112,27 +114,27 @@ export default function FormPage({ formId }: FormPageProps) {
   // Carregar respostas do banco de dados quando a entrevista atual mudar
   useEffect(() => {
     console.log("🔍 FormPage - useEffect executado:", { 
-      currentInterview: currentInterviewHook?.id, 
+      currentInterview: currentInterview?.id, 
       formId,
-      hasRealData: currentInterviewHook ? Object.keys(currentInterviewHook[`${formId}Answers`] || {}).length > 0 : false,
-      isCompleted: currentInterviewHook?.isCompleted,
-      currentInterviewObject: currentInterviewHook
+      hasRealData: currentInterview ? Object.keys(currentInterview[`${formId}Answers`] || {}).length > 0 : false,
+      isCompleted: currentInterview?.isCompleted,
+      currentInterviewObject: currentInterview
     });
     
-    if (currentInterviewHook && currentInterviewHook.id) {
-      console.log("🔍 FormPage - Entrevista carregada:", currentInterviewHook.id);
-      console.log("🔍 FormPage - Dados completos da entrevista:", currentInterviewHook);
+    if (currentInterview && currentInterview.id) {
+      console.log("🔍 FormPage - Entrevista carregada:", currentInterview.id);
+      console.log("🔍 FormPage - Dados completos da entrevista:", currentInterview);
       console.log("🔍 FormPage - Metadados da entrevista:", {
-        isInterviewer: currentInterviewHook.isInterviewer,
-        interviewerName: currentInterviewHook.interviewerName,
-        respondentName: currentInterviewHook.respondentName,
-        respondentDepartment: currentInterviewHook.respondentDepartment
+        isInterviewer: currentInterview.isInterviewer,
+        interviewerName: currentInterview.interviewerName,
+        respondentName: currentInterview.respondentName,
+        respondentDepartment: currentInterview.respondentDepartment
       });
       
       // Verificar se a entrevista tem dados reais E não está concluída
-      const formAnswers = currentInterviewHook[`${formId}Answers`] || {};
+      const formAnswers = currentInterview[`${formId}Answers`] || {};
       const hasRealData = Object.keys(formAnswers).length > 0;
-      const isCompleted = currentInterviewHook.isCompleted;
+      const isCompleted = currentInterview.isCompleted;
       
       console.log("🔍 FormPage - Status da entrevista:", {
         formId,
@@ -145,9 +147,9 @@ export default function FormPage({ formId }: FormPageProps) {
       // NOVA LÓGICA: Carregar dados de TODOS os formulários quando retomar entrevista
       if (!isCompleted) {
         // Verificar se há dados em qualquer formulário (entrevista em andamento)
-        const hasF1Data = currentInterviewHook.f1Answers && Object.keys(currentInterviewHook.f1Answers).length > 0;
-        const hasF2Data = currentInterviewHook.f2Answers && Object.keys(currentInterviewHook.f2Answers).length > 0;
-        const hasF3Data = currentInterviewHook.f3Answers && Object.keys(currentInterviewHook.f3Answers).length > 0;
+        const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
+        const hasF2Data = currentInterview.f2Answers && Object.keys(currentInterview.f2Answers).length > 0;
+        const hasF3Data = currentInterview.f3Answers && Object.keys(currentInterview.f3Answers).length > 0;
         const hasAnyData = hasF1Data || hasF2Data || hasF3Data;
         
         console.log("🔍 FormPage - Status dos formulários:", {
@@ -181,16 +183,16 @@ export default function FormPage({ formId }: FormPageProps) {
       // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
       // FORÇAR CARREGAMENTO DOS METADADOS
       const bankMeta = {
-        is_interviewer: currentInterviewHook.isInterviewer || false,
-        interviewer_name: currentInterviewHook.interviewerName || "",
-        respondent_name: currentInterviewHook.respondentName || "",
-        respondent_department: currentInterviewHook.respondentDepartment || ""
+        is_interviewer: currentInterview.isInterviewer || false,
+        interviewer_name: currentInterview.interviewerName || "",
+        respondent_name: currentInterview.respondentName || "",
+        respondent_department: currentInterview.respondentDepartment || ""
       };
       
       console.log("🔍 FormPage - Debug metadados:", {
         formId,
         bankMeta,
-        f1Answers: currentInterviewHook.f1Answers,
+        f1Answers: currentInterview.f1Answers,
         isCompleted,
         currentMeta: meta
       });
@@ -226,17 +228,17 @@ export default function FormPage({ formId }: FormPageProps) {
       setHasDraftData(false);
       setShowValidation(false);
     }
-  }, [currentInterviewHook, formId]);
+  }, [currentInterview, formId]);
 
   // NOVA FUNÇÃO: Forçar recarga da entrevista
   const forceReloadInterview = async () => {
-    if (!currentInterviewHook?.id) return;
+    if (!currentInterview?.id) return;
     
-    console.log("🔄 FormPage - Forçando recarga da entrevista:", currentInterviewHook.id);
+    console.log("🔄 FormPage - Forçando recarga da entrevista:", currentInterview.id);
     
     try {
       // Buscar dados diretamente da API
-      const response = await fetch(`/api/interviews/${currentInterviewHook.id}`);
+      const response = await fetch(`/api/interviews/${currentInterview.id}`);
       if (response.ok) {
         const interview = await response.json();
         console.log("✅ FormPage - Entrevista recarregada da API:", interview);
@@ -259,12 +261,49 @@ export default function FormPage({ formId }: FormPageProps) {
   const handleAnswerChange = (questionId: string, value: string | string[]) => {
     const newAnswers = { ...answers, [questionId]: value };
     setAnswers(newAnswers);
-    
     console.log(`📝 FormPage - Resposta alterada em ${formId}:`, { questionId, value });
-    
-    // Salvar no banco de dados
-    updateAnswers(formId, newAnswers);
   };
+
+  // Debounce de salvamento das respostas para reduzir chamadas PUT
+  const lastSavedJsonRef = useRef<string>(JSON.stringify(answers));
+  const debounceTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    const currentJson = JSON.stringify(answers);
+    if (currentJson === lastSavedJsonRef.current) return; // nada mudou
+    
+    const timer = window.setTimeout(async () => {
+      try {
+        await updateAnswers(formId, answers);
+        lastSavedJsonRef.current = currentJson;
+      } catch (err) {
+        console.error("❌ FormPage - Erro ao salvar respostas (debounced):", err);
+      }
+    }, 500);
+    debounceTimerRef.current = timer;
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+    };
+  }, [answers, formId, updateAnswers]);
+
+  // Flush pendente ao desmontar o componente (para não perder respostas recentes)
+  useEffect(() => {
+    return () => {
+      try {
+        const currentJson = JSON.stringify(answers);
+        if (currentJson !== lastSavedJsonRef.current) {
+          // Último flush síncrono ao sair da página
+          updateAnswers(formId, answers);
+          lastSavedJsonRef.current = currentJson;
+        }
+      } catch (err) {
+        console.error("❌ FormPage - Erro no flush onUnmount:", err);
+      }
+    };
+  }, [answers, formId, updateAnswers]);
 
   const handleMetaChange = (newMeta: PpmMeta) => {
     console.log(`📝 FormPage - Metadados alterados em ${formId}:`, newMeta);
@@ -346,9 +385,17 @@ export default function FormPage({ formId }: FormPageProps) {
   };
 
   // Função para tentar avançar (ativa validação se necessário)
-  const handleNext = () => {
+  const handleNext = async () => {
     if (canProceed()) {
-      // Se pode avançar, navegar normalmente
+      // Último formulário: marcar entrevista como concluída
+      if (formId === "f3") {
+        try {
+          console.log("🎯 FormPage - Finalizando entrevista", currentInterviewId);
+          await completeInterview();
+        } catch (e) {
+          console.error("❌ FormPage - Erro ao finalizar entrevista:", e);
+        }
+      }
       navigate(getNextRoute());
     } else {
       // Se não pode avançar, ativar validação para mostrar erros
@@ -447,7 +494,7 @@ export default function FormPage({ formId }: FormPageProps) {
               </span>
             )}
             {/* Botão de Sincronizar Dados */}
-            {currentInterviewHook?.id && (
+            {currentInterview?.id && (
               <Button
                 variant="outline"
                 size="sm"

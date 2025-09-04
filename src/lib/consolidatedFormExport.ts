@@ -54,9 +54,17 @@ export async function consolidateFormInterviews(
   }
 
   const consolidatedData: ConsolidatedFormData[] = [];
+  // Aceitar tanto string JSON quanto objeto já parseado
   const formInterviews = interviews.filter(interview => {
-    const answers = interview[`${formId}Answers`];
-    return answers && typeof answers === 'string' && answers.trim() !== '';
+    const answersAny = (interview as any)[`${formId}Answers`];
+    if (!answersAny) return false;
+    if (typeof answersAny === 'string') {
+      return answersAny.trim() !== '';
+    }
+    if (typeof answersAny === 'object') {
+      return Object.keys(answersAny).length > 0;
+    }
+    return false;
   });
 
   let earliestDate = new Date();
@@ -64,13 +72,8 @@ export async function consolidateFormInterviews(
 
   for (const interview of formInterviews) {
     try {
-      const answersString = interview[`${formId}Answers`];
-      if (!answersString || typeof answersString !== 'string') {
-        console.warn(`Entrevista ${interview.id} não tem respostas válidas para ${formId}`);
-        continue;
-      }
-
-      const answers = JSON.parse(answersString);
+      const answersRaw = (interview as any)[`${formId}Answers`];
+      const answers = typeof answersRaw === 'string' ? JSON.parse(answersRaw) : answersRaw;
       const interviewDate = new Date(interview.createdAt);
       
       if (interviewDate < earliestDate) earliestDate = interviewDate;

@@ -20,7 +20,10 @@ import {
   Play
 } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { useInterviews, useAnalyses, useInterview } from "@/hooks/useInterview";
+import { useInterviews, useAnalyses, useInterview, useConfig } from "@/hooks/useInterview";
+import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
+import type { PpmMeta, Answers } from "@/lib/types";
+import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -158,9 +161,10 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
 }
 
 export default function Entrevistas() {
-  const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses } = useInterviews();
+  const { interviews, isLoading, error, deleteInterview, isDeleting, updateInterviewStatuses, refetchList } = useInterviews();
   const { analyses } = useAnalyses(); // Manter para não quebrar funcionalidades
   const { resumeInterview } = useInterview(); // Hook para retomar entrevista
+  const { config, isLoading: isConfigLoading } = useConfig();
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isResumingInterview, setIsResumingInterview] = useState<string | null>(null);
@@ -171,6 +175,8 @@ export default function Entrevistas() {
     setIsUpdatingStatus(true);
     try {
       await updateInterviewStatuses();
+      // Garantir atualização imediata da lista após marcar concluídas
+      await refetchList();
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -203,23 +209,37 @@ export default function Entrevistas() {
       // Navegar para o próximo formulário não preenchido
       const interview = interviews.find(i => i.id === interviewId);
       if (interview) {
-        let nextForm = "/f1";
-        if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
-          if (interview.f2Answers && Object.keys(interview.f2Answers).length > 0) {
-            nextForm = "/f3"; // F1 e F2 preenchidos, ir para F3
-          } else {
-            nextForm = "/f2"; // Só F1 preenchido, ir para F2
+        const decideNextForm = (): string => {
+          // Se não há config ainda, usar fallback simples
+          if (!config || !config.forms) {
+            let fallback = "/f1";
+            if (interview.f1Answers && Object.keys(interview.f1Answers).length > 0) {
+              fallback = interview.f2Answers && Object.keys(interview.f2Answers).length > 0 ? "/f3" : "/f2";
+            }
+            return fallback;
           }
-        }
+
+          const order: Array<'f1'|'f2'|'f3'> = ['f1', 'f2', 'f3'];
+          for (const fid of order) {
+            const form = config.forms.find(f => f.id === fid);
+            if (!form) continue;
+            const activeQs = form.questions.filter(q => q.active !== false);
+            const ans: Record<string, any> = (interview as any)[`${fid}Answers`] || {};
+            const answeredCount = activeQs.reduce((acc, q) => acc + (ans[q.id] !== undefined && ans[q.id] !== '' ? 1 : 0), 0);
+            const totalActive = activeQs.length;
+            console.log(`🔎 Resume decide - ${fid}: ${answeredCount}/${totalActive}`);
+            if (answeredCount < totalActive) return `/${fid}`;
+          }
+          // Todos completos? Voltar ao F3 como fallback
+          return '/f3';
+        };
+
+        const nextForm = decideNextForm();
         
         console.log("🎯 Entrevistas - Navegando para:", nextForm);
         
-        // AGUARDAR UM POUCO ANTES DE NAVEGAR
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // FORÇAR RELOAD COMPLETO DA PÁGINA PARA GARANTIR EXECUÇÃO DO FORMPAGE
-        console.log("�� Entrevistas - Forçando reload completo para:", nextForm);
-        window.location.href = nextForm;
+        // Navegação suave sem reload completo
+        navigate(nextForm);
       }
     } catch (error) {
       console.error("❌ Entrevistas - Erro ao retomar entrevista:", error);
@@ -274,6 +294,48 @@ export default function Entrevistas() {
 
   const getAnalysisForInterview = (interviewId: string) => {
     return analyses.find(analysis => analysis.interviewId === interviewId);
+  };
+
+  // Download consolidado de uma entrevista específica (F1+F2+F3)
+  const handleDownloadInterview = (interview: any) => {
+    try {
+      if (!config) {
+        toast({ title: 'Configuração não encontrada', description: 'Carregue uma configuração ativa para exportar.', variant: 'destructive' });
+        return;
+      }
+      const answers: { f1: Answers; f2: Answers; f3: Answers } = {
+        f1: interview.f1Answers || {},
+        f2: interview.f2Answers || {},
+        f3: interview.f3Answers || {},
+      };
+      const meta: PpmMeta = {
+        is_interviewer: interview.isInterviewer || false,
+        interviewer_name: interview.interviewerName || '',
+        respondent_name: interview.respondentName || '',
+        respondent_department: interview.respondentDepartment || '',
+      };
+      const report = generateConsolidatedReport(config, answers, meta);
+      const csvContent = exportConsolidatedReportToCsv(report);
+      const filenameBase = interview.respondentName ? interview.respondentName.replace(/[^a-zA-Z0-9-_]/g, '_') : interview.id.substring(0,8);
+      const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-');
+      const filename = `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.csv`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      toast({ title: 'Download realizado', description: `${filename} baixado com sucesso!` });
+    } catch (error:any) {
+      console.error('Erro ao gerar relatório consolidado:', error);
+      toast({ title: 'Erro ao gerar relatório', description: error?.message || 'Erro desconhecido', variant: 'destructive' });
+    }
   };
 
   if (isLoading) {
@@ -471,6 +533,7 @@ export default function Entrevistas() {
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleDownloadInterview(interview)}
                               disabled={!interview.isCompleted}
                             >
                               <Download className="h-4 w-4" />

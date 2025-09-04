@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { interviewsApi, configsApi, analysesApi, type ApiInterview } from '@/lib/api';
+import { interviewsApi, configsApi, analysesApi, healthApi, type ApiInterview } from '@/lib/api';
 import type { PpmMeta, Answers } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 
@@ -33,6 +33,16 @@ export function useInterview() {
     console.log("🔍 useInterview - currentInterviewId inicial:", stored);
     return stored;
   });
+
+  // Helper para sincronizar o ID no estado e no localStorage
+  const setInterviewId = (id: string | null) => {
+    setCurrentInterviewId(id);
+    if (id) {
+      localStorage.setItem('currentInterviewId', id);
+    } else {
+      localStorage.removeItem('currentInterviewId');
+    }
+  };
   
   console.log("🔍 useInterview - Estado atual:", {
     currentInterviewId,
@@ -46,21 +56,18 @@ export function useInterview() {
     console.log("🔍 useInterview: useEffect executado - Verificando APENAS conexão...");
     const checkOnline = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/health', {
-          method: 'GET',
-          signal: AbortSignal.timeout(5000) // Timeout de 5 segundos
-        });
-        if (response.ok) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await healthApi.check();
+        clearTimeout(timeout);
+        if (res && res.status === 'OK') {
           console.log("✅ useInterview: API online");
           setIsOnline(true);
           
           // NÃO buscar entrevistas existentes automaticamente
           // O sistema deve começar limpo e só carregar dados quando explicitamente solicitado
           console.log("🔍 useInterview: Sistema iniciado limpo, aguardando ação do usuário");
-        } else {
-          console.log("❌ useInterview: API offline");
-          setIsOnline(false);
-        }
+        } 
       } catch (error) {
         console.error("❌ useInterview: Erro ao verificar API:", error);
         setIsOnline(false);
@@ -99,7 +106,7 @@ export function useInterview() {
   const createInterviewMutation = useMutation({
     mutationFn: interviewsApi.create,
     onSuccess: (data) => {
-      setCurrentInterviewId(data.id);
+      setInterviewId(data.id);
     },
   });
 
@@ -131,7 +138,7 @@ export function useInterview() {
       
       if (interviewWithData) {
         console.log("✅ useInterview - Entrevista com dados encontrada:", interviewWithData.id);
-        setCurrentInterviewId(interviewWithData.id);
+        setInterviewId(interviewWithData.id);
         return interviewWithData;
       }
       
@@ -142,7 +149,7 @@ export function useInterview() {
       
       if (activeInterview) {
         console.log("✅ useInterview - Entrevista ativa encontrada:", activeInterview.id);
-        setCurrentInterviewId(activeInterview.id);
+        setInterviewId(activeInterview.id);
         return activeInterview;
       }
 
@@ -341,7 +348,7 @@ export function useInterview() {
             respondentName: result.respondentName,
             respondentDepartment: result.respondentDepartment
           });
-          setCurrentInterviewId(result.id);
+          setInterviewId(result.id);
           interviewId = result.id;
           queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
         } else {
@@ -379,7 +386,7 @@ export function useInterview() {
     console.log("🧹 useInterview - Limpando entrevista atual e campos...");
     
     // Limpar ID da entrevista atual
-    setCurrentInterviewId(null);
+    setInterviewId(null);
     
     // Forçar limpeza completa do cache
     queryClient.removeQueries({ queryKey: interviewKeys.lists() });
@@ -441,7 +448,7 @@ export function useInterview() {
       });
       
       // Definir como entrevista atual
-      setCurrentInterviewId(interviewId);
+      setInterviewId(interviewId);
       
       // Aguardar um pouco para garantir que o estado foi atualizado
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -472,7 +479,11 @@ export function useInterview() {
     try {
       if (isOnline && currentInterviewId) {
         await interviewsApi.complete(currentInterviewId);
-        setCurrentInterviewId(null);
+        // invalidar listas e detalhes para refletir status concluído
+        queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.all });
+        queryClient.invalidateQueries({ queryKey: interviewKeys.detail(currentInterviewId) });
+        setInterviewId(null);
       } else {
         throw new Error('Sistema offline. Conecte-se à internet para continuar.');
       }
@@ -506,9 +517,12 @@ export function useInterviews() {
 
   console.log('🔍 useInterviews - Hook iniciado');
 
-  const { data: interviews, isLoading, error } = useQuery({
+  const { data: interviews, isLoading, error, refetch } = useQuery({
     queryKey: interviewKeys.lists(),
     queryFn: interviewsApi.getAll,
+    // Forçar atualização da lista sempre que a tela montar
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   console.log('🔍 useInterviews - React Query retornou:', {
@@ -586,6 +600,7 @@ export function useInterviews() {
     deleteInterview: deleteInterviewMutation.mutate,
     isDeleting: deleteInterviewMutation.isPending,
     updateInterviewStatuses,
+    refetchList: refetch,
   };
 }
 
