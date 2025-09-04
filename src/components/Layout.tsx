@@ -1,33 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { Linkedin } from "lucide-react";
 
-// Deloitte Logo Component
+// Deloitte Logo Component (carrega SVG oficial por URL)
 const DeloitteLogo = ({ className }: { className?: string }) => (
-  <svg
-    viewBox="0 0 200 100"
-    className={className}
-    fill="currentColor"
-    preserveAspectRatio="none"
-    style={{ width: '36px', height: '24px' }}
-  >
-    <path
-      d="M20 10 C20 10, 20 10, 20 10
-         L20 90
-         C20 90, 20 90, 20 90
-         L80 90
-         C120 90, 140 70, 140 50
-         C140 30, 120 10, 80 10
-         L20 10 Z
-         M40 25
-         L75 25
-         C105 25, 120 35, 120 50
-         C120 65, 105 75, 75 75
-         L40 75
-         L40 25 Z"
-      fill="#000000"
-    />
-    <circle cx="160" cy="50" r="12" fill="#86BC25" />
-  </svg>
+  <img
+    src="https://www.deloitte.com/content/dam/assets-shared/logos/svg/a-d/deloitte.svg"
+    alt="Deloitte"
+    className={className ? className : ''}
+    style={{ height: '22px', width: 'auto' }}
+    loading="lazy"
+    crossOrigin="anonymous"
+  />
 );
 
 interface LayoutProps {
