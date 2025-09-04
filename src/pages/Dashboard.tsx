@@ -330,7 +330,7 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-primary mb-2">Dashboard PPM</h1>
+            <h1 className="text-3xl font-bold text-black mb-2">Dashboard PPM</h1>
             <p className="text-muted-foreground">
               Visualize e gerencie todos os indicadores da pesquisa
             </p>

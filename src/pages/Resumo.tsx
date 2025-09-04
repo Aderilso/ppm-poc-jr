@@ -289,7 +289,7 @@ export default function Resumo() {
     <Layout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Relatório Final - Avaliação PPM</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Relatório Final - Avaliação PPM</h1>
           <p className="text-muted-foreground">
             Análise completa com pesos, scores e recomendações estratégicas
           </p>

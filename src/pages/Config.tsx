@@ -464,7 +464,7 @@ export default function Config() {
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-primary mb-2">Configurações</h1>
+          <h1 className="text-3xl font-bold text-black mb-2">Configurações</h1>
           <p className="text-muted-foreground">
             Configure as perguntas dos formulários através de JSON ou arquivo
           </p>
