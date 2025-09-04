@@ -29,27 +29,51 @@ function canWrite(targetPath) {
   }
 }
 
+function dirWriteTest(dir) {
+  try {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tmp = path.join(dir, `.write-test-${Date.now()}.tmp`);
+    fs.writeFileSync(tmp, 'ok');
+    fs.unlinkSync(tmp);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 // Forçar uso do DB no diretório do usuário (~/.ppm-data/dev.db), ignorando .env
 function forceUserDatabaseUrl() {
   const homeDir = os.homedir() || __dirname;
   const userDataDir = path.join(homeDir, '.ppm-data');
   const dbFile = path.join(userDataDir, 'dev.db');
-  try {
-    if (!fs.existsSync(userDataDir)) fs.mkdirSync(userDataDir, { recursive: true });
-    // Garantir que a pasta é gravável
-    if (!canWrite(userDataDir)) {
-      try { fs.chmodSync(userDataDir, 0o700); } catch (_) {}
-    }
-    // Se o arquivo existir e estiver somente-leitura, tentar liberar
-    if (fs.existsSync(dbFile) && !canWrite(dbFile)) {
-      try { fs.chmodSync(dbFile, 0o600); } catch (_) {}
-    }
-  } catch (e) {
-    console.warn('⚠️ Não foi possível preparar ~/.ppm-data:', e?.message || e);
+
+  // 1) Tentar pasta do usuário
+  if (dirWriteTest(userDataDir)) {
+    try {
+      if (fs.existsSync(dbFile) && !canWrite(dbFile)) {
+        try { fs.chmodSync(dbFile, 0o600); } catch (_) {}
+      }
+    } catch (_) {}
+    const url = `file:${dbFile}`;
+    process.env.DATABASE_URL = url;
+    console.log('🔧 DATABASE_URL forçado para (usuário):', url);
+    return url;
   }
+
+  // 2) Fallback para diretório temporário do sistema
+  const tmpRoot = path.join(os.tmpdir(), 'ppm-data');
+  const tmpDb = path.join(tmpRoot, 'dev.db');
+  if (dirWriteTest(tmpRoot)) {
+    const url = `file:${tmpDb}`;
+    process.env.DATABASE_URL = url;
+    console.log('🔧 DATABASE_URL forçado para (temporário):', url);
+    return url;
+  }
+
+  // 3) Último recurso: manter ~/.ppm-data mesmo sem write test (irá falhar e será evidente no /api/debug/dbinfo)
   const url = `file:${dbFile}`;
   process.env.DATABASE_URL = url;
-  console.log('🔧 DATABASE_URL forçado para (usuário):', url);
+  console.warn('⚠️ Nenhum diretório gravável encontrado; usando mesmo assim:', url);
   return url;
 }
 
