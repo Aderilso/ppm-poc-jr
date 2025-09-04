@@ -41,12 +41,16 @@ if [ ! -d "server/node_modules" ]; then
   (cd server && npm install)
 fi
 
-# 3) Ensure DB schema exists (safe/no-op if already applied)
+# 3) Choose writable DB dir (user home preferred, else temp)
 echo "🗄️ Checando schema do banco (Prisma db push)..."
-# Forçar DATABASE_URL para ~/.ppm-data/dev.db para CLI do Prisma
-export DATABASE_URL="file:${HOME}/.ppm-data/dev.db"
-mkdir -p "${HOME}/.ppm-data" 2>/dev/null || true
-touch "${HOME}/.ppm-data/.perm" 2>/dev/null || true
+DB_DIR="$HOME/.ppm-data"
+mkdir -p "$DB_DIR" 2>/dev/null || true
+if ! (echo ok > "$DB_DIR/.perm" 2>/dev/null); then
+  DB_DIR="${TMPDIR:-/tmp}/ppm-data"
+  mkdir -p "$DB_DIR" 2>/dev/null || true
+  echo "⚠️ Sem permissão em ~/.ppm-data, usando temporário: $DB_DIR"
+fi
+export DATABASE_URL="file:${DB_DIR}/dev.db"
 (cd server && npx prisma generate >/dev/null 2>&1 && npx prisma db push >/dev/null 2>&1) || true
 
 # 4) Free ports optionally

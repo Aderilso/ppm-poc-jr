@@ -38,9 +38,16 @@ if not exist "server\node_modules" (
 )
 
 REM Garantir schema do banco (no-op se ja aplicado)
-REM Forcar DATABASE_URL para pasta do usuario
-set "DATABASE_URL=file:%USERPROFILE%\.ppm-data\dev.db"
-if not exist "%USERPROFILE%\.ppm-data" mkdir "%USERPROFILE%\.ppm-data" >nul 2>&1
+REM Escolher pasta gravavel para o DB (preferir usuario, senao TEMP)
+set "DBDIR=%USERPROFILE%\.ppm-data"
+if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
+echo ok>"%DBDIR%\.perm" 2>nul
+if errorlevel 1 (
+  set "DBDIR=%TEMP%\ppm-data"
+  if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
+  echo ⚠️ Sem permissao em pasta do usuario, usando TEMP: %DBDIR%
+)
+set "DATABASE_URL=file:%DBDIR%\dev.db"
 
 pushd server >nul
 call npx prisma generate >nul 2>&1
