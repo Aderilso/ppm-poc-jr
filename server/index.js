@@ -2,8 +2,19 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
 const app = express();
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Garantir que DATABASE_URL aponte para o arquivo correto independentemente do CWD
+if (!process.env.DATABASE_URL) {
+  const sqlitePath = `file:${path.join(__dirname, 'prisma', 'dev.db')}`;
+  process.env.DATABASE_URL = sqlitePath;
+  console.log('🔧 DATABASE_URL não definido; usando fallback:', sqlitePath);
+}
+console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: process.env.DATABASE_URL });
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
 
@@ -82,6 +93,13 @@ app.post('/api/interviews', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao criar entrevista:', error);
     console.error('❌ Stack trace:', error.stack);
+    // Diagnóstico adicional: listar colunas da tabela interviews para checar divergências
+    try {
+      const columns = await prisma.$queryRawUnsafe('PRAGMA table_info("interviews")');
+      console.log('🧭 Schema atual da tabela interviews:', columns);
+    } catch (e) {
+      console.warn('⚠️ Falha ao consultar PRAGMA table_info(interviews):', e?.message || e);
+    }
     // Retornar mais contexto para facilitar diagnóstico no cliente
     res.status(500).json({ 
       error: 'Erro interno do servidor', 
