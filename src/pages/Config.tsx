@@ -684,14 +684,14 @@ export default function Config() {
                             <Button
                               variant="outline"
                               onClick={handleExportWeights}
-                              className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                              className="w-full border-blue-300 text-blue-700 hover:bg-transparent hover:text-blue-700 focus-visible:ring-0"
                             >
                               Exportar Pesos
                             </Button>
                             <Button
                               variant="outline"
                               onClick={handleImportWeightsClick}
-                              className="w-full border-blue-300 text-blue-700 hover:bg-blue-50 hover:border-blue-400"
+                              className="w-full border-blue-300 text-blue-700 hover:bg-transparent hover:text-blue-700 focus-visible:ring-0"
                             >
                               Importar Pesos
                             </Button>
@@ -700,7 +700,7 @@ export default function Config() {
                           <Button
                             onClick={handleClearConfig}
                             variant="outline"
-                            className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                            className="w-full border-red-300 text-red-600 hover:bg-transparent hover:text-red-600 focus-visible:ring-0"
                             disabled={!currentConfig}
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
@@ -710,7 +710,7 @@ export default function Config() {
                           <Button
                             onClick={handleClearDatabaseClick}
                             variant="outline"
-                            className="w-full border-red-500 text-red-700 hover:bg-red-100 hover:border-red-600"
+                            className="w-full border-red-500 text-red-700 hover:bg-transparent hover:text-red-700 focus-visible:ring-0"
                             disabled={isClearingDatabase}
                           >
                             {isClearingDatabase ? (
