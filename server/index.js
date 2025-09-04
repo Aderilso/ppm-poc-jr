@@ -82,7 +82,13 @@ app.post('/api/interviews', async (req, res) => {
   } catch (error) {
     console.error('❌ Erro ao criar entrevista:', error);
     console.error('❌ Stack trace:', error.stack);
-    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+    // Retornar mais contexto para facilitar diagnóstico no cliente
+    res.status(500).json({ 
+      error: 'Erro interno do servidor', 
+      details: error?.message || 'Erro desconhecido',
+      code: error?.code || undefined,
+      meta: error?.meta || undefined
+    });
   }
 });
 
@@ -211,21 +217,30 @@ app.get('/api/interviews/:id', async (req, res) => {
 app.put('/api/interviews/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-    
+    const body = req.body || {};
+
     console.log('📝 PUT /api/interviews/:id - Atualizando entrevista:', id);
-    console.log('📝 Dados recebidos:', updateData);
-    
-    // Log detalhado dos metadados
-    if (updateData.interviewerName || updateData.respondentName || updateData.respondentDepartment) {
-      console.log('🔍 Metadados sendo atualizados:', {
-        isInterviewer: updateData.isInterviewer,
-        interviewerName: updateData.interviewerName,
-        respondentName: updateData.respondentName,
-        respondentDepartment: updateData.respondentDepartment
-      });
+    console.log('📝 Dados recebidos (brutos):', body);
+
+    // Sanitizar entrada
+    const updateData = {};
+    if (typeof body.isInterviewer === 'boolean' || body.isInterviewer === 'true' || body.isInterviewer === 'false') {
+      updateData.isInterviewer = body.isInterviewer === true || body.isInterviewer === 'true';
     }
-    
+    if (typeof body.interviewerName === 'string') updateData.interviewerName = body.interviewerName.trim() || null;
+    if (typeof body.respondentName === 'string') updateData.respondentName = body.respondentName.trim() || null;
+    if (typeof body.respondentDepartment === 'string') updateData.respondentDepartment = body.respondentDepartment.trim() || null;
+    if (body.completedAt) {
+      const parsed = new Date(body.completedAt);
+      if (!isNaN(parsed.getTime())) updateData.completedAt = parsed; 
+    }
+    if (typeof body.isCompleted === 'boolean') updateData.isCompleted = body.isCompleted;
+    if (body.configSnapshot !== undefined) {
+      try { updateData.configSnapshot = JSON.stringify(body.configSnapshot); } catch (e) { /* ignore */ }
+    }
+
+    console.log('💾 Dados sanitizados para update:', updateData);
+
     const interview = await prisma.interview.update({
       where: { id },
       data: updateData
