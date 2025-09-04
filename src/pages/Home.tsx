@@ -117,7 +117,7 @@ export default function Home() {
         
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-primary mb-4">
+          <h1 className="text-4xl font-bold text-black mb-4">
             Pesquisa sobre Ferramentas PPM
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -140,7 +140,7 @@ export default function Home() {
           <CardContent className="text-center">
             <Button 
               size="lg" 
-              className="ppm-button-primary px-8 py-3 text-lg"
+              className="px-8 py-3 text-lg bg-black text-white hover:bg-zinc-900"
               onClick={handleStartInterview}
               disabled={isStartingInterview || isLoading}
             >
