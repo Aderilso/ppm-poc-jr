@@ -23,6 +23,7 @@ import {
 import { Layout } from "@/components/Layout";
 import { useInterviews, useAnalyses, useInterview, useConfig } from "@/hooks/useInterview";
 import { generateConsolidatedReport, exportConsolidatedReportToCsv } from "@/lib/consolidatedReport";
+import { downloadXlsx, type WorksheetSpec } from "@/lib/xlsx";
 import type { PpmMeta, Answers } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -167,6 +168,8 @@ export default function Entrevistas() {
   const { resumeInterview } = useInterview(); // Hook para retomar entrevista
   const { config, isLoading: isConfigLoading } = useConfig();
   const [selectedInterview, setSelectedInterview] = useState<any>(null);
+  const [downloadInterviewTarget, setDownloadInterviewTarget] = useState<any>(null);
+  const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isResumingInterview, setIsResumingInterview] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -298,7 +301,7 @@ export default function Entrevistas() {
   };
 
   // Download consolidado de uma entrevista específica (F1+F2+F3)
-  const handleDownloadInterview = (interview: any) => {
+  const handleDownloadInterview = (interview: any, format: 'csv' | 'xlsx' = 'csv') => {
     try {
       if (!config) {
         toast({ title: 'Configuração não encontrada', description: 'Carregue uma configuração ativa para exportar.', variant: 'destructive' });
@@ -316,23 +319,84 @@ export default function Entrevistas() {
         respondent_department: interview.respondentDepartment || '',
       };
       const report = generateConsolidatedReport(config, answers, meta);
-      const csvContent = exportConsolidatedReportToCsv(report);
       const filenameBase = interview.respondentName ? interview.respondentName.replace(/[^a-zA-Z0-9-_]/g, '_') : interview.id.substring(0,8);
       const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-');
-      const filename = `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.csv`;
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+      if (format === 'xlsx') {
+        const sheets: WorksheetSpec[] = [
+          {
+            name: 'Metadados',
+            headers: ['Campo','Valor'],
+            rows: [
+              ['Data de Geração', report.metadata.generated_at],
+              ['Entrevistador', meta.interviewer_name || ''],
+              ['Respondente', meta.respondent_name || ''],
+              ['Departamento', meta.respondent_department || ''],
+              ['Total de Perguntas', report.metadata.total_questions],
+              ['Perguntas Respondidas', report.metadata.answered_questions],
+              ['Taxa de Conclusão', `${report.metadata.completion_rate.toFixed(1)}%`],
+            ]
+          },
+          {
+            name: 'Scores',
+            headers: ['Indicador','Percentual'],
+            rows: [
+              ['Score Geral', `${report.analysis.overallScore.percentage.toFixed(1)}%`],
+              ['Satisfação', `${report.analysis.satisfactionScore.percentage.toFixed(1)}%`],
+              ['Funcionalidades', `${report.analysis.functionalityScore.percentage.toFixed(1)}%`],
+              ['Integração', `${report.analysis.integrationScore.percentage.toFixed(1)}%`],
+              ['Uso e Adoção', `${report.analysis.usageScore.percentage.toFixed(1)}%`],
+            ]
+          },
+          {
+            name: 'Categorias',
+            headers: ['Categoria','Perguntas','Score%','Peso','Status','Insights'],
+            rows: report.category_summary.map(c => [
+              c.category,
+              c.total_questions,
+              `${c.score_percentage.toFixed(1)}%`,
+              c.weight,
+              c.status,
+              (c.key_insights || []).join('; ')
+            ])
+          },
+          {
+            name: 'Recomendacoes',
+            headers: ['Prioridade','Categoria','Recomendacao','Impacto','Esforço','Timeline'],
+            rows: report.prioritized_recommendations.map(r => [r.priority, r.category, r.recommendation, r.impact, r.effort, r.timeline])
+          },
+          {
+            name: 'Detalhado',
+            headers: ['Formulário','Pergunta','Categoria','Peso','Resposta','Score','Score%'],
+            rows: report.detailed_responses.map(d => [
+              d.form_title,
+              d.question_text,
+              d.category,
+              d.weight,
+              Array.isArray(d.raw_answer) ? d.raw_answer.join('; ') : (d.raw_answer || ''),
+              d.numeric_score,
+              `${d.score_percentage.toFixed(1)}%`
+            ])
+          }
+        ];
+        downloadXlsx(sheets, `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.xlsx`);
+        toast({ title: 'Download realizado', description: `Arquivo XLSX baixado com sucesso!` });
+      } else {
+        const csvContent = exportConsolidatedReportToCsv(report);
+        const filename = `PPM_Relatorio_Consolidado_${filenameBase}_${ts}.csv`;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+          const url = URL.createObjectURL(blob);
+          link.setAttribute('href', url);
+          link.setAttribute('download', filename);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+        toast({ title: 'Download realizado', description: `${filename} baixado com sucesso!` });
       }
-      toast({ title: 'Download realizado', description: `${filename} baixado com sucesso!` });
     } catch (error:any) {
       console.error('Erro ao gerar relatório consolidado:', error);
       toast({ title: 'Erro ao gerar relatório', description: error?.message || 'Erro desconhecido', variant: 'destructive' });
@@ -541,7 +605,7 @@ export default function Entrevistas() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDownloadInterview(interview)}
+                              onClick={() => { setDownloadInterviewTarget(interview); setIsDownloadDialogOpen(true); }}
                               disabled={!interview.isCompleted}
                             >
                               <Download className="h-4 w-4" />
@@ -571,6 +635,24 @@ export default function Entrevistas() {
             interview={selectedInterview}
             onClose={() => setSelectedInterview(null)}
           />
+        )}
+
+        {/* Dialogo de formato de download */}
+        {isDownloadDialogOpen && downloadInterviewTarget && (
+          <Dialog open onOpenChange={(open) => { if (!open) { setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); } }}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Baixar Relatório</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Escolha o formato do arquivo para a entrevista de <strong>{downloadInterviewTarget.respondentName || downloadInterviewTarget.id.substring(0,8)}</strong>.</p>
+                <div className="flex gap-3">
+                  <Button className="flex-1" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'csv'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>CSV</Button>
+                  <Button className="flex-1" variant="outline" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'xlsx'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>XLSX</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
     </Layout>
