@@ -15,6 +15,7 @@ import { useConfig } from "@/hooks/useInterview";
 import type { PpmConfig, PpmMeta, FormAnswers } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { downloadXlsx, type WorksheetSpec } from "@/lib/xlsx";
 
 export default function Resumo() {
@@ -29,6 +30,8 @@ export default function Resumo() {
   const [currentAnswers, setCurrentAnswers] = useState<FormAnswers>({ f1: {}, f2: {}, f3: {} });
   const [currentMeta, setCurrentMeta] = useState<PpmMeta>({ is_interviewer: false });
   const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('csv');
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<null | { type: 'form'; formId: 'f1'|'f2'|'f3' } | { type: 'global' }>(null);
 
   // Sem carregamento de config via localStorage — usamos a ativa do banco.
 
@@ -113,7 +116,7 @@ export default function Resumo() {
     }
   };
 
-  const handleConsolidatedDownload = async (formId: "f1" | "f2" | "f3") => {
+  const handleConsolidatedDownload = async (formId: "f1" | "f2" | "f3", formatOverride?: 'csv'|'xlsx') => {
     if (!config) return;
 
     try {
@@ -133,9 +136,10 @@ export default function Resumo() {
         return;
       }
 
-      if (exportFormat === 'xlsx') {
+      const fmt = formatOverride ?? exportFormat;
+      if (fmt === 'xlsx') {
         const headers = [
-          "form_id","form_title","question_id","pergunta","question_type","category",
+          "form_id","form_title","question_id","pergunta","question_type",
           "respondent_name","respondent_department","interviewer_name","resposta","timestamp","interview_id","is_completed"
         ];
         const rows = data.map(row => headers.map(h => (row as any)[h] ?? ''));
@@ -176,7 +180,7 @@ export default function Resumo() {
   };
 
   // Novo: Download consolidado global (todas as entrevistas, F1+F2+F3 em um arquivo)
-  const handleDownloadAllConsolidated = async () => {
+  const handleDownloadAllConsolidated = async (formatOverride?: 'csv'|'xlsx') => {
     if (!config) return;
     try {
       // Gerar consolidados por formulário
@@ -184,10 +188,11 @@ export default function Resumo() {
       const f2 = await consolidateFormInterviews(config, "f2");
       const f3 = await consolidateFormInterviews(config, "f3");
 
-      if (exportFormat === 'xlsx') {
+      const fmt = formatOverride ?? exportFormat;
+      if (fmt === 'xlsx') {
         const mkSheets = (data: any[], stats: any, formId: string): WorksheetSpec[] => {
           const headers = [
-            "form_id","form_title","question_id","pergunta","question_type","category",
+            "form_id","form_title","question_id","pergunta","question_type",
             "respondent_name","respondent_department","interviewer_name","resposta","timestamp","interview_id","is_completed"
           ];
           const rows = data.map(row => headers.map(h => (row as any)[h] ?? ''));
@@ -342,7 +347,7 @@ export default function Resumo() {
                             <Button
                               variant="default"
                               className="w-full mb-2 bg-green-600 hover:bg-green-700"
-                              onClick={() => handleConsolidatedDownload(formId as "f1" | "f2" | "f3")}
+                              onClick={() => { setPendingAction({ type: 'form', formId: formId as 'f1'|'f2'|'f3' }); setFormatDialogOpen(true); }}
                             >
                               <Download className="w-4 h-4 mr-2" />
                               Consolidado {formId.toUpperCase()}
@@ -384,7 +389,7 @@ export default function Resumo() {
                         </p>
                         <Button
                           className="ppm-button-accent w-full mb-2"
-                          onClick={handleDownloadAllConsolidated}
+                          onClick={() => { setPendingAction({ type: 'global' }); setFormatDialogOpen(true); }}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Download Consolidado
@@ -416,6 +421,32 @@ export default function Resumo() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Dialogo de formato para downloads no Resumo */}
+      {formatDialogOpen && pendingAction && (
+        <Dialog open onOpenChange={(open) => { if (!open) { setFormatDialogOpen(false); setPendingAction(null); } }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Escolha o Formato</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Selecione o formato do arquivo para exportação.</p>
+              <div className="flex gap-3">
+                <Button className="flex-1" onClick={() => {
+                  if (pendingAction.type === 'form') handleConsolidatedDownload(pendingAction.formId, 'csv');
+                  else handleDownloadAllConsolidated('csv');
+                  setFormatDialogOpen(false); setPendingAction(null);
+                }}>CSV</Button>
+                <Button className="flex-1" variant="outline" onClick={() => {
+                  if (pendingAction.type === 'form') handleConsolidatedDownload(pendingAction.formId, 'xlsx');
+                  else handleDownloadAllConsolidated('xlsx');
+                  setFormatDialogOpen(false); setPendingAction(null);
+                }}>XLSX</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Layout>
   );
 }

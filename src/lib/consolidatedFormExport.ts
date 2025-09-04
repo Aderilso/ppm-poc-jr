@@ -7,7 +7,6 @@ export interface ConsolidatedFormData {
   question_id: string;
   pergunta: string;
   question_type: string;
-  category?: string;
   respondent_name: string;
   respondent_department: string;
   interviewer_name: string;
@@ -95,7 +94,6 @@ export async function consolidateFormInterviews(
             question_id: question.id,
             pergunta: question.pergunta,
             question_type: question.tipo,
-            category: question.categoria,
             respondent_name: interview.respondentName || 'Anônimo',
             respondent_department: interview.respondentDepartment || '',
             interviewer_name: interview.interviewerName || '',
@@ -137,7 +135,6 @@ export function generateConsolidatedFormCsv(data: ConsolidatedFormData[], stats:
     "question_id",
     "pergunta",
     "question_type",
-    "category",
     "respondent_name",
     "respondent_department",
     "interviewer_name",
