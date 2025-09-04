@@ -14,7 +14,6 @@ import { useInterview, useInterviews } from "@/hooks/useInterview";
 import { useConfig } from "@/hooks/useInterview";
 import type { PpmConfig, PpmMeta, FormAnswers } from "@/lib/types";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { downloadXlsx, type WorksheetSpec } from "@/lib/xlsx";
 
@@ -29,7 +28,7 @@ export default function Resumo() {
   // Carregar dados da entrevista atual
   const [currentAnswers, setCurrentAnswers] = useState<FormAnswers>({ f1: {}, f2: {}, f3: {} });
   const [currentMeta, setCurrentMeta] = useState<PpmMeta>({ is_interviewer: false });
-  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('csv');
+  // Formato decidido via diálogo para cada ação
   const [formatDialogOpen, setFormatDialogOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | { type: 'form'; formId: 'f1'|'f2'|'f3' } | { type: 'global' }>(null);
 
@@ -136,7 +135,7 @@ export default function Resumo() {
         return;
       }
 
-      const fmt = formatOverride ?? exportFormat;
+      const fmt = formatOverride || 'csv';
       if (fmt === 'xlsx') {
         const headers = [
           "form_id","form_title","question_id","pergunta","question_type",
@@ -188,7 +187,7 @@ export default function Resumo() {
       const f2 = await consolidateFormInterviews(config, "f2");
       const f3 = await consolidateFormInterviews(config, "f3");
 
-      const fmt = formatOverride ?? exportFormat;
+      const fmt = formatOverride || 'csv';
       if (fmt === 'xlsx') {
         const mkSheets = (data: any[], stats: any, formId: string): WorksheetSpec[] => {
           const headers = [
@@ -323,21 +322,7 @@ export default function Resumo() {
                 <div className="space-y-10">
                   {/* Consolidados por Formulário (Todas as Entrevistas) */}
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-medium">Consolidados por Formulário (Todas as Entrevistas)</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Formato:</span>
-                        <Select value={exportFormat} onValueChange={(v: 'csv' | 'xlsx') => setExportFormat(v)}>
-                          <SelectTrigger className="w-36 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="csv">CSV (padrão)</SelectItem>
-                            <SelectItem value="xlsx">XLSX</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    <h3 className="font-medium mb-3">Consolidados por Formulário (Todas as Entrevistas)</h3>
                     <p className="text-sm text-muted-foreground mb-3">Gera um arquivo por formulário com todas as entrevistas do banco (cada resposta em uma linha).</p>
                     <div className="grid md:grid-cols-3 gap-4">
                       {["f1", "f2", "f3"].map((formId) => {
@@ -367,21 +352,7 @@ export default function Resumo() {
 
                   {/* Relatório Consolidado (Todas as Entrevistas) */}
                   <div className="pt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">Relatório Consolidado (Todas as Entrevistas)</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Formato:</span>
-                        <Select value={exportFormat} onValueChange={(v: 'csv' | 'xlsx') => setExportFormat(v)}>
-                          <SelectTrigger className="w-36 h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="csv">CSV (padrão)</SelectItem>
-                            <SelectItem value="xlsx">XLSX</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    <h3 className="font-medium mb-2">Relatório Consolidado (Todas as Entrevistas)</h3>
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="md:col-span-1">
                         <p className="text-sm text-muted-foreground mb-3 leading-snug">
