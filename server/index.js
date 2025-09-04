@@ -197,33 +197,7 @@ app.get('/api/interviews', async (req, res) => {
       });
     });
     
-    // Auto-conclusão defensiva ao listar
-    const completedIds = [];
-    for (let i = 0; i < interviews.length; i++) {
-      const itw = interviews[i];
-      try {
-        const f1 = itw.f1Answers ? JSON.parse(itw.f1Answers) : null;
-        const f2 = itw.f2Answers ? JSON.parse(itw.f2Answers) : null;
-        const f3 = itw.f3Answers ? JSON.parse(itw.f3Answers) : null;
-        const hasF1 = f1 && Object.keys(f1).length > 0;
-        const hasF2 = f2 && Object.keys(f2).length > 0;
-        const hasF3 = f3 && Object.keys(f3).length > 0;
-        if (hasF1 && hasF2 && hasF3 && !itw.isCompleted) {
-          await prisma.interview.update({
-            where: { id: itw.id },
-            data: { isCompleted: true, completedAt: new Date() }
-          });
-          itw.isCompleted = true;
-          itw.completedAt = new Date();
-          completedIds.push(itw.id);
-        }
-      } catch (e) {
-        console.warn('⚠️ Erro ao verificar/atualizar conclusão ao listar:', itw.id, e);
-      }
-    }
-    if (completedIds.length > 0) {
-      console.log('✅ Entrevistas marcadas como concluídas ao listar:', completedIds);
-    }
+    // Removido: marcação automática de conclusão ao listar
 
     // Converter campos JSON de volta para objetos
     const interviewsWithJson = interviews.map(interview => ({
@@ -254,25 +228,7 @@ app.get('/api/interviews/:id', async (req, res) => {
       return res.status(404).json({ error: 'Entrevista não encontrada' });
     }
     
-    // Auto-conclusão defensiva ao buscar por ID
-    try {
-      const f1 = interview.f1Answers ? JSON.parse(interview.f1Answers) : null;
-      const f2 = interview.f2Answers ? JSON.parse(interview.f2Answers) : null;
-      const f3 = interview.f3Answers ? JSON.parse(interview.f3Answers) : null;
-      const hasF1 = f1 && Object.keys(f1).length > 0;
-      const hasF2 = f2 && Object.keys(f2).length > 0;
-      const hasF3 = f3 && Object.keys(f3).length > 0;
-      if (hasF1 && hasF2 && hasF3 && !interview.isCompleted) {
-        console.log(`🎯 Marcando entrevista ${id} como CONCLUÍDA automaticamente (GET by id)`);
-        interview = await prisma.interview.update({
-          where: { id },
-          data: { isCompleted: true, completedAt: new Date() },
-          include: { analyses: true }
-        });
-      }
-    } catch (e) {
-      console.warn('⚠️ Erro ao verificar/atualizar conclusão em GET by id:', id, e);
-    }
+    // Removido: marcação automática de conclusão ao buscar por ID
 
     // Converter campos JSON de volta para objetos
     const interviewWithJson = {
@@ -363,27 +319,7 @@ app.put('/api/interviews/:id/answers', async (req, res) => {
     console.log(`✅ ${formId} salvo com sucesso na entrevista ${id}`);
     console.log(`📊 Total de respostas em ${formId}: ${Object.keys(answers).length}`);
 
-    // Verificar se todos os formulários possuem respostas para concluir automaticamente
-    try {
-      const f1 = interview.f1Answers ? JSON.parse(interview.f1Answers) : null;
-      const f2 = interview.f2Answers ? JSON.parse(interview.f2Answers) : null;
-      const f3 = interview.f3Answers ? JSON.parse(interview.f3Answers) : null;
-      const hasF1 = f1 && Object.keys(f1).length > 0;
-      const hasF2 = f2 && Object.keys(f2).length > 0;
-      const hasF3 = f3 && Object.keys(f3).length > 0;
-
-      console.log('🔍 Verificação automática de conclusão:', { id, hasF1, hasF2, hasF3, isCompleted: interview.isCompleted });
-
-      if (hasF1 && hasF2 && hasF3 && !interview.isCompleted) {
-        console.log(`🎯 Marcando entrevista ${id} como CONCLUÍDA automaticamente`);
-        interview = await prisma.interview.update({
-          where: { id },
-          data: { isCompleted: true, completedAt: new Date() }
-        });
-      }
-    } catch (autoErr) {
-      console.warn('⚠️ Erro ao verificar conclusão automática:', autoErr);
-    }
+    // Removido: marcação automática de conclusão ao salvar respostas; agora só conclui via /complete
 
     // Converter campos JSON de volta para objetos
     const interviewWithJson = {
