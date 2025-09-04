@@ -565,7 +565,7 @@ export default function FormPage({ formId }: FormPageProps) {
           <Button
             onClick={handleNext}
             disabled={isSaving}
-            className="ppm-button-primary flex items-center gap-2"
+            className={`flex items-center gap-2 ${formId === 'f3' ? 'bg-lime-600 text-white hover:bg-lime-700' : 'bg-black text-white hover:bg-zinc-900'}`}
           >
             {formId === "f3" ? "Finalizar" : "Próximo"}
             <ChevronRight className="w-4 h-4" />

@@ -140,7 +140,7 @@ export default function Home() {
           <CardContent className="text-center">
             <Button 
               size="lg" 
-              className="relative overflow-visible group px-8 py-3 text-lg bg-black text-white hover:bg-zinc-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-lime-500 after:transition-all group-hover:after:w-full"
+              className="relative overflow-visible px-8 py-3 text-lg bg-black text-white hover:bg-zinc-900 after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-lime-500 after:transition-all hover:after:w-full"
               onClick={handleStartInterview}
               disabled={isStartingInterview || isLoading}
             >
