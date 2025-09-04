@@ -29,52 +29,31 @@ function canWrite(targetPath) {
   }
 }
 
-// Garante um DATABASE_URL funcional e gravável, com fallbacks
-function ensureWritableDatabaseUrl() {
-  let current = process.env.DATABASE_URL;
-  const defaultUrl = `file:${path.join('prisma', 'dev.db')}`; // relativo ao __dirname
-  if (!current) current = defaultUrl;
-
-  // Primeiro recurso: pasta do usuário (mais confiável p/ escrita)
-  const homeDir = os.homedir();
-  const userDataDir = path.join(homeDir || __dirname, '.ppm-data');
-  const userUrl = `file:${path.join(userDataDir, 'dev.db')}`;
-  const tryUrls = [userUrl, current, defaultUrl, `file:${path.join('prisma', 'dev_rw.db')}`];
-
-  for (const url of tryUrls) {
-    try {
-      const filePath = resolveSqlitePath(url);
-      const dir = path.dirname(filePath);
-      // Criar diretório se necessário
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      // Se o arquivo existir mas estiver somente-leitura, tentar ajustar permissões
-      if (fs.existsSync(filePath) && !canWrite(filePath)) {
-        try { fs.chmodSync(filePath, 0o600); } catch (_) {}
-      }
-      // Validar permissão de escrita SEMPRE na pasta (SQLite cria -wal/-shm)
-      if (!canWrite(dir)) {
-        console.warn('⚠️ Diretório do banco não é gravável:', dir);
-        continue; // tentar próximo
-      }
-      // Se o arquivo existir e ainda assim não for gravável, pular
-      if (fs.existsSync(filePath) && !canWrite(filePath)) {
-        console.warn('⚠️ Arquivo SQLite não gravável:', filePath);
-        continue;
-      }
-      // Escolhido
-      if (process.env.DATABASE_URL !== url) {
-        process.env.DATABASE_URL = url;
-        console.log('🔧 Definindo DATABASE_URL:', url);
-      }
-      return url;
-    } catch (e) {
-      console.warn('⚠️ Falha ao preparar URL do banco:', url, e?.message || e);
+// Forçar uso do DB no diretório do usuário (~/.ppm-data/dev.db), ignorando .env
+function forceUserDatabaseUrl() {
+  const homeDir = os.homedir() || __dirname;
+  const userDataDir = path.join(homeDir, '.ppm-data');
+  const dbFile = path.join(userDataDir, 'dev.db');
+  try {
+    if (!fs.existsSync(userDataDir)) fs.mkdirSync(userDataDir, { recursive: true });
+    // Garantir que a pasta é gravável
+    if (!canWrite(userDataDir)) {
+      try { fs.chmodSync(userDataDir, 0o700); } catch (_) {}
     }
+    // Se o arquivo existir e estiver somente-leitura, tentar liberar
+    if (fs.existsSync(dbFile) && !canWrite(dbFile)) {
+      try { fs.chmodSync(dbFile, 0o600); } catch (_) {}
+    }
+  } catch (e) {
+    console.warn('⚠️ Não foi possível preparar ~/.ppm-data:', e?.message || e);
   }
-  return current; // melhor esforço
+  const url = `file:${dbFile}`;
+  process.env.DATABASE_URL = url;
+  console.log('🔧 DATABASE_URL forçado para (usuário):', url);
+  return url;
 }
 
-const finalDbUrl = ensureWritableDatabaseUrl();
+const finalDbUrl = forceUserDatabaseUrl();
 console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: finalDbUrl });
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;

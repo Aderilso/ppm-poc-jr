@@ -5,6 +5,16 @@
 
 set -euo pipefail
 
+# Args
+BG_MODE=false
+for arg in "$@"; do
+  case "$arg" in
+    --bg|--background)
+      BG_MODE=true
+      ;;
+  esac
+done
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
@@ -33,6 +43,10 @@ fi
 
 # 3) Ensure DB schema exists (safe/no-op if already applied)
 echo "🗄️ Checando schema do banco (Prisma db push)..."
+# Forçar DATABASE_URL para ~/.ppm-data/dev.db para CLI do Prisma
+export DATABASE_URL="file:${HOME}/.ppm-data/dev.db"
+mkdir -p "${HOME}/.ppm-data" 2>/dev/null || true
+touch "${HOME}/.ppm-data/.perm" 2>/dev/null || true
 (cd server && npx prisma generate >/dev/null 2>&1 && npx prisma db push >/dev/null 2>&1) || true
 
 # 4) Free ports optionally
@@ -53,16 +67,18 @@ free_port 8080
 
 # 5) Start backend in background
 echo "🚀 Iniciando backend em segundo plano..."
-(cd server && npm run dev) >/dev/null 2>&1 &
+(cd server && DATABASE_URL="$DATABASE_URL" npm run dev) >/dev/null 2>&1 &
 BACKEND_PID=$!
 echo "✅ Backend PID: $BACKEND_PID"
 
-# Kill backend on exit
-cleanup() {
-  echo "\n🛑 Encerrando processos..."
-  kill "$BACKEND_PID" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+# Kill backend on exit (apenas modo foreground)
+if [ "$BG_MODE" = false ]; then
+  cleanup() {
+    echo "\n🛑 Encerrando processos..."
+    kill "$BACKEND_PID" >/dev/null 2>&1 || true
+  }
+  trap cleanup EXIT
+fi
 
 # 6) Wait for API
 echo "⏳ Aguardando API (http://localhost:3001/api/health)..."
@@ -80,7 +96,16 @@ done
 echo "🌐 Abra: http://localhost:8080"
 echo "📜 Logs do backend aparecem nesta janela se houver erros."
 
-# 7) Start frontend in foreground (Ctrl+C para sair)
+# 7) Start frontend
 echo "🚀 Iniciando frontend (Vite)"
-npm run dev
-
+if [ "$BG_MODE" = true ]; then
+  (npm run dev) >/dev/null 2>&1 &
+  FRONTEND_PID=$!
+  echo "✅ Frontend em background (PID: $FRONTEND_PID)"
+  echo "🌐 Abra: http://localhost:8080"
+  echo "💡 Para encerrar: kill $BACKEND_PID $FRONTEND_PID"
+  # Keep this script alive just to show PIDs briefly
+  sleep 2
+else
+  npm run dev
+fi

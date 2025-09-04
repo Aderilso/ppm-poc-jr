@@ -38,13 +38,17 @@ if not exist "server\node_modules" (
 )
 
 REM Garantir schema do banco (no-op se ja aplicado)
+REM Forcar DATABASE_URL para pasta do usuario
+set "DATABASE_URL=file:%USERPROFILE%\.ppm-data\dev.db"
+if not exist "%USERPROFILE%\.ppm-data" mkdir "%USERPROFILE%\.ppm-data" >nul 2>&1
+
 pushd server >nul
 call npx prisma generate >nul 2>&1
 call npx prisma db push >nul 2>&1
 popd >nul
 
 echo 🚀 Abrindo janelas...
-start "PPM API" cmd /k ""cd /d "%ROOT%server" && npm run dev""
+start "PPM API" cmd /k ""cd /d "%ROOT%server" && set DATABASE_URL=%DATABASE_URL% && npm run dev""
 start "PPM Frontend" cmd /k ""cd /d "%ROOT%" && npm run dev""
 
 timeout /t 2 >nul
@@ -61,4 +65,3 @@ exit /b 0
 echo ❌ Ocorreu um erro ao iniciar. Verifique as mensagens acima.
 pause
 exit /b 1
-
