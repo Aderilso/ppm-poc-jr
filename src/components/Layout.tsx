@@ -70,16 +70,16 @@ export function Layout({ children }: LayoutProps) {
       </main>
 
       {/* Footer */}
-      <footer className="bg-muted mt-16">
+      <footer className="mt-16 bg-black text-zinc-200 border-t border-zinc-800/60">
         <div className="container mx-auto px-4 py-6">
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm">
             <p className="flex items-center justify-center gap-2">
               Desenvolvido por{" "}
               <a
                 href="https://www.linkedin.com/in/aderilsojunior/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary hover:text-primary/80 transition-colors font-medium"
+                className="inline-flex items-center gap-1 text-lime-400 hover:text-lime-300 transition-colors font-medium"
               >
                 <Linkedin className="w-4 h-4" />
                 Aderilso Junior
