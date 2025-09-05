@@ -37,7 +37,8 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
       </div>
 
       {meta.is_interviewer && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <Label htmlFor="interviewer_name" className="text-sm">
               Nome do Entrevistador *
@@ -91,11 +92,12 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
               <p className="text-sm text-destructive mt-1">Preencha este campo.</p>
             )}
           </div>
-        </div>
-        <div className="mt-4 flex justify-end">
-          <Button onClick={() => onCommit && onCommit()} disabled={!canCommit}>
-            {actionLabel}
-          </Button>
+          </div>
+          <div className="mt-4 flex justify-end">
+            <Button onClick={() => onCommit && onCommit()} disabled={!canCommit}>
+              {actionLabel}
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -38,16 +38,26 @@ if not exist "server\node_modules" (
 )
 
 REM Garantir schema do banco (no-op se ja aplicado)
-REM Escolher pasta gravavel para o DB (preferir usuario, senao TEMP)
-set "DBDIR=%USERPROFILE%\.ppm-data"
-if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
-echo ok>"%DBDIR%\.perm" 2>nul
-if errorlevel 1 (
-  set "DBDIR=%TEMP%\ppm-data"
-  if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
-  echo ⚠️ Sem permissao em pasta do usuario, usando TEMP: %DBDIR%
+REM Escolher DB: primeiro tenta ler .ppm-db.env, senao define home/TEMP
+if exist "%~dp0.ppm-db.env" (
+  for /f "usebackq delims=" %%L in ("%~dp0.ppm-db.env") do (
+    for /f "tokens=1,* delims==" %%A in ("%%L") do (
+      if /I "%%A"=="DATABASE_URL" set "DATABASE_URL=%%B"
+    )
+  )
+  echo 🔧 DATABASE_URL carregado de .ppm-db.env
 )
-set "DATABASE_URL=file:%DBDIR%\dev.db"
+if "%DATABASE_URL%"=="" (
+  set "DBDIR=%USERPROFILE%\.ppm-data"
+  if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
+  echo ok>"%DBDIR%\.perm" 2>nul
+  if errorlevel 1 (
+    set "DBDIR=%TEMP%\ppm-data"
+    if not exist "%DBDIR%" mkdir "%DBDIR%" >nul 2>&1
+    echo ⚠️ Sem permissao em pasta do usuario, usando TEMP: %DBDIR%
+  )
+  set "DATABASE_URL=file:%DBDIR%\dev.db"
+)
 
 pushd server >nul
 call npx prisma generate >nul 2>&1

@@ -41,16 +41,24 @@ if [ ! -d "server/node_modules" ]; then
   (cd server && npm install)
 fi
 
-# 3) Choose writable DB dir (user home preferred, else temp)
+# 3) Choose DB target: allow override via .ppm-db.env, else writable default
 echo "🗄️ Checando schema do banco (Prisma db push)..."
-DB_DIR="$HOME/.ppm-data"
-mkdir -p "$DB_DIR" 2>/dev/null || true
-if ! (echo ok > "$DB_DIR/.perm" 2>/dev/null); then
-  DB_DIR="${TMPDIR:-/tmp}/ppm-data"
-  mkdir -p "$DB_DIR" 2>/dev/null || true
-  echo "⚠️ Sem permissão em ~/.ppm-data, usando temporário: $DB_DIR"
+# Load override if present
+if [ -f "$ROOT_DIR/.ppm-db.env" ]; then
+  # shellcheck disable=SC1090
+  . "$ROOT_DIR/.ppm-db.env"
+  echo "🔧 DATABASE_URL carregado de .ppm-db.env"
 fi
-export DATABASE_URL="file:${DB_DIR}/dev.db"
+if [ -z "${DATABASE_URL:-}" ]; then
+  DB_DIR="$HOME/.ppm-data"
+  mkdir -p "$DB_DIR" 2>/dev/null || true
+  if ! (echo ok > "$DB_DIR/.perm" 2>/dev/null); then
+    DB_DIR="${TMPDIR:-/tmp}/ppm-data"
+    mkdir -p "$DB_DIR" 2>/dev/null || true
+    echo "⚠️ Sem permissão em ~/.ppm-data, usando temporário: $DB_DIR"
+  fi
+  export DATABASE_URL="file:${DB_DIR}/dev.db"
+fi
 (cd server && npx prisma generate >/dev/null 2>&1 && npx prisma db push >/dev/null 2>&1) || true
 
 # 4) Free ports optionally

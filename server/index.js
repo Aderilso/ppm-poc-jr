@@ -77,7 +77,26 @@ function forceUserDatabaseUrl() {
   return url;
 }
 
-const finalDbUrl = forceUserDatabaseUrl();
+// Se DATABASE_URL já estiver definido no ambiente (ex.: via scripts ou .env), respeite-o;
+// caso contrário, force um caminho gravável do usuário/TEMP.
+let finalDbUrl = process.env.DATABASE_URL;
+if (!finalDbUrl) {
+  finalDbUrl = forceUserDatabaseUrl();
+} else {
+  // Se veio do ambiente, ainda assim tente validar e, se impossível, caia para TMP
+  const filePath = resolveSqlitePath(finalDbUrl);
+  try {
+    const dir = path.dirname(filePath);
+    if (!dir || !fs.existsSync(dir) || !canWrite(dir)) {
+      console.warn('⚠️ DATABASE_URL não aponta para diretório gravável. Usando fallback. URL:', finalDbUrl);
+      finalDbUrl = forceUserDatabaseUrl();
+    }
+  } catch (_) {
+    console.warn('⚠️ Falha ao validar DATABASE_URL. Usando fallback. URL:', finalDbUrl);
+    finalDbUrl = forceUserDatabaseUrl();
+  }
+  process.env.DATABASE_URL = finalDbUrl;
+}
 console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: finalDbUrl });
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;

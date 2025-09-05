@@ -106,7 +106,12 @@ async function apiRequest<T>(
       errorBody = 'Erro ao ler resposta do servidor';
     }
     
-    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorBody.substring(0, 100)}`);
+    const snippet = isDevelopment ? errorBody : errorBody.substring(0, 200);
+    // Log completo no console para facilitar diagnóstico em dev
+    if (isDevelopment) {
+      console.error('❌ API - Corpo de erro completo:', errorBody);
+    }
+    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${snippet}`);
   }
 
   // Verificar se a resposta é JSON

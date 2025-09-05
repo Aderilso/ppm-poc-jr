@@ -12,7 +12,7 @@ import { saveConfig, loadConfig } from "@/lib/storage";
 import { addNewQuestionWeight, WeightManager } from "@/lib/weightManager";
 import { SAMPLE_JSON, loadDefaultConfig } from "@/lib/sampleData";
 import { toast } from "@/hooks/use-toast";
-import { criticalApi } from "@/lib/api";
+import { criticalApi, configsApi } from "@/lib/api";
 import { isAuthenticatedForCriticalOperations } from "@/lib/auth";
 import { AuthModal } from "@/components/AuthModal";
 import type { PpmConfig, Question } from "@/lib/types";
@@ -48,7 +48,18 @@ export default function Config() {
     }
   }, []);
 
-  const handleValidateAndSave = () => {
+  const publishToServer = async (cfg: PpmConfig) => {
+    try {
+      const ts = new Date().toISOString();
+      await configsApi.create({ forms: cfg.forms, lookups: cfg.lookups, name: 'Ativa via UI', description: `Publicada em ${ts}` });
+      queryClient.invalidateQueries({ queryKey: ['configs'] });
+      toast({ title: 'Configuração publicada', description: 'Configuração ativa no servidor.' });
+    } catch (e) {
+      toast({ title: 'Falha ao publicar no servidor', description: e instanceof Error ? e.message : 'Erro desconhecido', variant: 'destructive' });
+    }
+  };
+
+  const handleValidateAndSave = async () => {
     try {
       const parsed = JSON.parse(jsonText);
       const validation = validatePpmConfig(parsed);
@@ -58,6 +69,7 @@ export default function Config() {
         setCurrentConfig(validation.data);
         setErrors([]);
         setIsValid(true);
+        await publishToServer(validation.data);
         
         // Salvar timestamp
         const timestamp = new Date().toLocaleString('pt-BR');
@@ -119,6 +131,7 @@ export default function Config() {
         setErrors([]);
         setIsValid(true);
         setShowLoadOptions(false);
+        await publishToServer(validation.data);
         
         // Salvar timestamp
         const timestamp = new Date().toLocaleString('pt-BR');
@@ -226,6 +239,7 @@ export default function Config() {
             setErrors([]);
             setIsValid(true);
             setShowLoadOptions(false);
+            publishToServer(validation.data);
             
             // Salvar timestamp
             const timestamp = new Date().toLocaleString('pt-BR');
@@ -744,23 +758,33 @@ export default function Config() {
               </div>
             ) : (
               <Card className="ppm-card border-blue-200 bg-blue-50">
-                <CardContent className="text-center py-16">
-                  <Database className="w-20 h-20 text-blue-600 mx-auto mb-6" />
-                  <h3 className="text-2xl font-bold text-blue-800 mb-4">Bem-vindo ao Sistema PPM</h3>
-                  <p className="text-blue-700 mb-8 text-lg">
-                    Para começar a configurar os formulários, você precisa carregar uma configuração inicial.
-                  </p>
-                  <Button
-                    onClick={() => setShowLoadOptions(true)}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
-                  >
-                    <Database className="w-5 h-5 mr-3" />
-                    Carregar Configuração
-                  </Button>
-                  <p className="text-sm text-blue-600 mt-4">
-                    Escolha entre usar o JSON padrão ou anexar um arquivo personalizado
-                  </p>
+                <CardContent className="py-10">
+                  <div className="text-center">
+                    <Database className="w-20 h-20 text-blue-600 mx-auto mb-6" />
+                    <h3 className="text-2xl font-bold text-blue-800 mb-2">Bem-vindo ao Sistema PPM</h3>
+                    <p className="text-blue-700 mb-8 text-lg">
+                      Para começar, escolha uma das opções abaixo.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button
+                      onClick={handleLoadDefault}
+                      className="h-24 flex flex-col items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                    >
+                      <Database className="w-8 h-8" />
+                      <span className="font-medium text-base">Usar JSON Padrão</span>
+                      <span className="text-sm text-green-100">ppm_forms_consolidado_v2_normalizado.json</span>
+                    </Button>
+                    <Button
+                      onClick={handleLoadCustom}
+                      variant="outline"
+                      className="h-24 flex flex-col items-center justify-center gap-2 border-2 border-blue-600 text-blue-700 hover:bg-blue-100 hover:text-blue-800 hover:border-blue-700 transition-colors duration-200"
+                    >
+                      <FileUp className="w-8 h-8" />
+                      <span className="font-medium text-base">Fazer upload de JSON</span>
+                      <span className="text-sm text-blue-600">Selecionar arquivo personalizado</span>
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
