@@ -53,8 +53,10 @@ export function MultiSelectChips({ value, onChange, options, hasError = false }:
                 onClick={() => handleRemove(item)}
                 className="ml-1 hover:text-destructive"
                 title="Remover item"
+                aria-label={`Remover item ${item}`}
               >
-                <X className="w-3 h-3" />
+                <X className="w-3 h-3" aria-hidden="true" />
+                <span className="sr-only">Remover</span>
               </button>
             </Badge>
           ))}

@@ -68,8 +68,10 @@ export function ListaPriorizacao({
                 onClick={() => handleRemove(item)}
                 className="h-6 w-6 p-0"
                 title="Remover item"
+                aria-label={`Remover item ${item}`}
               >
-                <X className="w-3 h-3" />
+                <X className="w-3 h-3" aria-hidden="true" />
+                <span className="sr-only">Remover</span>
               </Button>
             </div>
           ))}

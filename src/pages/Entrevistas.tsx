@@ -612,8 +612,11 @@ export default function Entrevistas() {
                               variant="outline"
                               size="sm"
                               onClick={() => setSelectedInterview(interview)}
+                              aria-label={`Ver detalhes da entrevista de ${interview.respondentName || 'ID ' + interview.id.substring(0,8)}`}
+                              title={`Ver detalhes da entrevista`}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">Ver detalhes</span>
                             </Button>
                             
                             {/* Botão Retomar Entrevista - só para entrevistas em andamento */}
@@ -644,16 +647,22 @@ export default function Entrevistas() {
                               size="sm"
                               onClick={() => { setDownloadInterviewTarget(interview); setIsDownloadDialogOpen(true); }}
                               disabled={!interview.isCompleted}
+                              aria-label={`Baixar relatório da entrevista de ${interview.respondentName || 'ID ' + interview.id.substring(0,8)}`}
+                              title="Baixar relatório"
                             >
-                              <Download className="h-4 w-4" />
+                              <Download className="h-4 w-4" aria-hidden="true" />
+                              <span className="sr-only">Baixar</span>
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleDelete(interview.id)}
                               disabled={isDeleting}
+                              aria-label={`Excluir entrevista de ${interview.respondentName || 'ID ' + interview.id.substring(0,8)}`}
+                              title="Excluir entrevista"
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className="h-4 w-4 text-destructive" aria-hidden="true" />
+                              <span className="sr-only">Excluir</span>
                             </Button>
                           </div>
                         </TableCell>
