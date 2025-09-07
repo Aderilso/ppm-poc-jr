@@ -32,20 +32,51 @@ import { ptBR } from "date-fns/locale";
 interface InterviewDetailsProps {
   interview: any;
   onClose: () => void;
+  config?: any;
 }
 
-function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
-  const formatAnswers = (answers: any) => {
-    if (!answers) return "Nenhuma resposta";
-    
-    return Object.entries(answers).map(([key, value]) => (
-      <div key={key} className="mb-2">
-        <strong className="text-sm text-muted-foreground">{key}:</strong>
-        <span className="ml-2 text-sm">
-          {Array.isArray(value) ? value.join(", ") : String(value)}
-        </span>
-      </div>
-    ));
+function InterviewDetails({ interview, onClose, config }: InterviewDetailsProps) {
+  const formatValue = (value: any): string => {
+    if (value === null || value === undefined) return "";
+    return Array.isArray(value) ? value.join(", ") : String(value);
+  };
+
+  const formatAnswers = (formId: 'f1' | 'f2' | 'f3', answers: any) => {
+    if (!answers || Object.keys(answers).length === 0) return "Nenhuma resposta";
+
+    const nodes: JSX.Element[] = [];
+    const used = new Set<string>();
+
+    const form = config?.forms?.find((f: any) => f.id === formId);
+    if (form && Array.isArray(form.questions)) {
+      for (const q of form.questions) {
+        if (q?.active === false) continue;
+        const key = q?.id;
+        const label = q?.pergunta || key;
+        const value = answers[key];
+        if (value === undefined || value === null || value === '') continue;
+        used.add(key);
+        nodes.push(
+          <div key={key} className="mb-2">
+            <strong className="text-sm text-muted-foreground">{label}:</strong>
+            <span className="ml-2 text-sm">{formatValue(value)}</span>
+          </div>
+        );
+      }
+    }
+
+    // Qualquer resposta que não esteja mais no config (fallback)
+    for (const [key, value] of Object.entries(answers)) {
+      if (used.has(key)) continue;
+      nodes.push(
+        <div key={key} className="mb-2">
+          <strong className="text-sm text-muted-foreground">{key}:</strong>
+          <span className="ml-2 text-sm">{formatValue(value)}</span>
+        </div>
+      );
+    }
+
+    return nodes.length > 0 ? nodes : "Nenhuma resposta";
   };
 
   return (
@@ -139,21 +170,21 @@ function InterviewDetails({ interview, onClose }: InterviewDetailsProps) {
                 <div>
                   <h4 className="font-semibold mb-2">Formulário 1 - Avaliação Geral</h4>
                   <div className="bg-muted p-3 rounded-md">
-                    {formatAnswers(interview.f1Answers)}
+                    {formatAnswers('f1', interview.f1Answers)}
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-2">Formulário 2 - Análise de Funcionalidades</h4>
                   <div className="bg-muted p-3 rounded-md">
-                    {formatAnswers(interview.f2Answers)}
+                    {formatAnswers('f2', interview.f2Answers)}
                   </div>
                 </div>
                 
                 <div>
                   <h4 className="font-semibold mb-2">Formulário 3 - Necessidades de Integração</h4>
                   <div className="bg-muted p-3 rounded-md">
-                    {formatAnswers(interview.f3Answers)}
+                    {formatAnswers('f3', interview.f3Answers)}
                   </div>
                 </div>
               </div>
@@ -640,6 +671,7 @@ export default function Entrevistas() {
           <InterviewDetails
             interview={selectedInterview}
             onClose={() => setSelectedInterview(null)}
+            config={config}
           />
         )}
 
