@@ -183,9 +183,15 @@ Este sistema permite que múltiplos analistas trabalhem de forma independente e 
 
 ### Para Windows:
 ```cmd
-git clone [URL_DO_REPOSITORIO]
+REM Opção 1: Um clique (recomendado)
+REM Baixe e execute: bootstrap-analistas.bat
+REM (ou clique com o direito em bootstrap-analistas.ps1 > Run with PowerShell)
+
+REM Opção 2: Manual
+git clone https://github.com/Aderilso/ppm-poc-jr.git
 cd ppm-poc-jr
-setup-completo.bat
+setup-completo.bat  
+REM ou: start-all.bat (se dependências já instaladas)
 ```
 
 ### Para macOS/Linux:
