@@ -95,8 +95,8 @@ function InterviewDetails({ interview, onClose, config }: InterviewDetailsProps)
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <strong className="text-sm text-muted-foreground">ID:</strong>
-                  <p className="text-sm font-mono">{interview.id}</p>
+                  <strong className="text-sm text-muted-foreground">Código:</strong>
+                  <p className="text-sm font-mono">{interview.code || (interview.id?.substring(0,8) + '...')}</p>
                 </div>
                 <div>
                   <strong className="text-sm text-muted-foreground">Status:</strong>
@@ -353,7 +353,7 @@ export default function Entrevistas() {
         respondent_department: interview.respondentDepartment || '',
       };
       const report = generateConsolidatedReport(config, answers, meta);
-      const filenameBase = interview.respondentName ? interview.respondentName.replace(/[^a-zA-Z0-9-_]/g, '_') : interview.id.substring(0,8);
+      const filenameBase = interview.code || (interview.respondentName ? interview.respondentName.replace(/[^a-zA-Z0-9-_]/g, '_') : interview.id.substring(0,8));
       const ts = new Date().toISOString().slice(0,16).replace(/[:-]/g, '').replace('T','-');
       if (format === 'xlsx') {
         const sheets: WorksheetSpec[] = [
@@ -557,7 +557,7 @@ export default function Entrevistas() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID</TableHead>
+                    <TableHead>Código</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Entrevistador</TableHead>
                     <TableHead>Respondente</TableHead>
@@ -572,7 +572,7 @@ export default function Entrevistas() {
                     return (
                       <TableRow key={interview.id}>
                         <TableCell className="font-mono text-xs">
-                          {interview.id.substring(0, 8)}...
+                          {interview.code || (interview.id.substring(0, 8) + '...')}
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -692,7 +692,7 @@ export default function Entrevistas() {
                 <DialogTitle>Baixar Relatório</DialogTitle>
               </DialogHeader>
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">Escolha o formato do arquivo para a entrevista de <strong>{downloadInterviewTarget.respondentName || downloadInterviewTarget.id.substring(0,8)}</strong>.</p>
+                <p className="text-sm text-muted-foreground">Escolha o formato do arquivo para a entrevista <strong>{downloadInterviewTarget.code || downloadInterviewTarget.respondentName || downloadInterviewTarget.id.substring(0,8)}</strong>.</p>
                 <div className="flex gap-3">
                   <Button className="flex-1" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'csv'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>CSV</Button>
                   <Button className="flex-1" variant="outline" onClick={() => { handleDownloadInterview(downloadInterviewTarget, 'xlsx'); setIsDownloadDialogOpen(false); setDownloadInterviewTarget(null); }}>XLSX</Button>

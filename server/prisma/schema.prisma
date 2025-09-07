@@ -15,6 +15,9 @@ model Interview {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Código legível sequencial (ex.: EN001, EN002). Único, gerado no servidor
+  code      String?  @unique
+
   // Metadados da entrevista
   isInterviewer    Boolean  @default(false)
   interviewerName  String?

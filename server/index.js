@@ -99,6 +99,27 @@ if (!finalDbUrl) {
 }
 console.log('🗺️ Server startup paths:', { cwd: process.cwd(), dirname: __dirname, DATABASE_URL: finalDbUrl });
 const prisma = new PrismaClient();
+
+// Gera próximo código de entrevista no formato EN### (EN001, EN002, ...)
+async function generateNextInterviewCode() {
+  try {
+    // Busca maior número já usado (baseado no sufixo numérico do código)
+    const rows = await prisma.$queryRawUnsafe(
+      "SELECT code FROM interviews WHERE code LIKE 'EN%' ORDER BY CAST(substr(code, 3) AS INTEGER) DESC LIMIT 1"
+    );
+    let next = 1;
+    if (Array.isArray(rows) && rows.length > 0 && rows[0]?.code) {
+      const current = parseInt(String(rows[0].code).replace(/^EN/i, ''), 10);
+      if (!isNaN(current)) next = current + 1;
+    }
+    const padded = String(next).padStart(3, '0');
+    return `EN${padded}`;
+  } catch (_) {
+    // Fallback: baseado no count (não perfeito, mas suficiente em baixa concorrência)
+    const count = await prisma.interview.count();
+    return `EN${String(count + 1).padStart(3, '0')}`;
+  }
+}
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -148,14 +169,30 @@ app.post('/api/interviews', async (req, res) => {
 
     console.log('💾 Dados que serão salvos no banco (sanitizados):', dataToSave);
 
-    const interview = await prisma.interview.create({
-      data: dataToSave
-    });
+    // Gerar código legível sequencial (com tolerância a condição de corrida)
+    let interview;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        const code = await generateNextInterviewCode();
+        interview = await prisma.interview.create({
+          data: { ...dataToSave, code }
+        });
+        break;
+      } catch (e) {
+        if (e?.code === 'P2002') {
+          // Código duplicado (unique constraint). Tentar novamente gerando outro.
+          continue;
+        }
+        throw e;
+      }
+    }
+    if (!interview) throw new Error('Falha ao gerar código único para entrevista.');
     
-    console.log('✅ Entrevista criada com sucesso:', interview.id);
+    console.log('✅ Entrevista criada com sucesso:', interview.id, interview.code);
     console.log('🎯 Entrevista X salva no banco de dados - Metadados salvos no banco de dados!');
     console.log('📊 Detalhes da entrevista criada:', {
       id: interview.id,
+      code: interview.code,
       isInterviewer: interview.isInterviewer,
       interviewerName: interview.interviewerName,
       respondentName: interview.respondentName,
@@ -166,6 +203,7 @@ app.post('/api/interviews', async (req, res) => {
     // Verificar se os dados foram realmente salvos
     console.log('🔍 Verificação pós-criação - Dados no banco:', {
       id: interview.id,
+      code: interview.code,
       isInterviewer: interview.isInterviewer,
       interviewerName: interview.interviewerName,
       respondentName: interview.respondentName,
