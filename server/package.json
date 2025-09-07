@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:init": "node init-db.js",
-    "db:reset": "prisma migrate reset --force && node init-db.js"
+    "db:reset": "prisma migrate reset --force && node init-db.js",
+    "codes:backfill": "node scripts/backfill-codes.js"
   },
   "dependencies": {
     "express": "^4.18.2",
