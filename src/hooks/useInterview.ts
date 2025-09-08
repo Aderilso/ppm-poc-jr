@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { interviewsApi, configsApi, analysesApi, healthApi, type ApiInterview } from '@/lib/api';
 import type { PpmMeta, Answers } from '@/lib/types';
