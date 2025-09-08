@@ -11,9 +11,10 @@ interface InterviewerFieldsProps {
   onCommit?: () => void;
   canCommit?: boolean;
   actionLabel?: string;
+  locked?: boolean;
 }
 
-export function InterviewerFields({ meta, onMetaChange, showValidation = false, onCommit, canCommit = false, actionLabel = "Salvar" }: InterviewerFieldsProps) {
+export function InterviewerFields({ meta, onMetaChange, showValidation = false, onCommit, canCommit = false, actionLabel = "Iniciar Entrevista", locked = false }: InterviewerFieldsProps) {
   // Função para verificar se um campo tem erro
   const hasFieldError = (fieldName: keyof PpmMeta, value: string) => {
     if (!showValidation) return false;
@@ -22,7 +23,7 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
   };
 
   return (
-    <div className="ppm-card p-4 mb-6 bg-[hsl(var(--ppm-gray))]">
+    <div className={`ppm-card p-4 mb-6 ${locked ? 'bg-muted opacity-90' : 'bg-[hsl(var(--ppm-gray))]'}`}>
       <div className="flex items-center space-x-2 mb-4">
         <Checkbox
           id="is_interviewer"
@@ -30,6 +31,7 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
           onCheckedChange={(checked) =>
             onMetaChange({ ...meta, is_interviewer: !!checked })
           }
+          disabled={locked}
         />
         <Label htmlFor="is_interviewer" className="text-sm font-medium">
           Preencher como ENTREVISTADOR
@@ -51,6 +53,7 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
               }
               placeholder="Seu nome"
               required
+              disabled={locked}
               className={hasFieldError('interviewer_name', meta.interviewer_name || "") ? "border-destructive" : ""}
             />
             {hasFieldError('interviewer_name', meta.interviewer_name || "") && (
@@ -69,6 +72,7 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
               }
               placeholder="Nome do entrevistado"
               required
+              disabled={locked}
               className={hasFieldError('respondent_name', meta.respondent_name || "") ? "border-destructive" : ""}
             />
             {hasFieldError('respondent_name', meta.respondent_name || "") && (
@@ -83,9 +87,9 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
               id="respondent_department"
               value={meta.respondent_department || ""}
               onChange={(e) => onMetaChange({ ...meta, respondent_department: e.target.value })}
-              onBlur={() => { if (onCommit && canCommit) onCommit(); }}
               placeholder="Departamento"
               required
+              disabled={locked}
               className={hasFieldError('respondent_department', meta.respondent_department || "") ? "border-destructive" : ""}
             />
             {hasFieldError('respondent_department', meta.respondent_department || "") && (
@@ -93,11 +97,13 @@ export function InterviewerFields({ meta, onMetaChange, showValidation = false, 
             )}
           </div>
           </div>
-          <div className="mt-4 flex justify-end">
-            <Button onClick={() => onCommit && onCommit()} disabled={!canCommit}>
-              {actionLabel}
-            </Button>
-          </div>
+          {!locked && (
+            <div className="mt-4 flex justify-end">
+              <Button onClick={() => onCommit && onCommit()} disabled={!canCommit} className="bg-black text-white hover:bg-zinc-900">
+                {actionLabel}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

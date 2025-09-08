@@ -126,6 +126,51 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Garantir coluna/índice 'code' e realizar backfill automático (idempotente)
+async function ensureCodeColumnAndIndex() {
+  try {
+    const columns = await prisma.$queryRawUnsafe('PRAGMA table_info("interviews")');
+    const hasCode = Array.isArray(columns) && columns.some((c) => c?.name === 'code');
+    if (!hasCode) {
+      console.log('➕ Adicionando coluna "code" em interviews...');
+      await prisma.$executeRawUnsafe('ALTER TABLE "interviews" ADD COLUMN "code" TEXT');
+    }
+    console.log('➕ Garantindo índice único parcial em "code" (se não existir)...');
+    await prisma.$executeRawUnsafe('CREATE UNIQUE INDEX IF NOT EXISTS "Interview_code_key" ON "interviews"("code") WHERE "code" IS NOT NULL');
+  } catch (e) {
+    console.warn('⚠️ ensureCodeColumnAndIndex: falha ao garantir coluna/índice:', e?.message || e);
+  }
+}
+
+async function backfillMissingCodes() {
+  try {
+    const missing = await prisma.interview.findMany({ where: { code: null }, orderBy: { createdAt: 'asc' }, select: { id: true } });
+    if (!missing.length) return;
+    console.log(`🔧 Backfill de códigos EN pendentes: ${missing.length}`);
+    for (const it of missing) {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const code = await generateNextInterviewCode();
+          await prisma.interview.update({ where: { id: it.id }, data: { code } });
+          console.log(`✔️ ${it.id.substring(0,8)}... -> ${code}`);
+          break;
+        } catch (e) {
+          if (e?.code === 'P2002') continue; // tentar outro código
+          console.warn('⚠️ backfill code falhou:', e?.message || e);
+          break;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ backfillMissingCodes: erro:', e?.message || e);
+  }
+}
+
+(async () => {
+  await ensureCodeColumnAndIndex();
+  await backfillMissingCodes();
+})();
+
 // Rotas para Entrevistas
 app.post('/api/interviews', async (req, res) => {
   try {

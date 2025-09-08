@@ -521,17 +521,7 @@ export default function FormPage({ formId }: FormPageProps) {
                 Salvando...
               </span>
             )}
-            {/* Botão de Sincronizar Dados */}
-            {currentInterview?.id && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={forceReloadInterview}
-                className="text-blue-600 border-blue-600 hover:bg-blue-50"
-              >
-                🔄 Sincronizar Dados
-              </Button>
-            )}
+            {/* Removido: botão de sincronizar para simplificar a UI */}
           </div>
         </div>
 
@@ -551,7 +541,8 @@ export default function FormPage({ formId }: FormPageProps) {
           onMetaChange={handleMetaChange}
           onCommit={commitMeta}
           canCommit={!!(meta.is_interviewer && meta.interviewer_name && meta.respondent_name && meta.respondent_department)}
-          actionLabel={currentInterviewId ? 'Salvar Metadados' : 'Iniciar Entrevista'}
+          actionLabel={'Iniciar Entrevista'}
+          locked={!!currentInterviewId}
         />
 
         {/* Questions */}
