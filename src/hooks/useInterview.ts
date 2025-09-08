@@ -110,6 +110,9 @@ export function useInterview() {
     },
   });
 
+  // Evitar criação duplicada por chamadas concorrentes
+  const creatingRef = useRef(false);
+
   // Mutação para salvar respostas
   const saveAnswersMutation = useMutation({
     mutationFn: ({ formId, answers }: { formId: 'f1' | 'f2' | 'f3'; answers: Answers }) => {
@@ -326,6 +329,10 @@ export function useInterview() {
         let interviewId = currentInterviewId;
 
         if (!interviewId) {
+          if (createInterviewMutation.isPending || creatingRef.current) {
+            console.log("⏳ useInterview - Criação de entrevista já em andamento. Ignorando chamada duplicada.");
+            return;
+          }
           // Só criar entrevista se houver metadados válidos
           if (!hasValidMeta) {
             console.log("⚠️ useInterview - Metadados insuficientes para criar entrevista, aguardando...");
@@ -334,6 +341,7 @@ export function useInterview() {
           }
           
           console.log("🆕 useInterview - Criando nova entrevista com metadados válidos...");
+          creatingRef.current = true;
           const result = await createInterviewMutation.mutateAsync({
             isInterviewer: meta.is_interviewer,
             interviewerName: meta.interviewer_name,
@@ -351,6 +359,7 @@ export function useInterview() {
           setInterviewId(result.id);
           interviewId = result.id;
           queryClient.invalidateQueries({ queryKey: interviewKeys.lists() });
+          creatingRef.current = false;
         } else {
           console.log(`💾 useInterview - Salvando metadados da entrevista ${interviewId} no banco...`);
           const result = await interviewsApi.update(interviewId, {
@@ -377,6 +386,7 @@ export function useInterview() {
       }
     } catch (error) {
       console.error("❌ useInterview - Erro ao atualizar metadados:", error);
+      creatingRef.current = false;
       throw error;
     }
   };

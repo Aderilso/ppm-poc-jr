@@ -61,6 +61,9 @@ export default function FormPage({ formId }: FormPageProps) {
   const [form, setForm] = useState<FormSpec | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
   const [meta, setMeta] = useState<PpmMeta>({ is_interviewer: false });
+  const prevInterviewIdRef = useRef<string | null>(null);
+  const answersInitializedRef = useRef(false);
+  const metaInitializedRef = useRef(false);
   const [hasDraftData, setHasDraftData] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showValidation, setShowValidation] = useState(false);
@@ -144,7 +147,7 @@ export default function FormPage({ formId }: FormPageProps) {
         formAnswersKeys: Object.keys(formAnswers)
       });
       
-      // NOVA LÓGICA: Carregar dados de TODOS os formulários quando retomar entrevista
+      // Carregar dados somente no primeiro load por entrevista (evitar sobrescrever enquanto digita)
       if (!isCompleted) {
         // Verificar se há dados em qualquer formulário (entrevista em andamento)
         const hasF1Data = currentInterview.f1Answers && Object.keys(currentInterview.f1Answers).length > 0;
@@ -160,9 +163,17 @@ export default function FormPage({ formId }: FormPageProps) {
           hasAnyData
         });
         
-        // FORÇAR CARREGAMENTO DOS DADOS DO FORMULÁRIO ATUAL
-        console.log(`🔄 FormPage - Forçando carregamento de dados para ${formId}:`, formAnswers);
-        setAnswers(formAnswers);
+        const interviewChanged = prevInterviewIdRef.current !== currentInterview.id;
+        if (interviewChanged) {
+          answersInitializedRef.current = false;
+        }
+        if (!answersInitializedRef.current || interviewChanged) {
+          console.log(`🔄 FormPage - Inicializando respostas para ${formId}:`, formAnswers);
+          setAnswers(formAnswers);
+          answersInitializedRef.current = true;
+        } else {
+          console.log('⏸️ FormPage - Mantendo respostas locais; evitando sobrescrever enquanto usuário digita');
+        }
         
         if (hasAnyData) {
           // IMPORTANTE: Marcar que há dados de entrevista em andamento
@@ -180,8 +191,7 @@ export default function FormPage({ formId }: FormPageProps) {
         setHasDraftData(false);
       }
       
-      // LÓGICA PARA CAMPOS DO ENTREVISTADOR:
-      // FORÇAR CARREGAMENTO DOS METADADOS
+      // LÓGICA PARA CAMPOS DO ENTREVISTADOR: inicializar sem sobrescrever
       const bankMeta = {
         is_interviewer: currentInterview.isInterviewer || false,
         interviewer_name: currentInterview.interviewerName || "",
@@ -197,20 +207,16 @@ export default function FormPage({ formId }: FormPageProps) {
         currentMeta: meta
       });
       
-      // SIMPLIFICAÇÃO: Sempre carregar metadados do banco quando há entrevista ativa
       if (!isCompleted) {
-        console.log("🔄 FormPage - FORÇANDO carregamento de metadados do banco para", formId, ":", bankMeta);
-        setMeta(bankMeta);
-        
-        // FORÇAR RE-RENDER DOS COMPONENTES
-        setTimeout(() => {
-          console.log("⏰ FormPage - Timeout executado, forçando re-render");
-          setMeta(prevMeta => {
-            console.log("🔄 FormPage - setMeta executado:", { prevMeta, newMeta: bankMeta });
-            return { ...bankMeta };
-          });
-          console.log("✅ FormPage - Metadados forçados após timeout:", bankMeta);
-        }, 100);
+        const interviewChanged = prevInterviewIdRef.current !== currentInterview.id;
+        if (interviewChanged) metaInitializedRef.current = false;
+        if (!metaInitializedRef.current || interviewChanged) {
+          console.log("🔄 FormPage - Inicializando metadados do banco para", formId, ":", bankMeta);
+          setMeta(bankMeta);
+          metaInitializedRef.current = true;
+        } else {
+          console.log("⏸️ FormPage - Mantendo metadados locais; evitando sobrescrever enquanto usuário digita");
+        }
       } else {
         // Entrevista concluída - limpar metadados
         console.log("🧹 FormPage - Entrevista concluída, limpando metadados");
@@ -219,6 +225,7 @@ export default function FormPage({ formId }: FormPageProps) {
       
       // Limpar validação visual quando nova entrevista é carregada
       setShowValidation(false);
+      prevInterviewIdRef.current = currentInterview.id;
       
     } else {
       // Se não há entrevista ativa, limpar todos os campos
@@ -368,6 +375,20 @@ export default function FormPage({ formId }: FormPageProps) {
     if (!form) return false;
     const progress = getProgress();
     return progress.current === progress.total;
+  };
+
+  const handleFinishNow = async () => {
+    try {
+      if (!currentInterviewId) {
+        setShowValidation(true);
+        return;
+      }
+      console.log("🎯 FormPage - Finalizar agora acionado", { formId, currentInterviewId });
+      await completeInterview();
+      navigate('/dashboard');
+    } catch (e) {
+      console.error('❌ FormPage - Erro ao finalizar agora:', e);
+    }
   };
 
   // Função para verificar se uma pergunta específica tem erro
@@ -575,14 +596,27 @@ export default function FormPage({ formId }: FormPageProps) {
             )}
           </div>
 
-          <Button
-            onClick={handleNext}
-            disabled={isSaving}
-            className={`flex items-center gap-2 ${formId === 'f3' ? 'bg-lime-600 text-white hover:bg-lime-700' : 'bg-black text-white hover:bg-zinc-900'}`}
-          >
-            {formId === "f3" ? "Finalizar" : "Próximo"}
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Botão Finalizar sempre visível para permitir concluir sem passar por todos os formulários */}
+            <Button
+              onClick={handleFinishNow}
+              disabled={isSaving}
+              className="flex items-center gap-2 bg-lime-600 text-white hover:bg-lime-700"
+              title="Finalizar entrevista"
+            >
+              Finalizar
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+
+            <Button
+              onClick={handleNext}
+              disabled={isSaving}
+              className={`flex items-center gap-2 ${formId === 'f3' ? 'bg-lime-600 text-white hover:bg-lime-700' : 'bg-black text-white hover:bg-zinc-900'}`}
+            >
+              {formId === "f3" ? "Finalizar" : "Próximo"}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </Layout>
