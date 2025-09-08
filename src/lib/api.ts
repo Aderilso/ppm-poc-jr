@@ -13,6 +13,7 @@ console.log('🔧 API - Configuração:', {
 // Tipos para a API
 export interface ApiInterview {
   id: string;
+  code?: string;
   createdAt: string;
   updatedAt: string;
   isInterviewer: boolean;

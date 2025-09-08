@@ -179,6 +179,13 @@ app.post('/api/interviews', async (req, res) => {
         });
         break;
       } catch (e) {
+        // Se o cliente Prisma não tem o campo `code` (client desatualizado), criar sem o código para não bloquear o uso.
+        const msg = e?.message || '';
+        if (msg.includes('Unknown argument `code`') || msg.includes('Unknown arg `code`')) {
+          console.warn('⚠️ Prisma Client parece desatualizado (sem coluna `code`). Criando entrevista sem code. Rode: npx prisma generate && npx prisma db push');
+          interview = await prisma.interview.create({ data: dataToSave });
+          break;
+        }
         if (e?.code === 'P2002') {
           // Código duplicado (unique constraint). Tentar novamente gerando outro.
           continue;
